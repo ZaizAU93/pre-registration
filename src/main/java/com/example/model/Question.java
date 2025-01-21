@@ -1,14 +1,18 @@
 package com.example.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import org.springframework.format.annotation.DateTimeFormat;
+import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Question {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,7 +24,11 @@ public class Question {
     @JoinColumn(name = "test_id")
     private Test test;
 
-    private String answer; // Правильный ответ
+    @OneToMany
+    @JoinColumn(name = "answer_id")
+    private List<Answer> answers;  //  ответ
 
-    private boolean multipleAnswers; // многоответность
+    @OneToMany
+    @JoinColumn(name = "correct_answer_id")
+    private List<Сanswer> сorrectAnswer;  // Правильный ответ
 }

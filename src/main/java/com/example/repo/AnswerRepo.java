@@ -1,15 +1,11 @@
 package com.example.repo;
 
+import com.example.model.Answer;
 import com.example.model.Question;
-import com.example.model.Test;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Repository
-public interface QuestionRepo extends JpaRepository<Question, Long> {
-
-    List<Question> findByTest(Test test);
-
+public interface AnswerRepo extends JpaRepository<Answer, Long> {
+    void deleteAllByQuestion(Question question);
 }

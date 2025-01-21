@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Создание теста</title>
+    <title>Создать тест</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -53,28 +53,32 @@
         .back:hover {
             background-color: #c9302c;
         }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            text-decoration: none;
+            color: #337ab7;
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>Создание теста</h1>
+    <h1>Создать тест</h1>
 
-    <form action="#" th:action="@{/save-test}" method="post">
+    <form action="#" th:action="@{/test/create}" th:object="${test}" method="post">
         <div class="form-group">
-            <label for="title">Название теста:</label>
-            <input type="text" id="title" name="title" required>
+            <label for="title">Название:</label>
+            <input type="text" id="title" th:field="*{title}" required/>
         </div>
         <div class="form-group">
-            <label for="description">Описание теста:</label>
-            <textarea id="description" name="description" rows="4" required></textarea>
+            <label for="description">Описание:</label>
+            <textarea id="description" th:field="*{description}" required></textarea>
         </div>
-
-        <button type="submit">Сохранить тест</button>
+        <button type="submit">Создать</button>
     </form>
 
-    <div style="text-align: center; margin-top: 20px;">
-        <button class="back" type="button" th:onclick="'location.href=\'/view-tests\''">Назад</button>
-    </div>
+    <a href="/test" class="back-link">Назад к списку тестов</a>
 </div>
 </body>
 </html>

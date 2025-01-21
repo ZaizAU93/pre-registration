@@ -13,16 +13,14 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Test {
+public class Answer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String title;
-
-    private String description;
-
-    @OneToMany(mappedBy = "test")
-    private List<Question> questions;
+    private String content;
+    @ManyToOne
+    @JoinColumn(name = "question_id")
+    private Question question; // Вопрос, к которому относится этот ответ
 }

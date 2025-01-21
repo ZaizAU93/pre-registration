@@ -8,21 +8,19 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+
 @Entity
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Test {
-
+public class Сanswer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String title;
-
-    private String description;
-
-    @OneToMany(mappedBy = "test")
-    private List<Question> questions;
+    private String content;
+    @ManyToOne
+    @JoinColumn(name = "question_id")
+    private Question questions; // Вопросы, которые имеют этот правильный ответ
 }

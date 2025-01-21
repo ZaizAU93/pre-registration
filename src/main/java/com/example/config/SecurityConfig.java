@@ -44,7 +44,7 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form
                        .loginPage("/login").permitAll() // Позволяем всем доступ к странице логина
-                        .defaultSuccessUrl("/index", true) // true указывает на перенаправление даже если был предыдущий URL
+                        .defaultSuccessUrl("/test/create", true) // true указывает на перенаправление даже если был предыдущий URL
                         .failureUrl("/login?error=true")
                 )
                 .logout(logout -> logout
