@@ -17,7 +17,7 @@ import java.util.List;
 @Controller
 @RequestMapping("/questions")
 public class QuestionController {
-
+/*
     @Autowired
     private QuestionRepo questionRepository;
 
@@ -116,4 +116,6 @@ public class QuestionController {
         questionRepository.delete(question);
         return "redirect:/questions";
     }
+
+ */
 }

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Админ - Список тикетов</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+    <script>
+        var stompClient = null;
+
+        function connect() {
+            var socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+            stompClient.connect({}, function (frame) {
+                console.log('Connected: ' + frame);
+                stompClient.subscribe('/topic/tickets', function (ticket) {
+                    // Обновите список тикетов, когда получен новый тикет
+                    updateTicketList(JSON.parse(ticket.body));
+                });
+            });
+        }
+
+
+        function updateTicketList(ticket) {
+            var table = document.getElementById("ticketTable");
+            var newRow = table.insertRow(1); // вставляем на вторую строку, чтобы не затереть заголовки
+            newRow.insertCell(0).innerText = ticket.id;
+            newRow.insertCell(1).innerText = ticket.description;
+            newRow.insertCell(2).innerText = ticket.userIp;
+            newRow.insertCell(3).innerText = ticket.createdAt;
+            newRow.insertCell(4).innerText = ticket.status;
+            var actionsCell = newRow.insertCell(5);
+            actionsCell.innerHTML = `<a href="/admin/tickets/${ticket.id}">Закрыть тикет</a>`;
+        }
+
+
+        window.onload = function() {
+            connect();
+        }
+    </script>
+</head>
+<body>
+<div class="container">
+    <h1>Админ - Список тикетов</h1>
+    <table id="ticketTable">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Описание</th>
+            <th>IP пользователя</th>
+            <th>Дата создания</th>
+            <th>Статус</th>
+            <th>Действия</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="ticket : ${tickets}">
+            <td th:text="${ticket.id}"></td>
+            <td th:text="${ticket.description}"></td>
+            <td th:text="${ticket.userIp}"></td>
+            <td th:text="${ticket.createdAt}"></td>
+            <td th:text="${ticket.status}"></td>
+            <td><a th:href="@{/admin/tickets/{id}(id=${ticket.id})}">Закрыть тикет</a></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
