@@ -45,7 +45,6 @@
     <tr th:each="ticket : ${tickets}">
         <td th:text="${ticket.id}"></td>
         <td th:text="${ticket.description}"></td>
-        <td th:text="${ticket.userIp}"></td>
         <td th:text="${ticket.createdAt}"></td>
         <td th:text="${ticket.status}"></td>
     </tr>

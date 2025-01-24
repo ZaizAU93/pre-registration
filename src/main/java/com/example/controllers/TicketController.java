@@ -53,6 +53,6 @@ public class TicketController {
 
         ticket1.setUser(userService.getCurrentUser());
 
-        return ticket; // Возвращаем тикет, чтобы отправить его всем подписчикам
+        return ticket1; // Возвращаем тикет, чтобы отправить его всем подписчикам
     }
 }

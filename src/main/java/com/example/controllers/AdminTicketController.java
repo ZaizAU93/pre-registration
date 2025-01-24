@@ -32,7 +32,7 @@ public class AdminTicketController {
         model.addAttribute("tickets", tickets);
         model.addAttribute("user", userService.getCurrentUser());
 
-        return "1"; // имя шаблона Thymeleaf для админов
+        return "adminTicketList"; // имя шаблона Thymeleaf для админов
     }
 
     // Добавьте методы для управления тикетами (например, закрытие тикета)
