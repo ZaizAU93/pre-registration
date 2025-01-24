@@ -30,7 +30,12 @@ public class User{
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    @OneToOne
+    @ManyToOne
     private Department department;
+
+    @Override
+    public String toString() {
+        return "User{name='" + name + '\'' + ", department=" + (department != null ? department.getName() : "null") + '}';
+    }
 
 }

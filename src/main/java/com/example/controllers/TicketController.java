@@ -2,6 +2,7 @@ package com.example.controllers;
 
 import com.example.model.Ticket;
 import com.example.service.TicketService;
+import com.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -22,6 +23,9 @@ public class TicketController {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
+    @Autowired
+    private UserService userService;
+
     @GetMapping
     public String getTickets(Model model) {
         List<Ticket> tickets = ticketService.getAllTickets();
@@ -32,7 +36,6 @@ public class TicketController {
     @GetMapping("/new")
     public String createTicketForm(Model model) {
         model.addAttribute("ticket", new Ticket());
-
         return "ticketForm"; // имя шаблона Thymeleaf
     }
 
@@ -46,7 +49,10 @@ public class TicketController {
     @MessageMapping("/ticket")
     @SendTo("/topic/tickets")
     public Ticket sendTicket(Ticket ticket) {
-        // Логика обработки тикета (например, сохранение в БД)
+        Ticket ticket1 = ticket;
+
+        ticket1.setUser(userService.getCurrentUser());
+
         return ticket; // Возвращаем тикет, чтобы отправить его всем подписчикам
     }
 }

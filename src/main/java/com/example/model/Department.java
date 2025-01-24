@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Entity
 @NoArgsConstructor
@@ -18,6 +20,11 @@ public class Department {
 
     private String name;
 
-    @ManyToOne
-    private User user;
+    @OneToMany(mappedBy = "department")
+    private List<User> users;
+
+    @Override
+    public String toString() {
+        return "Department{name='" + name + '\'' + ", usersCount=" + (users != null ? users.size() : 0) + '}';
+    }
 }

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список тикетов</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        header {
+            background-color: #28a745;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        footer {
+            background-color: #28a745;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+        }
+        .container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+        }
+        .profile {
+            width: 300px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: #fff;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-right: 20px;
+            text-align: center;
+        }
+        .task-list {
+            width: 400px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: #fff;
+            padding: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .task-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Список тикетов</h1>
+</header>
+
+<div class="container">
+    <div class="profile">
+        <h2>Информация о пользователе</h2>
+        <div class="admin-info">
+            <strong>Имя:</strong> <span th:text="${user.name}"></span><br>
+            <strong>Должность:</strong> <span th:text="${user.fathername}"></span><br>
+            <strong>Электронная почта:</strong> <span th:text="${user.surname}"></span><br>
+            <strong>Телефон:</strong> <span th:text="${user.department}"></span><br>
+        </div>
+    </div>
+
+    <div class="task-list">
+        <h2>Список тикетов</h2>
+        <div th:each="ticket : ${tickets}" class="task-item">
+            <strong>Тикет ID: <span th:text="${ticket.id}"></span></strong><br>
+            <strong>Описание:</strong> <span th:text="${ticket.description}"></span><br>
+            <strong>Дата создания:</strong> <span th:text="${ticket.createdAt}"></span><br>
+            <strong>Статус:</strong> <span th:text="${ticket.status}"></span><br>
+            <strong>Пользователь:</strong> <span th:text="${ticket.user.name}"></span><br>
+            <strong>Компьютер:</strong> <span th:text="${ticket.computer.name}"></span><br>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <p>&copy; 2023 Все права защищены</p>
+</footer>
+
+</body>
+</html>

@@ -22,7 +22,6 @@ public class Ticket {
 
     private String description;
 
-    private String userIp;
     private LocalDateTime createdAt;
     private LocalDateTime closedAt;
     private Status status;
@@ -35,5 +34,9 @@ public class Ticket {
 
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Problem> problems;
+
+    @OneToOne
+    private Computer computer;
+
 
 }
