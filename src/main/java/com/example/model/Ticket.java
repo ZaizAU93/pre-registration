@@ -24,19 +24,19 @@ public class Ticket {
 
     private LocalDateTime createdAt;
     private LocalDateTime closedAt;
+
+    @Enumerated(EnumType.STRING)
     private Status status;
 
     @OneToOne
     private User admin; // назначается потом, после того как посмотрели все администраторы либо назначит начальник
 
-    @OneToOne
+    @ManyToOne
     private User user;
 
-    @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Problem> problems;
+    @ManyToOne
+    private Problem problems;
 
-    @OneToOne
+    @ManyToOne
     private Computer computer;
-
-
 }

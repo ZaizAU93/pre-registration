@@ -63,22 +63,34 @@
             stompClient.connect({}, function (frame) {
                 console.log('Connected: ' + frame);
                 stompClient.subscribe('/topic/tickets', function (ticket) {
-                    // Обновите список тикетов, когда получен новый тикет
                     updateTicketList(JSON.parse(ticket.body));
                 });
             });
         }
 
         function updateTicketList(ticket) {
-            var table = document.getElementById("ticketTable");
-            var newRow = table.insertRow(1); // вставляем на вторую строку, чтобы не затереть заголовки
-            newRow.insertCell(0).innerText = ticket.id;
-            newRow.insertCell(1).innerText = ticket.description;
-            newRow.insertCell(2).innerText = ticket.userIp;
-            newRow.insertCell(3).innerText = ticket.createdAt;
-            newRow.insertCell(4).innerText = ticket.status;
-            var actionsCell = newRow.insertCell(5);
-            actionsCell.innerHTML = `<a href="/admin/tickets/${ticket.id}">Закрыть тикет</a>`;
+            var ticketTableBody = document.querySelector('.ticket-table-body');
+
+            // Создаем новую строку таблицы для тикета
+            var newTicketRow = document.createElement('tr');
+            newTicketRow.innerHTML = `
+                <td>${ticket.description}</td>
+                <td>${ticket.createdAt}</td>
+                <td>${ticket.problems ? ticket.problems.topic : ''}</td>
+                <td>
+                    <div class="system-info">
+                        <h2>Информация о системе</h2>
+                        <p><strong>Имя компьютера:</strong> <span>${ticket.computer.hostName}</span></p>
+                        <p><strong>IP-адрес:</strong> <span>${ticket.computer.ipAddress}</span></p>
+                        <p><strong>Название ОС:</strong> <span>${ticket.computer.name}</span></p>
+                        <p><strong>Версия ОС:</strong> <span>${ticket.computer.osVersion}</span></p>
+                        <p><strong>Архитектура ОС:</strong> <span>${ticket.computer.osArchitecture}</span></p>
+                    </div>
+                </td>
+            `;
+
+            // Добавляем новую строку в конец таблицы
+            ticketTableBody.prepend(newTicketRow);
         }
 
         window.onload = function() {
@@ -89,28 +101,38 @@
 <body>
 <div class="container">
     <h1>Админ - Список тикетов</h1>
-    <div id="ticketTable"th:each="ticket : ${tickets}" class="task-list">
+    <div th:if="${!#lists.isEmpty(tickets)}" id="ticketTable">
         <h2>Список задач</h2>
-        <div class="task-item">
-            <input class="hide" th:id="'task_' + ${ticket.id}" type="checkbox">
-            <strong>Задача ID: <span th:text="${ticket.id}"></span></strong>
-            <div>
-                <strong>Описание:</strong> <span th:text="${ticket.description}"></span><br>
-                <strong>Дата создания:</strong> <span th:text="${ticket.createdAt}"></span><br>
-                <strong>Статус:</strong> <span th:text="${ticket.status}"></span><br>
-                <strong>Пользователь:</strong> <span th:text="${ticket.user.name}"></span><br> <!-- Предполагается, что у User есть поле name -->
-                <strong>Проблема:</strong> <span th:text="${ticket.problem.topic}"></span>
-            </div>
-        </div>
-</div>
-
-    <div class="system-info">
-        <h2>Информация о системе</h2>
-        <p><strong>Имя компьютера:</strong> <span th:text="${computer.hostName}"></span></p>
-        <p><strong>IP-адрес:</strong> <span th:text="${computer.ipAddress}"></span></p>
-        <p><strong>Название ОС:</strong> <span th:text="${computer.name}"></span></p>
-        <p><strong>Версия ОС:</strong> <span th:text="${computer.osVersion}"></span></p>
-        <p><strong>Архитектура ОС:</strong> <span th:text="${computer.osArchitecture}"></span></p>
+        <table>
+            <thead>
+            <tr>
+                <th>Описание</th>
+                <th>Дата создания</th>
+                <th>Проблема</th>
+                <th>Информация о системе</th>
+            </tr>
+            </thead>
+            <tbody class="ticket-table-body" th:each="ticket : ${tickets}">
+            <tr>
+                <td th:text="${ticket.description}"></td>
+                <td th:text="${ticket.createdAt}"></td>
+                <td th:text="${ticket.problems.topic}"></td>
+                <td>
+                    <div class="system-info">
+                        <h2>Информация о системе</h2>
+                        <p><strong>Имя компьютера:</strong> <span th:text="${ticket.computer.hostName}"></span></p>
+                        <p><strong>IP-адрес:</strong> <span th:text="${ticket.computer.ipAddress}"></span></p>
+                        <p><strong>Название ОС:</strong> <span th:text="${ticket.computer.name}"></span></p>
+                        <p><strong>Версия ОС:</strong> <span th:text="${ticket.computer.osVersion}"></span></p>
+                        <p><strong>Архитектура ОС:</strong> <span th:text="${ticket.computer.osArchitecture}"></span></p>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div th:if="${#lists.isEmpty(tickets)}">
+        <p>Нет доступных тикетов.</p>
     </div>
 </div>
 </body>

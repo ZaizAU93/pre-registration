@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Личный чат</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+<h1>Личный чат</h1>
+<div>
+  <input type="text" id="username" placeholder="Введите ваше имя" />
+  <input type="text" id="recipient" placeholder="Получатель" />
+  <textarea id="message" placeholder="Сообщение"></textarea>
+  <button id="send">Отправить</button>
+</div>
+<div id="chat-log"></div>
+
+<script>
+  const stompClient = Stomp.over(new SockJS('/ws')); // Замените '/ws' на ваш WebSocket URL
+
+  let username = '';
+  const chatLog = $('#chat-log');
+
+  function connect() {
+    stompClient.connect({}, function (frame) {
+      console.log('Connected: ' + frame);
+      // Подписка на личные сообщения
+      stompClient.subscribe('/user/queue/messages', function (message) {
+        const msg = JSON.parse(message.body);
+        chatLog.append('<div><strong>' + msg.sender + ':</strong> ' + msg.content + '</div>');
+      });
+    });
+  }
+
+  $(document).ready(function () {
+    $('#send').click(function () {
+      const recipient = $('#recipient').val();
+      const content = $('#message').val();
+      const message = { 'sender': username, 'content': content };
+
+      stompClient.send("/app/chat/" + recipient, {}, JSON.stringify(message));
+      $('#message').val('');
+    });
+
+    $('#username').change(function () {
+      username = $(this).val();
+      connect();
+    });
+  });
+</script>
+</body>
+</html>

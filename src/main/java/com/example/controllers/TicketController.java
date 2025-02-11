@@ -1,6 +1,11 @@
 package com.example.controllers;
 
+import com.example.model.Computer;
+import com.example.model.Department;
+import com.example.model.Problem;
 import com.example.model.Ticket;
+import com.example.service.ComputerService;
+import com.example.service.ProblemService;
 import com.example.service.TicketService;
 import com.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +16,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.UnknownHostException;
 import java.util.List;
 
 @Controller
@@ -26,6 +32,12 @@ public class TicketController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private ProblemService problemService;
+
+    @Autowired
+    private ComputerService computerService;
+
     @GetMapping
     public String getTickets(Model model) {
         List<Ticket> tickets = ticketService.getAllTickets();
@@ -36,16 +48,43 @@ public class TicketController {
     @GetMapping("/new")
     public String createTicketForm(Model model) {
         model.addAttribute("ticket", new Ticket());
+
+        List<Problem> problems = problemService.getAllProblems();
+
+        model.addAttribute("problems", problems);
+
+
         return "ticketForm"; // имя шаблона Thymeleaf
     }
 
+
+    @PostMapping("/create")
+    public String createTicketForm(@ModelAttribute Ticket ticket) throws UnknownHostException {
+
+        Computer computer = computerService.getSystemInfo();
+
+        Long id = computerService.save(computer);
+
+        System.out.println(id);
+
+
+        Long idTicketNew = ticketService.createTicket(ticket, computerService.getComputerById(id) );
+
+        messagingTemplate.convertAndSend("/topic/tickets", ticketService.getTiketById(idTicketNew));
+
+        return "redirect:/tickets"; // перенаправление на список тикетов
+
+    }
+
+
+/*
     @PostMapping
     public String createTicket(@ModelAttribute Ticket ticket) {
         ticketService.createTicket(ticket);
         messagingTemplate.convertAndSend("/topic/tickets", ticket);
         return "redirect:/tickets"; // перенаправление на список тикетов
     }
-
+*/
     @MessageMapping("/ticket")
     @SendTo("/topic/tickets")
     public Ticket sendTicket(Ticket ticket) {

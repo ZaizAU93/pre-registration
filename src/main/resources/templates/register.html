@@ -28,13 +28,15 @@
             color: #555;
         }
         input[type="text"],
-        input[type="password"] {
+        input[type="password"],
+        select {
             width: 100%;
             padding: 10px;
             margin-bottom: 15px;
             border: 1px solid #ddd;
             border-radius: 5px;
             box-sizing: border-box;
+            font-size: 16px; /* Согласуем размер шрифта */
         }
         button {
             width: 100%;
@@ -57,31 +59,43 @@
 </head>
 <body>
 <div class="container">
-    <h1>Register</h1>
+    <h1>Регистрация в системе</h1>
     <form method="post" th:action="@{/register}">
         <div>
-            <label for="username">Username:</label>
+            <label for="username">Укажите логин:</label>
             <input type="text" id="username" name="username" required />
         </div>
         <div>
-            <label for="password">Password:</label>
+            <label for="password">Пароль:</label>
             <input type="password" id="password" name="password" required />
         </div>
+
         <div>
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="name" required />
-        </div>
-        <div>
-            <label for="surname">Surname:</label>
+            <label for="surname">Фамилия:</label>
             <input type="text" id="surname" name="surname" required />
         </div>
+
         <div>
-            <label for="fathername">Father's Name:</label>
+            <label for="name">Имя:</label>
+            <input type="text" id="name" name="name" required />
+        </div>
+
+        <div>
+            <label for="fathername">Отчество:</label>
             <input type="text" id="fathername" name="fathername" required />
         </div>
-        <button type="submit">Register</button>
+
+        <label for="departaments">Подразделение:</label>
+        <select id="departaments" th:field="*{departaments}" required>
+            <option value="" disabled selected>Укажите подразделение</option>
+            <option th:each="departament : ${departaments}"
+                    th:value="${departament.id}"
+                    th:text="${departament.name}"></option>
+        </select>
+
+        <button type="submit">Зарегистрироваться</button>
     </form>
-    <p><a th:href="@{/login}">Login</a></p>
+    <p><a th:href="@{/login}">Войти</a></p>
 </div>
 </body>
 </html>

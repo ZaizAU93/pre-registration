@@ -20,8 +20,6 @@ public class AdminTicketController {
 
     @Autowired
     private TicketService ticketService;
-    @Autowired
-    private SystemInfoService systemInfoService;
 
     @Autowired
     private UserService userService;

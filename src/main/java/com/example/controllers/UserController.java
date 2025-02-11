@@ -1,6 +1,7 @@
 package com.example.controllers;
 
 import com.example.model.User;
+import com.example.service.DepartmentService;
 import com.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -15,13 +16,18 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private DepartmentService departmentService;
+
     @GetMapping("/login")
     public String login() {
         return "login";
     }
 
     @GetMapping("/register")
-    public String register() {
+    public String register(Model model) {
+        model.addAttribute("departaments", departmentService.getAllDepartaments());
         return "register";
     }
 

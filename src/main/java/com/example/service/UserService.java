@@ -32,7 +32,7 @@ public class UserService {
                     .surname(user.getSurname())
                     .name(user.getName())
                     .fathername(user.getFathername())
-
+                    .department(user.getDepartment())
                     .build();
 
             userRepository.save(userNew);
@@ -63,9 +63,7 @@ public class UserService {
 
 
     public User getCurrentUser() {
-        // Получаем текущий контекст безопасности
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
         // Получаем детали пользователя
         Object principal = authentication.getPrincipal();
 

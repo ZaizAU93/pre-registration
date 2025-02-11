@@ -65,9 +65,18 @@
 </head>
 <body>
 <h1>Создать новый тикет</h1>
-<form action="#" th:action="@{/tickets}" th:object="${ticket}" method="post">
+<form action="#" th:action="@{/tickets/create}" th:object="${ticket}" method="post">
     <label for="description">Описание:</label>
     <input type="text" id="description" th:field="*{description}" required/>
+
+    <label for="problem">Проблема:</label>
+    <select id="problem" th:field="*{problems}" required>
+        <option value="" disabled selected>Выберите проблему</option>
+        <option th:each="problem : ${problems}"
+                th:value="${problem.id}"
+                th:text="${problem.topic}"></option>
+    </select>
+
     <br/>
     <button type="submit">Отправить</button>
 </form>

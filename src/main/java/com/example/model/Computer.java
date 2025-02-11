@@ -17,7 +17,6 @@ import org.springframework.stereotype.Component;
 @Builder
 @Component
 public class Computer {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
