@@ -4,7 +4,9 @@ import com.example.model.Computer;
 import com.example.model.Status;
 import com.example.model.Ticket;
 import com.example.model.User;
+import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -17,13 +19,20 @@ public interface TicketRepo extends JpaRepository<Ticket, Long> {
 
     Ticket getTicketById(Long id);
 
-    @Query("SELECT t FROM Ticket t WHERE t.user.id = :userId AND t.status = :status")
+    @Query("SELECT t FROM Ticket t WHERE t.userId = :userId AND t.status = :status")
     List<Optional<Ticket>> findTicketByUserIdAndStatus(@Param("userId") Long userId, @Param("status") Status status);
 
-    List<Ticket> findByUser(User user);
+    List<Ticket> findByUserId( Long id);
 
-    @Query("UPDATE Ticket t SET t.status =: status WHERE t.id =: id ")
-    Ticket jobs(@Param("status") Status status, @Param("id") Long id);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Ticket t SET t.status = :status, t.adminId = :admin WHERE t.id = :id")
+    void jobs(@Param("status") Status status, @Param("admin") Long admin, @Param("id") Long id);
+
+    @Transactional
+    @Query("SELECT t FROM Ticket t WHERE t.status = :status AND t.adminId =:admin")
+    List<Optional<Ticket>> ticketStatus(@Param("status") Status status, @Param("admin") Long admin);
 
 }
 

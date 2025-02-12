@@ -1,14 +1,12 @@
 package com.example.controllers;
 
-import com.example.model.Computer;
-import com.example.model.Department;
-import com.example.model.Problem;
-import com.example.model.Ticket;
+import com.example.model.*;
 import com.example.service.ComputerService;
 import com.example.service.ProblemService;
 import com.example.service.TicketService;
 import com.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -67,7 +65,6 @@ public class TicketController {
 
         System.out.println(id);
 
-
         Long idTicketNew = ticketService.createTicket(ticket, computerService.getComputerById(id) );
 
         messagingTemplate.convertAndSend("/topic/tickets", ticketService.getTiketById(idTicketNew));
@@ -90,8 +87,25 @@ public class TicketController {
     public Ticket sendTicket(Ticket ticket) {
         Ticket ticket1 = ticket;
 
-        ticket1.setUser(userService.getCurrentUser());
+        ticket1.setUserId(userService.getCurrentUser().getId());
 
         return ticket1; // Возвращаем тикет, чтобы отправить его всем подписчикам
+    }
+
+
+    @PostMapping("/hire")
+    @ResponseBody
+    public ResponseEntity<String> hireInProgressTiket(@RequestParam Long id) {
+        Status status = Status.IN_PROGRESS;
+        ticketService.jobs(status, id);
+        return ResponseEntity.ok("Задача успешно принята в работу");
+    }
+
+
+    @PostMapping("/close/{id}")
+    public String closeTiket(@PathVariable Long id){
+        Status status = Status.IN_PROGRESS;
+        ticketService.jobs(status, id);
+        return "redirect:profAdmin";
     }
 }

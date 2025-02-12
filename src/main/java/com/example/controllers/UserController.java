@@ -39,4 +39,18 @@ public class UserController {
         return "redirect:/login"; // Перенаправление на страницу входа после регистрации
     }
 
+
+    @GetMapping("/admin/register")
+    public String registerAdmin(Model model) {
+        model.addAttribute("departaments", departmentService.getAllDepartaments());
+        return "registerAdmin";
+    }
+
+    @PostMapping("/admin/register")
+    public String registerAdmin(@ModelAttribute User user) {
+        userService.createAdmin(user);
+        return "redirect:/login"; // Перенаправление на страницу входа после регистрации
+    }
+
+
 }

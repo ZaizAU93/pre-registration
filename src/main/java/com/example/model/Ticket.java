@@ -1,11 +1,13 @@
 package com.example.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -14,7 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Ticket {
+public class Ticket  {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,11 +30,11 @@ public class Ticket {
     @Enumerated(EnumType.STRING)
     private Status status;
 
-    @OneToOne
-    private User admin; // назначается потом, после того как посмотрели все администраторы либо назначит начальник
 
-    @ManyToOne
-    private User user;
+    private Long adminId;
+
+
+    private Long userId;
 
     @ManyToOne
     private Problem problems;

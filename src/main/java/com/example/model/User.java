@@ -1,11 +1,13 @@
 package com.example.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.List;
 
 @Entity
@@ -14,7 +16,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class User{
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -32,18 +34,10 @@ public class User{
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    @ManyToOne
-    private Department department;
+    private  Long departametId;
 
-    @OneToMany
-    private List<Ticket> ticket;
+    private String jobTitle;
 
-
-    @Override
-    public String toString() {
-        return "User{name='" + name + '\'' + ", department=" + (department != null ? department.getName() : "null") + '}';
-    }
-
-
+    private String workPhone;
 
 }

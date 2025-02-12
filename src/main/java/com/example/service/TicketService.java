@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class TicketService {
@@ -31,7 +30,7 @@ public class TicketService {
                 .createdAt(LocalDateTime.now())
                 .problems(ticket.getProblems())
                 .status(Status.NEW)
-                .user(userService.getCurrentUser())
+                .userId(userService.getCurrentUser().getId())
                 .computer(computer)
                 .build();
 
@@ -54,7 +53,7 @@ public class TicketService {
     }
 
     public List<Ticket> findByUser(User user){
-        return ticketRepo.findByUser(user);
+        return ticketRepo.findByUserId(user.getId());
     }
 
     public List<Long> searchAdminAllTicketInStatusInprogress(Long id, Status status){
@@ -64,19 +63,22 @@ public class TicketService {
         ArrayList<Long> idAdmin = new ArrayList<>();
 
         for (Optional<Ticket> ticket:listAdmin) {
-           idAdmin.add(ticket.get().getUser().getId());
+           idAdmin.add(ticket.get().getUserId());
         }
 
         return idAdmin;
     }
 
 
-// взять в работу
-    public void hire(){
+// метод изменение статуса работам (статус, id тикета)
+    public void jobs( Status status, Long id){
+        User admin = userService.getCurrentUser();
+        ticketRepo.jobs(status, admin.getId(), id);
+    }
 
-
-
-        return;
+    public List<Optional<Ticket>> getStatusTicket(Status status){
+        User admin = userService.getCurrentUser();
+        return ticketRepo.ticketStatus(status, admin.getId());
     }
 
 

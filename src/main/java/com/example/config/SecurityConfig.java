@@ -38,13 +38,17 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/index").hasAnyRole( "USER")
                                 .requestMatchers("/register").permitAll()
+                                .requestMatchers("admin/register").permitAll()
+                                .requestMatchers("admin/tickets").hasAnyRole("ADMIN")
  //                       .requestMatchers("/resources/**").hasAnyRole("ADMIN", "USER")
                         .anyRequest().hasAnyRole("ADMIN", "USER") // Остальные запросы требуют одной из ролей
 
                 )
                 .formLogin(form -> form
-                       .loginPage("/login").permitAll() // Позволяем всем доступ к странице логина
-                        .defaultSuccessUrl("/test/create", true) // true указывает на перенаправление даже если был предыдущий URL
+                       .loginPage("/login").
+                        permitAll() // Позволяем всем доступ к странице логина
+                        .successHandler(new CustomAuthenticationSuccessHandler())
+                        // .defaultSuccessUrl("/tickets/new", true) // true указывает на перенаправление даже если был предыдущий URL
                         .failureUrl("/login?error=true")
                 )
                 .logout(logout -> logout

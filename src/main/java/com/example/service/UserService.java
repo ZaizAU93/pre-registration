@@ -32,7 +32,7 @@ public class UserService {
                     .surname(user.getSurname())
                     .name(user.getName())
                     .fathername(user.getFathername())
-                    .department(user.getDepartment())
+                    .departametId(user.getDepartametId())
                     .build();
 
             userRepository.save(userNew);
@@ -40,25 +40,21 @@ public class UserService {
     }
 
 
-    public UserDTO printCurrentUserInfo() {
-        // Получаем текущий контекст безопасности
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    public void createAdmin(User user) {
+        // Проверяем, существует ли пользователь с данным именем
+        if (userRepository.findByUsername(user.getUsername()) == null) {
+            User userNew = User.builder()
+                    .username(user.getUsername())
+                    .password(passwordEncoder.encode(user.getPassword()))
+                    .role(Role.ADMIN)
+                    .surname(user.getSurname())
+                    .name(user.getName())
+                    .fathername(user.getFathername())
+                    .departametId(user.getDepartametId())
+                    .build();
 
-        // Получаем детали пользователя
-        Object principal = authentication.getPrincipal();
-
-        UserDetails userDetails = (UserDetails) principal;
-        String username = userDetails.getUsername();
-
-        User user = userRepository.findByUsername(username);
-
-        UserDTO userDTO = UserDTO.builder().
-                department(user.getDepartment())
-                .fathername(user.getFathername())
-                .name(user.getName())
-                .build();
-
-        return userDTO;
+            userRepository.save(userNew);
+        }
     }
 
 

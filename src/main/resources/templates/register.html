@@ -36,7 +36,7 @@
             border: 1px solid #ddd;
             border-radius: 5px;
             box-sizing: border-box;
-            font-size: 16px; /* Согласуем размер шрифта */
+            font-size: 16px;
         }
         button {
             width: 100%;
@@ -86,7 +86,7 @@
         </div>
 
         <label for="departaments">Подразделение:</label>
-        <select id="departaments" th:field="*{departaments}" required>
+        <select id="departaments" name="departamentId" required>
             <option value="" disabled selected>Укажите подразделение</option>
             <option th:each="departament : ${departaments}"
                     th:value="${departament.id}"
