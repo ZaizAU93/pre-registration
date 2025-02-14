@@ -4,6 +4,8 @@
   <title>Админ - Список тикетов</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css" />
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -57,27 +59,51 @@
 
 </head>
 <body>
-<div class="container">
-  <h1>Отправленные заявки</h1>
-  <div th:if="${!#lists.isEmpty(tickets)}" id="ticketTable" class="task-list">
-    <h2>Список задач</h2>
-    <div th:each="ticket : ${tickets}" class="task-item">
-      <input class="hide" th:id="'task_' + ${ticket.id}" type="checkbox">
-      <strong>Задача ID: <span th:text="${ticket.id}"></span></strong>
-      <div>
-        <strong>Описание:</strong> <span th:text="${ticket.description}"></span><br>
-        <strong>Дата создания:</strong> <span th:text="${ticket.createdAt}"></span><br>
-        <strong>Статус:</strong> <span th:text="${ticket.status}"></span><br>
-        <strong>Пользователь:</strong> <span th:text="${ticket.user.name}"></span><br>
-        <strong>Проблема:</strong> <span th:text="${ticket.problems.topic}"></span>
-      </div>
-    </div>
-  </div>
-  <div th:if="${#lists.isEmpty(tickets)}">
-    <p>Нет доступных тикетов.</p>
-  </div>
-</div>
 
-</div>
+<div id="locationTree"></div>
+
+
+
 </body>
 </html>
+
+
+
+<script>
+  $(document).ready(function () {
+    $('#locationTree').jstree({
+      'core': {
+        'data': {
+          'url': '/locations/tree',
+          'data': function (node) {
+            return { 'id': node.id }; // Передаем ID узла для загрузки дочерних элементов
+          }
+        }
+      }
+    });
+
+    $('#locationTree').on('changed.jstree', function (e, data) {
+      const selectedNode = data.instance.get_node(data.selected[0]);
+      console.log('Выбрано:', selectedNode);
+    });
+  });
+
+
+  $('#locationTree').on('changed.jstree', function (e, data) {
+    const selectedNode = data.instance.get_node(data.selected[0]);
+    const locationId = selectedNode.id; // ID выбранного элемента
+    const locationType = selectedNode.type; // Тип элемента (branch, address, floor, room, cubicle)
+
+    // Отправка на сервер
+    $.ajax({
+      url: '/locations/select',
+      method: 'POST',
+      data: { id: locationId, type: locationType },
+      success: function (response) {
+        console.log('Местоположение сохранено:', response);
+      }
+    });
+  });
+</script>
+
+при загрузки старницы пусто и такие ошибки есть. Исправь

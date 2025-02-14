@@ -87,7 +87,7 @@ public class TicketController {
     public Ticket sendTicket(Ticket ticket) {
         Ticket ticket1 = ticket;
 
-        ticket1.setUserId(userService.getCurrentUser().getId());
+        ticket1.setUser(userService.getCurrentUser());
 
         return ticket1; // Возвращаем тикет, чтобы отправить его всем подписчикам
     }
@@ -95,17 +95,20 @@ public class TicketController {
 
     @PostMapping("/hire")
     @ResponseBody
-    public ResponseEntity<String> hireInProgressTiket(@RequestParam Long id) {
+    public ResponseEntity<String> hireInProgressTiket(@RequestParam("id") Long id) {
+        System.out.println("ID задачи: " + id); // Добавьте это для отладки
         Status status = Status.IN_PROGRESS;
         ticketService.jobs(status, id);
         return ResponseEntity.ok("Задача успешно принята в работу");
     }
 
 
-    @PostMapping("/close/{id}")
-    public String closeTiket(@PathVariable Long id){
-        Status status = Status.IN_PROGRESS;
+
+    @PostMapping("/close")
+    @ResponseBody
+    public  ResponseEntity<String> closeTiket(@RequestParam("id") Long id){
+        Status status = Status.RESOLVED;
         ticketService.jobs(status, id);
-        return "redirect:profAdmin";
+        return ResponseEntity.ok("Задача завершена");
     }
 }

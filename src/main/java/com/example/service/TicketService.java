@@ -5,16 +5,20 @@ import com.example.model.Status;
 import com.example.model.Ticket;
 import com.example.model.User;
 import com.example.repo.TicketRepo;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Service
-public class TicketService {
+public class TicketService implements Serializable {
 
     @Autowired
     private TicketRepo ticketRepo;
@@ -25,14 +29,18 @@ public class TicketService {
 
     public Long createTicket(Ticket ticket, Computer computer) {
 
+
         Ticket ticketNew = Ticket.builder()
                 .description(ticket.getDescription())
                 .createdAt(LocalDateTime.now())
                 .problems(ticket.getProblems())
                 .status(Status.NEW)
-                .userId(userService.getCurrentUser().getId())
+                .user(userService.getCurrentUser())
                 .computer(computer)
                 .build();
+
+        System.out.println("user id: " + ticketNew.getUser().getId());
+
 
          ticketRepo.save(ticketNew);
         return ticketNew.getId();
@@ -48,22 +56,22 @@ public class TicketService {
 
 
     // поиск по id администратора и статусу в работе
-    public List<Optional<Ticket>> getTiketByIdAndStatus(Long id, Status status){
-        return ticketRepo.findTicketByUserIdAndStatus(id, status);
+    public List<Optional<Ticket>> getTiketByIdAndStatus(User user, Status status){
+        return ticketRepo.findTicketByUserIdAndStatus(user, status);
     }
 
     public List<Ticket> findByUser(User user){
         return ticketRepo.findByUserId(user.getId());
     }
 
-    public List<Long> searchAdminAllTicketInStatusInprogress(Long id, Status status){
+    public List<Long> searchAdminAllTicketInStatusInprogress(User user, Status status){
 
-        List<Optional<Ticket>> listAdmin = new ArrayList<>( getTiketByIdAndStatus(id, status));
+        List<Optional<Ticket>> listAdmin = new ArrayList<>( getTiketByIdAndStatus(user, status));
 
         ArrayList<Long> idAdmin = new ArrayList<>();
 
         for (Optional<Ticket> ticket:listAdmin) {
-           idAdmin.add(ticket.get().getUserId());
+           idAdmin.add(ticket.get().getUser().getId());
         }
 
         return idAdmin;
@@ -81,5 +89,31 @@ public class TicketService {
         return ticketRepo.ticketStatus(status, admin.getId());
     }
 
+
+    @PersistenceContext
+    private EntityManager entityManager;
+    public List<Ticket> getTikecetStatusProgResol(Status status) {
+
+        Long admin = userService.getCurrentUser().getId();
+
+        String jpql = "SELECT t FROM Ticket t WHERE t.status =:status and t.adminId =:admin";
+        TypedQuery<Ticket> query = entityManager.createQuery(jpql, Ticket.class);
+        query.setParameter("status", status );
+        query.setParameter("admin", admin);
+
+        return query.getResultList(); // Получение списка результатов
+    }
+
+
+    public List<Ticket> getTikecetStatusNew(Status status) {
+
+        Long admin = userService.getCurrentUser().getId();
+
+        String jpql = "SELECT t FROM Ticket t WHERE t.status =:status";
+        TypedQuery<Ticket> query = entityManager.createQuery(jpql, Ticket.class);
+        query.setParameter("status", status );
+
+        return query.getResultList(); // Получение списка результатов
+    }
 
 }

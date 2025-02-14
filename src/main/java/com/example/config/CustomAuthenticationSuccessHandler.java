@@ -26,7 +26,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
                 redirectUrl = "/admin/tickets"; // URL для администраторов
                 break;
             } else if (authority.getAuthority().equals("ROLE_USER")) {
-                redirectUrl = "/tickets/new"; // URL для пользователей
+                redirectUrl = "/account"; // URL для пользователей
                 break;
             }
         }

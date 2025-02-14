@@ -81,52 +81,53 @@
       background-color: #218838;
     }
 
-    /* Стиль для раскрывающихся задач */
-    .hide, .hide + label ~ div {
-      display: none;
-    }
-    .hide + label {
-      cursor: pointer;
-      display: inline-block;
-    }
-    .hide:checked + label {
-      color: red;
-    }
-    .hide:checked + label + div {
-      display: block;
-      background: #efefef;
-      padding: 10px;
-      margin-left: 20px;
-    }
-    .hide + label:before {
-      content: "\002B";
-      display: inline-block;
-      margin-right: 5px;
-    }
-    .hide:checked + label:before {
-      content: "\2212";
+    /* Стиль для вкладок */
+    .tabs {
+      display: flex; /* Используем флекс для выравнивания вкладок */
+      margin-bottom: 20px;
+      border-bottom: 2px solid #28a745; /* Подчеркивание вкладок */
     }
 
-    /* Новый стиль для выбора аватара */
-    .avatar-picker {
-      display: flex;
-      justify-content: center;
-      margin-top: 10px;
+    .tab {
+      flex: 0 0 auto; /* Каждая вкладка занимает только необходимое пространство */
+      margin-right: 5px; /* Отступ между вкладками */
     }
-    .avatar {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      margin: 0 5px;
+
+    .tab:last-child {
+      margin-right: 0; /* Убираем отступ у последней вкладки */
+    }
+
+    .tab-title {
+      display: inline-block; /* Выстраиваем по горизонтали */
+      background: #ccc; /* Цвет фона */
+      padding: 10px; /* Поля вокруг текста */
+      border: 1px solid #666; /* Параметры рамки */
+      border-bottom: none; /* Снизу линию убираем */
       cursor: pointer;
-      border: 2px solid transparent;
+      transition: background 0.3s; /* Плавный переход цвета */
     }
+
+    .tab-title.active {
+      background: #fff; /* Цвет фона для активной вкладки */
+      color: #28a745; /* Цвет текста для активной вкладки */
+      border-top: 2px solid #28a745; /* Обводка сверху для активной вкладки */
+      z-index: 1; /* Отображаем поверх содержимого */
+    }
+
+    .tab-content {
+      display: none; /* Прячем вкладки */
+      border: 1px solid #666; /* Параметры рамки */
+      padding: 10px; /* Поля вокруг текста */
+      position: relative; /* Позиционирование контейнера содержимого */
+      height: auto; /* Фиксированная высота для области контента */
+    }
+
+    .tab-content.active {
+      display: block; /* Показываем активную вкладку */
+    }
+
     .avatar.selected {
-      border-color: #28a745;
-    }
-
-    .system-info {
-      margin-top: 10px;
+      border: 2px solid #28a745;
     }
   </style>
 
@@ -134,19 +135,27 @@
     var stompClient = null;
 
     function connect() {
-      var socket = new SockJS('/ws');
+      const socket = new SockJS('/ws');
       stompClient = Stomp.over(socket);
       stompClient.connect({}, function (frame) {
         console.log('Connected: ' + frame);
         stompClient.subscribe('/topic/tickets', function (ticket) {
-          updateTicketList(JSON.parse(ticket.body));
+          const ticketData = JSON.parse(ticket.body);
+          updateTicketList(ticketData);
         });
+      }, function (error) {
+        console.error('Ошибка подключения к WebSocket:', error);
       });
     }
 
     function loadTickets() {
       fetch('/admin/tickets/api/tickets')
-              .then(response => response.json())
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error('Ошибка сети: ' + response.status);
+                }
+                return response.json();
+              })
               .then(tickets => {
                 tickets.forEach(ticket => {
                   updateTicketList(ticket);
@@ -155,18 +164,34 @@
               .catch(error => console.error('Ошибка при загрузке тикетов:', error));
     }
 
-    function updateTicketList(ticket) {
-      var ticketTableBody = document.querySelector('.ticket-table-body');
+    window.onload = function() {
+      connect();
+      loadTickets(); // Загрузка тикетов при загрузке страницы
+    }
 
-      // Создаем новую строку таблицы для тикета
-      var newTicketRow = document.createElement('tr');
+    function formatDate(createdAt) {
+      if (Array.isArray(createdAt)) {
+        const [year, month, day, hour, minute, second] = createdAt;
+        return new Date(year, month - 1, day, hour, minute, second).toLocaleString();
+      }
+      return createdAt; // Если дата уже в строковом формате
+    }
+
+    function updateTicketList(ticket) {
+      const ticketTableBody = document.querySelector(`.ticket-table-body[data-status="${ticket.status}"]`);
+      if (!ticketTableBody) {
+        console.error('Элемент .ticket-table-body не найден');
+        return;
+      }
+
+      const newTicketRow = document.createElement('tr');
       newTicketRow.classList.add('task-item');
       newTicketRow.innerHTML = `
     <td>
       <span>${ticket.user.surname} ${ticket.user.name} ${ticket.user.fathername} (${ticket.user.jobTitle})</span>
     </td>
     <td>${ticket.description}</td>
-    <td>${ticket.createdAt}</td>
+    <td>${formatDate(ticket.createdAt)}</td>
     <td>${ticket.problems ? ticket.problems.topic : ''}</td>
     <td>
       <button onclick="toggleSystemInfo(this)">Информация о системе</button>
@@ -180,12 +205,15 @@
       </div>
     </td>
     <td>
-      <button onclick="takeTask('${ticket.id}')">Взять в работу</button>
+      ${ticket.status === 'IN_PROGRESS' ? `
+        <button onclick="completeTask('${ticket.id}')">Завершить задачу</button>
+        <button onclick="redirectTask('${ticket.id}')">Перенаправить задачу</button>
+      ` : ticket.status === 'NEW' ? `
+        <button onclick="takeTask('${ticket.id}')">Взять в работу</button>
+      ` : ''}
     </td>
   `;
 
-      // Добавляем новую строку в начало таблицы
-      ticketTableBody.prepend(newTicketRow);
       ticketTableBody.prepend(newTicketRow);
     }
 
@@ -197,6 +225,24 @@
     window.onload = function() {
       connect();
       loadTickets(); // Загрузка тикетов при загрузке страницы
+    }
+
+    function switchTab(tabId) {
+      const tabContents = document.querySelectorAll('.tab-content');
+      const tabTitles = document.querySelectorAll('.tab-title');
+
+      tabContents.forEach(content => content.classList.remove('active'));
+      tabTitles.forEach(title => title.classList.remove('active'));
+
+      const activeTabContent = document.getElementById(tabId);
+      if (activeTabContent) {
+        activeTabContent.classList.add('active');
+      }
+
+      const activeTabTitle = document.querySelector(`label[for="${tabId}"]`);
+      if (activeTabTitle) {
+        activeTabTitle.classList.add('active');
+      }
     }
 
   </script>
@@ -233,23 +279,77 @@
 
   <div class="task-list">
     <h1>Админ - Список тикетов</h1>
-    <div th:if="${!#lists.isEmpty(tickets)}" id="ticketTable">
+    <div th:if="${!#lists.isEmpty(ticketsNew)}" id="ticketTable">
       <h2>Список задач</h2>
-      <table>
-        <thead>
-        <tr>
-          <th>Пользователь</th>
-          <th>Описание</th>
-          <th>Дата создания</th>
-          <th>Проблема</th>
-          <th>Действия</th>
-        </tr>
-        </thead>
-        <tbody class="ticket-table-body" th:each="ticket : ${tickets}">
-        </tbody>
-      </table>
+      <div class="tabs">
+        <div class="tab">
+          <input type="radio" id="new-tickets" name="tab-group" checked onclick="switchTab('new-tickets-content')">
+          <label for="new-tickets" class="tab-title">Новые</label>
+        </div>
+        <div class="tab">
+          <input type="radio" id="in-progress-tickets" name="tab-group" onclick="switchTab('in-progress-tickets-content')">
+          <label for="in-progress-tickets" class="tab-title">В работе</label>
+        </div>
+        <div class="tab">
+          <input type="radio" id="completed-tickets" name="tab-group" onclick="switchTab('completed-tickets-content')">
+          <label for="completed-tickets" class="tab-title">Выполненные</label>
+        </div>
+      </div>
+
+
+      <div class="tab-content active" id="new-tickets-content">
+        <table>
+          <thead>
+          <tr>
+            <th>Пользователь</th>
+            <th>Описание</th>
+            <th>Дата создания</th>
+            <th>Проблема</th>
+            <th>Действия</th>
+          </tr>
+          </thead>
+          <tbody class="ticket-table-body" data-status="NEW">
+          <!-- Сюда будут добавляться новые тикеты -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tab-content" id="in-progress-tickets-content">
+        <table>
+          <thead>
+          <tr>
+            <th>Пользователь</th>
+            <th>Описание</th>
+            <th>Дата создания</th>
+            <th>Проблема</th>
+            <th>Действия</th>
+          </tr>
+          </thead>
+          <tbody class="ticket-table-body" data-status="IN_PROGRESS">
+          <!-- Сюда будут добавляться тикеты в работе -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tab-content" id="completed-tickets-content">
+        <table>
+          <thead>
+          <tr>
+            <th>Пользователь</th>
+            <th>Описание</th>
+            <th>Дата создания</th>
+            <th>Проблема</th>
+            <th>Действия</th>
+          </tr>
+          </thead>
+          <tbody class="ticket-table-body" data-status="RESOLVED">
+          <!-- Сюда будут добавляться выполненные тикеты -->
+          </tbody>
+        </table>
+      </div>
+
     </div>
-    <div th:if="${#lists.isEmpty(tickets)}">
+    <div th:if="${#lists.isEmpty(ticketsNew)}">
       <p>Нет доступных тикетов.</p>
     </div>
   </div>
@@ -274,29 +374,64 @@
 
   function takeTask(id) {
     $.ajax({
-      url: '/tickets/hire', // Убедитесь, что URL совпадает с тем, что у вас в контроллере
-      type: 'POST',
-      contentType: 'application/x-www-form-urlencoded', // Укажите правильный тип контента
-      data: { id: id }, // Передаем taskId как параметр
+      type: "POST",
+      url: "/tickets/hire",
+      data: { id: id },
       success: function(response) {
-        alert("Задача успешно принята в работу!");
-        console.log('Ответ сервера:', response);
+        alert('Задача взята в работу!');
+        // Обновите статус тикета и переместите его в соответствующую вкладку
+        const taskElement = document.querySelector(`tr[data-id="${id}"]`);
+        if (taskElement) {
+          taskElement.remove();
+          updateTicketList(response); // response должен содержать обновленный тикет с новым статусом
+        }
       },
       error: function(xhr, status, error) {
-        alert("Чет ошибка непонятная!");
-        console.error('Ошибка:', error);
+        console.error("Ошибка при принятии задачи:", xhr.responseText);
       }
     });
   }
 
-  function completeTask(taskId) {
-    if (inProgressTasks.includes(taskId)) {
-      alert("Задача выполнена!");
-      completedTasks.push(taskId);
-      inProgressTasks.splice(inProgressTasks.indexOf(taskId), 1);
-      updateTaskLists();
-    } else {
-      alert("Эта задача не была взята в работу!");
+  function completeTask(id) {
+    $.ajax({
+      type: "POST",
+      url: "/tickets/close",
+      data: { id: id },
+      success: function(response) {
+        alert('Задача завершена!');
+        // Обновите статус тикета и переместите его в соответствующую вкладку
+        const taskElement = document.querySelector(`tr[data-id="${id}"]`);
+        if (taskElement) {
+          taskElement.remove();
+          updateTicketList(response); // response должен содержать обновленный тикет с новым статусом
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error("Ошибка при завершении задачи:", xhr.responseText);
+      }
+    });
+  }
+
+  function redirectTask(id) {
+    const newAssigneeId = prompt("Введите ID нового исполнителя:");
+    if (newAssigneeId) {
+      $.ajax({
+        type: "POST",
+        url: "http://localhost:8080/tickets/redirect",
+        data: { id: id, newAssigneeId: newAssigneeId },
+        success: function(response) {
+          alert('Задача перенаправлена!');
+          // Обновите статус тикета и переместите его в соответствующую вкладку
+          const taskElement = document.querySelector(`tr[data-id="${id}"]`);
+          if (taskElement) {
+            taskElement.remove();
+            updateTicketList(response); // response должен содержать обновленный тикет с новым статусом
+          }
+        },
+        error: function(xhr, status, error) {
+          console.error("Ошибка при перенаправлении задачи:", xhr.responseText);
+        }
+      });
     }
   }
 

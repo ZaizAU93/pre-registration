@@ -33,8 +33,9 @@ public class Ticket  {
 
     private Long adminId;
 
-
-    private Long userId;
+    @ManyToOne
+    @JoinColumn
+    private User user;
 
     @ManyToOne
     private Problem problems;

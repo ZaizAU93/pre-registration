@@ -38,8 +38,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/index").hasAnyRole( "USER")
                                 .requestMatchers("/register").permitAll()
-                                .requestMatchers("admin/register").permitAll()
-                                .requestMatchers("admin/tickets").hasAnyRole("ADMIN")
+                                .requestMatchers("/admin/register").permitAll()
+                                .requestMatchers("/admin/tickets").hasAnyRole("ADMIN")
  //                       .requestMatchers("/resources/**").hasAnyRole("ADMIN", "USER")
                         .anyRequest().hasAnyRole("ADMIN", "USER") // Остальные запросы требуют одной из ролей
 

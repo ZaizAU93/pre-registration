@@ -23,6 +23,10 @@ public class UserService {
 
 
     public void createUser(User user) {
+
+        System.out.println("Деапартамент ID: " + user.getDepartametId());
+
+
         // Проверяем, существует ли пользователь с данным именем
         if (userRepository.findByUsername(user.getUsername()) == null) {
             User userNew = User.builder()
