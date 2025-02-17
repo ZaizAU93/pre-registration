@@ -1,5 +1,6 @@
 package com.example.controllers;
 
+import com.example.DTO.LocationNodeDTO;
 import com.example.model.location.*;
 import com.example.service.LocationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,17 +11,26 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @Controller
+@ResponseBody
 @RequestMapping("/locations")
 public class LocationController {
 
     @Autowired
     private LocationService locationService;
 
+
+
     @GetMapping("/tree")
-    @ResponseBody
-    public List<Branch> getLocationTree() {
-        return locationService.getFullLocationTree();
+    public ResponseEntity<List<LocationNodeDTO>> getLocationTree() {
+        List<LocationNodeDTO> tree = locationService.buildLocationTree();
+        return ResponseEntity.ok(tree);
     }
+
+//    @GetMapping("/tree")
+//    @ResponseBody
+//    public List<Branch> getLocationTree() {
+//        return locationService.getFullLocationTree();
+//    }
 
     @GetMapping("/addresses/{branchId}")
     @ResponseBody

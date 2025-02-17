@@ -1,8 +1,10 @@
 package com.example.controllers;
 
+import com.example.model.Problem;
 import com.example.model.Status;
 import com.example.model.Ticket;
 import com.example.model.User;
+import com.example.service.ProblemService;
 import com.example.service.TicketService;
 import com.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,19 +26,20 @@ public class AccountUserControllers {
     @Autowired
     private TicketService ticketService;
 
+    @Autowired
+    private ProblemService problemService;
 
     @GetMapping()
     public String getAccountUser(Model model){
+        model.addAttribute("ticket", new Ticket());
 
-//        User currentUser = userService.getCurrentUser();
-//
-//        List<Ticket> tickets = ticketService.findByUser(currentUser);
-//
-//        ticketService.searchAdminAllTicketInStatusInprogress(currentUser, Status.IN_PROGRESS);
-//
-//        model.addAttribute("user", currentUser);
-//        model.addAttribute("tickets", tickets);
-//        model.addAttribute("");
+        model.addAttribute("user", userService.getCurrentUser());
+
+        List<Problem> problems = problemService.getAllProblems();
+
+        model.addAttribute("problems", problems);
+
+        model.addAttribute("tiket_users", ticketService.getTiketById(userService.getCurrentUser().getId()));
 
         return "profUsers";
     }

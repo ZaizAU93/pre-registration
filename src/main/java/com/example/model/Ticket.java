@@ -33,6 +33,8 @@ public class Ticket  {
 
     private Long adminId;
 
+    private String location;
+
     @ManyToOne
     @JoinColumn
     private User user;
