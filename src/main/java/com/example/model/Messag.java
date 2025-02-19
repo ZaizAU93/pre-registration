@@ -5,8 +5,9 @@ import lombok.Data;
 @Data
 public class Messag {
 
-    private String sender;
-
     private String content;
+    private Long senderId;
+    private Long recipientId;
+    private String senderType;
 
 }

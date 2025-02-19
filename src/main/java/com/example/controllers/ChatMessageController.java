@@ -1,19 +1,17 @@
 package com.example.controllers;
 
 import com.example.model.Messag;
-import com.example.model.Status;
-import com.example.model.Ticket;
-import com.example.model.User;
 import com.example.service.TicketService;
 import com.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.List;
-import java.util.Optional;
 
 @Controller
 public class ChatMessageController {
@@ -28,14 +26,32 @@ public class ChatMessageController {
     private TicketService ticketService;
 
 
-    @MessageMapping("/chat/{recipient}")
-    @SendTo("/queue/messages")
-    public void sendMessageToUser(User recipient, Messag message) {
-
-      //  User currentUser = userService.getCurrentUser();
-
-        //List<Optional<Ticket>> tickets = ticketService.getTiketByIdAndStatus(currentUser.getId(), Status.IN_PROGRESS);
-
-        messagingTemplate.convertAndSendToUser(recipient.getUsername(), "/queue/messages", message);
+    @GetMapping("/chat/user")
+    public String chatPage(@RequestParam("adminId") Long adminId, @RequestParam("sender") Long sender, Model model) {
+        model.addAttribute("adminId", adminId);
+        model.addAttribute("sender", sender);
+        return "chat";
     }
+
+
+
+    @MessageMapping("/chat")
+    public void processMessage(@Payload Messag message) {
+
+
+        // Отправка сообщения конкретному получателю
+        String destination = "/queue/messages/" + message.getRecipientId();
+        messagingTemplate.convertAndSendToUser(
+                message.getRecipientId().toString(),
+                destination,
+                message
+        );
+    }
+
+
+
+
+
+
+
 }

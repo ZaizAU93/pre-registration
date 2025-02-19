@@ -50,10 +50,14 @@ public class TicketService implements Serializable {
         return ticketRepo.findAll();
     }
 
+    public List<Ticket> getTiketByUser(User user){
+        return ticketRepo.getTicketByUser(user);
+    }
+
+
     public Ticket getTiketById(Long id){
         return ticketRepo.getTicketById(id);
     }
-
 
     // поиск по id администратора и статусу в работе
     public List<Optional<Ticket>> getTiketByIdAndStatus(User user, Status status){

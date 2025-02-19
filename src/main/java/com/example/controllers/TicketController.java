@@ -93,15 +93,24 @@ public class TicketController {
     }
 
 
+
     @PostMapping("/hire")
     @ResponseBody
-    public ResponseEntity<String> hireInProgressTiket(@RequestParam("id") Long id) {
-        System.out.println("ID задачи: " + id); // Добавьте это для отладки
+    public ResponseEntity<String> hireInProgressTicket(@RequestParam("id") Long id) {
         Status status = Status.IN_PROGRESS;
         ticketService.jobs(status, id);
+        messagingTemplate.convertAndSend("/topic/tickets", ticketService.getTiketById(id) );
         return ResponseEntity.ok("Задача успешно принята в работу");
     }
 
+
+
+    @MessageMapping("/tickets/update")
+    @SendTo("/topic/tickets")
+    public Ticket sendTicketInProgress(Ticket ticket){
+        System.out.println("Проверка взятие задачи : " + ticket.getProblems());
+        return ticket;
+    }
 
 
     @PostMapping("/close")

@@ -18,6 +18,7 @@ import java.util.Optional;
 public interface TicketRepo extends JpaRepository<Ticket, Long> {
 
     Ticket getTicketById(Long id);
+    List<Ticket> getTicketByUser(User user);
 
     @Query("SELECT t FROM Ticket t WHERE t.user = :user AND t.status = :status")
     List<Optional<Ticket>> findTicketByUserIdAndStatus(@Param("user") User user, @Param("status") Status status);

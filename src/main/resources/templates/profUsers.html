@@ -2,6 +2,9 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <title>Профиль пользователя</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css" />
@@ -30,20 +33,16 @@
       gap: 20px;
     }
 
-    .profile-section {
-      width: 250px;
+    .profile-section,
+    .ticket-section {
       background: white;
       padding: 20px;
       border-radius: 8px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
 
-    .ticket-section {
-      flex: 1;
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    .profile-section {
+      width: 250px;
     }
 
     .form-group {
@@ -93,9 +92,132 @@
       color: white;
       text-align: center;
       padding: 10px;
-      margin-top: auto;
+      width: 100%;
+    }
+
+
+    .ticketTable {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .ticket {
+      background: #e9ecef;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .ticket h3 {
+      margin: 0 0 5px 0;
+      font-size: 1.2em;
+      color: #333;
+    }
+
+    .ticket p {
+      margin: 5px 0;
+      color: #555;
+    }
+
+    .ticket .status {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      font-weight: bold;
+      color: #28a745; /* Зеленый цвет для статуса */
+    }
+
+    .ticket .date {
+      font-size: 0.9em;
+      color: #888;
+    }
+
+    .no-tickets {
+      text-align: center;
+      color: #888;
+      font-size: 1.2em;
+      margin-top: 20px;
     }
   </style>
+
+
+<script>
+  function connect() {
+    const socket = new SockJS('/ws');
+    stompClient = Stomp.over(socket);
+    stompClient.connect({}, function (frame) {
+      console.log('Connected: ' + frame);
+      // Подписываемся на обновления статусов тикетов
+      stompClient.subscribe('/topic/tickets', function (ticket) {
+        const ticketData = JSON.parse(ticket.body);
+        console.log('Received ticket update:', ticketData); // Логирование обновления тикета
+        updateTicketList(ticketData);
+      });
+    }, function (error) {
+      console.error('Ошибка подключения к WebSocket:', error);
+    });
+  }
+
+  function updateTicketList(ticketData) {
+    // Находим элемент тикета по ID
+    const ticketElement = document.getElementById('tik' + ticketData.id);
+
+    if (ticketElement) {
+      // Обновляем статус
+      const statusElement = ticketElement.querySelector('.status');
+      const dateElement = ticketElement.querySelector('.date');
+
+      statusElement.innerText = ticketData.status;
+      dateElement.innerText = ticketData.createdAt; // Обновляем дату, если необходимо
+
+      // Проверяем статус и добавляем кнопку, если статус IN_PROGRESS
+      const existingButton = ticketElement.querySelector('.send-message-button');
+      if (ticketData.status === 'IN_PROGRESS') {
+        if (!existingButton) {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'send-message-button';
+          button.innerText = 'Отправить сообщение системотехнику';
+          button.onclick = function () { sendMessage(ticketData.adminId, ticketData.user.id); };
+          ticketElement.appendChild(button);
+        }
+      } else {
+        // Удаляем кнопку, если статус не IN_PROGRESS
+        if (existingButton) {
+          existingButton.remove();
+        }
+      }
+    }
+  }
+
+  // Функция для загрузки тикетов может остаться такой же
+  function loadTickets() {
+    fetch('/account/ticket/status')
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('Ошибка сети: ' + response.status);
+              }
+              return response.json();
+            })
+            .then(tickets => {
+              tickets.forEach(ticket => {
+                updateTicketList(ticket);
+              });
+            })
+            .catch(error => console.error('Ошибка при загрузке тикетов:', error));
+  }
+
+  window.onload = function() {
+    connect();
+    loadTickets(); // Загрузка тикетов при загрузке страницы
+  }
+
+</script>
+
 </head>
 <body>
 
@@ -147,21 +269,36 @@
         <label>Выберите местоположение:</label>
         <div class="location-tree" id="locationTree"></div>
       </div>
-         <button type="submit">Создать тикет</button>
+
+      <button type="submit">Создать тикет</button>
     </form>
   </div>
-  <div class="main-container">
-    <label>Оставленные заявки:</label>
+  <div class="ticket-section">
+    <h1>Оставленные заявки:</h1>
+    <div th:if="${!#lists.isEmpty(tiket_users)}" class="ticketTable">
+      <div th:each="ticket : ${tiket_users}" class="ticket" th:id="'tik' + ${ticket.id}">
+        <h3 th:text="${ticket.description}">Описание заявки</h3>
+        <p class="status" th:text="${ticket.status}">Статус</p>
+        <p class="date" th:text="${ticket.createdAt}">Дата создания</p>
+        <p th:text="${ticket.problems}">Проблема</p>
 
-    <div class="task-list">
-      <h1>Админ - Список тикетов</h1>
-      <div th:if="${!#lists.isEmpty(tiket_users)}" id="ticketTable">
-          <div th:each="ticket : ${tiket_users}" th:id = "tik+{}">
-            <span th:text="${ticket.description}">Описание</span>
-            <span th:text="${ticket}"></span>
-          </div>
+        <!-- Кнопка отправить сообщение системотехнику, если статус IN_PROGRESS
+        <div th:if="${ticket.status == ticket.status.IN_PROGRESS}">
+          <button type="button" th:onclick="'sendMessage(' + ${ticket.adminId} + ')'">Отправить сообщение системотехнику</button>
+        </div>-->
       </div>
+    </div>
+    <div th:if="${#lists.isEmpty(tiket_users)}" class="no-tickets">
+      <p>Нет оставленных заявок.</p>
+    </div>
+  </div>
+
+  </div>
 </div>
+
+
+
+
 
 <footer>
   <p>&copy; 2025 Все права защищены</p>
@@ -188,6 +325,10 @@
       console.log('Выбрано местоположение:', selectedNode.id);
     });
   });
+
+  function sendMessage(adminId, sender) {
+    window.location.href = '/chat/user?adminId=' + adminId + '&sender=' + sender;
+  }
 </script>
 </body>
 </html>
