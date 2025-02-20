@@ -79,7 +79,12 @@
     }
 
     function displayMessage(message) {
-      // Аналогично пользовательскому чату
+      const messagesContainer = document.getElementById('messages');
+      const messageElement = document.createElement('div');
+      messageElement.className = 'message ' + (message.senderType === 'ADMIN' ? 'admin' : 'user');
+      messageElement.innerText = message.content;
+      messagesContainer.appendChild(messageElement);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
     function sendMessage() {

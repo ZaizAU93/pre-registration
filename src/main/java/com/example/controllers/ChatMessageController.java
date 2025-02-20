@@ -1,14 +1,9 @@
 package com.example.controllers;
 
 import com.example.model.ChatMessage;
-import com.example.model.Messag;
-import com.example.model.SenderType;
 import com.example.repo.ChatMessageRepository;
-import com.example.service.ChatMessageService;
-import com.example.service.TicketService;
 import com.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -16,9 +11,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import javax.management.Notification;
-import java.util.List;
 
 @Controller
 public class ChatMessageController {
@@ -32,7 +24,7 @@ public class ChatMessageController {
     @Autowired
     private ChatMessageRepository chatMessageRepository;
 
-    @MessageMapping("/chat")
+    @MessageMapping("/app/chat")
     public void processMessage(@Payload ChatMessage message) {
        chatMessageRepository.save(message);
 
@@ -43,7 +35,6 @@ public class ChatMessageController {
                 destination,
                 message
         );
-
         // Отправляем уведомление отправителю (если нужно)
         if (message.getSenderType().equals("ADMIN")) {
             messagingTemplate.convertAndSendToUser(

@@ -127,11 +127,11 @@
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
-    function sendMessage(sendder) {
+    function sendMessage() {
       const messageInput = document.getElementById('messageInput');
       const message = {
         content: messageInput.value,
-        senderId: sendder,
+        senderId: sender,
         recipientId: adminId,
         senderType: 'USER'
       };
