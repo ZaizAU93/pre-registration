@@ -2,6 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <title>Профиль пользователя</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -149,16 +151,19 @@
   function connect() {
     const socket = new SockJS('/ws');
     stompClient = Stomp.over(socket);
-    stompClient.connect({}, function (frame) {
+
+    stompClient.connect({}, function(frame) {
       console.log('Connected: ' + frame);
-      // Подписываемся на обновления статусов тикетов
-      stompClient.subscribe('/topic/tickets', function (ticket) {
-        const ticketData = JSON.parse(ticket.body);
-        console.log('Received ticket update:', ticketData); // Логирование обновления тикета
-        updateTicketList(ticketData);
+
+      stompClient.subscribe('/user/queue/messages', function(message) {
+        const messageData = JSON.parse(message.body);
+        displayMessage(messageData);
+
+        // Уведомление
+        if (messageData.senderType === 'ADMIN') {
+          toastr.info('Новое сообщение от администратора: ' + messageData.content);
+        }
       });
-    }, function (error) {
-      console.error('Ошибка подключения к WebSocket:', error);
     });
   }
 

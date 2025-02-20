@@ -53,17 +53,23 @@
       stompClient = Stomp.over(socket);
 
       stompClient.connect({}, function(frame) {
-        // Подписка на общие уведомления
-        stompClient.subscribe('/topic/admin/messages', function(message) {
-          const msg = JSON.parse(message.body);
-          if (!selectedUserId || msg.senderId === selectedUserId) {
-            displayMessage(msg);
-          }
+        // Подписка на личные сообщения
+        stompClient.subscribe('/user/queue/messages', function(message) {
+          displayMessage(JSON.parse(message.body));
         });
 
-        // Загрузка списка диалогов
+        // Подписка на уведомления
+        stompClient.subscribe('/topic/admin/notifications', function(notification) {
+          showNotification(notification.content);
+        });
+
         loadConversations();
       });
+    }
+
+    function showNotification(content) {
+      const notification = new Notification(content);
+      // Добавить логику отображения уведомления
     }
 
     function selectUser(userId) {
@@ -100,7 +106,7 @@
 </head>
 <body>
 <header>
-  <h1>Чат с администратором</h1>
+  <h1>Чат с пользователем</h1>
 </header>
 
 <div class="main-container">
