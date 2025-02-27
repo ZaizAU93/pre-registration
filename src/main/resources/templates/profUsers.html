@@ -287,10 +287,6 @@
         <p class="date" th:text="${ticket.createdAt}">Дата создания</p>
         <p th:text="${ticket.problems}">Проблема</p>
 
-        <!-- Кнопка отправить сообщение системотехнику, если статус IN_PROGRESS
-        <div th:if="${ticket.status == ticket.status.IN_PROGRESS}">
-          <button type="button" th:onclick="'sendMessage(' + ${ticket.adminId} + ')'">Отправить сообщение системотехнику</button>
-        </div>-->
       </div>
     </div>
     <div th:if="${#lists.isEmpty(tiket_users)}" class="no-tickets">

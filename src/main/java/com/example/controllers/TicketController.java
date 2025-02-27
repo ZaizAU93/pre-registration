@@ -63,7 +63,6 @@ public class TicketController {
 
         Long id = computerService.save(computer);
 
-        System.out.println(id);
 
         Long idTicketNew = ticketService.createTicket(ticket, computerService.getComputerById(id) );
 
@@ -74,14 +73,7 @@ public class TicketController {
     }
 
 
-/*
-    @PostMapping
-    public String createTicket(@ModelAttribute Ticket ticket) {
-        ticketService.createTicket(ticket);
-        messagingTemplate.convertAndSend("/topic/tickets", ticket);
-        return "redirect:/tickets"; // перенаправление на список тикетов
-    }
-*/
+
     @MessageMapping("/ticket")
     @SendTo("/topic/tickets")
     public Ticket sendTicket(Ticket ticket) {
@@ -108,7 +100,6 @@ public class TicketController {
     @MessageMapping("/tickets/update")
     @SendTo("/topic/tickets")
     public Ticket sendTicketInProgress(Ticket ticket){
-        System.out.println("Проверка взятие задачи : " + ticket.getProblems());
         return ticket;
     }
 

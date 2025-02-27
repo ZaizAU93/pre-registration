@@ -39,9 +39,6 @@ public class TicketService implements Serializable {
                 .computer(computer)
                 .build();
 
-        System.out.println("user id: " + ticketNew.getUser().getId());
-
-
          ticketRepo.save(ticketNew);
         return ticketNew.getId();
     }

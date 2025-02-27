@@ -1,6 +1,5 @@
 package com.example.repo;
 
-import com.example.model.Computer;
 import com.example.model.Status;
 import com.example.model.Ticket;
 import com.example.model.User;

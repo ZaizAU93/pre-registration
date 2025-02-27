@@ -46,36 +46,34 @@
   </style>
   <script>
     let stompClient;
-    let selectedUserId;
+
+
+    const urlParams = new URLSearchParams(window.location.search);
+    let selectedUserId = urlParams.get('userId') || 0;
+
+    console.log(selectedUserId);
+/*
+    const urlParamsAdmin = new URLSearchParams(window.location.search);
+    let adminId = urlParamsAdmin.get('adminId') || 0;
+
+    console.log(adminId);
+*/
+
+
+
+    const adminId = '[[${adminId}]]';
+    console.log("Admin ID: ", adminId);
 
     function connect() {
       const socket = new SockJS('/ws');
       stompClient = Stomp.over(socket);
 
       stompClient.connect({}, function(frame) {
-        // Подписка на личные сообщения
         stompClient.subscribe('/user/queue/messages', function(message) {
           displayMessage(JSON.parse(message.body));
         });
-
-        // Подписка на уведомления
-        stompClient.subscribe('/topic/admin/notifications', function(notification) {
-          showNotification(notification.content);
-        });
-
-        loadConversations();
+        loadMessageHistory(selectedUserId);
       });
-    }
-
-    function showNotification(content) {
-      const notification = new Notification(content);
-      // Добавить логику отображения уведомления
-    }
-
-    function selectUser(userId) {
-      selectedUserId = userId;
-      document.getElementById('messages').innerHTML = '';
-      loadMessageHistory(userId);
     }
 
     function displayMessage(message) {
@@ -92,22 +90,49 @@
       const message = {
         content: input.value,
         recipientId: selectedUserId,
-        senderType: 'ADMIN'
+        senderType: 'ADMIN',
+        senderId: adminId
       };
+      console.log("Отправка сообщения:", message);
+
+      // Отправка сообщения через Stomp
       stompClient.send('/app/chat', {}, JSON.stringify(message));
-      input.value = '';
+
+      // Отображение отправленного сообщения
+      displayMessage(message);
+
+      input.value = ''; // Очистка поля ввода
     }
 
-    function loadConversations() {
-      fetch('/api/conversations')
+    function loadMessageHistory(userId) {
+      fetch(`/api/conversations?recipient=${userId}`)
               .then(response => response.json())
-              .then(conversations => {
-                // Отображение списка диалогов
+              .then(messages => {
+                const messagesContainer = document.getElementById('messages');
+                messagesContainer.innerHTML = ''; // Очистить предыдущие сообщения
+
+                messages.forEach(message => {
+                  displayMessage(message); // Используем функцию displayMessage для отображения
+                });
+                messagesContainer.scrollTop = messagesContainer.scrollHeight; // Прокрутка вниз
+              })
+              .catch(error => {
+                console.error('Ошибка при загрузке сообщений:', error);
               });
     }
 
+    // Добавьте обработчик события для нажатия клавиши Enter
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault(); // Предотвратить отправку формы
+        sendMessage(); // Отправить сообщение
+      }
+    });
+
     window.onload = connect;
+    window.loadMessageHistory(selectedUserId);
   </script>
+
 </head>
 <body>
 <header>
@@ -116,6 +141,8 @@
 
 <div class="main-container">
   <div class="chat-section">
+    <div class="conversations" id="conversations">
+    </div>
     <div class="messages" id="messages"></div>
     <div class="form-group">
       <input type="text" id="messageInput" placeholder="Введите сообщение...">
@@ -123,5 +150,6 @@
     </div>
   </div>
 </div>
+
 </body>
 </html>

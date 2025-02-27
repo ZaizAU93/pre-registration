@@ -1,0 +1,122 @@
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+header {
+    background-color: #28a745;
+    color: white;
+    padding: 15px;
+    text-align: center;
+}
+footer {
+    background-color: #28a745;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    width: 100%;
+}
+
+.container {
+    flex: 1;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding: 20px;
+}
+
+.profile {
+    width: 19%;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background: #fff;
+    padding: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-right: 20px;
+    text-align: center;
+}
+
+.task-list {
+    width: 75%;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background: #fff;
+    padding: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+.task-item {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+.task-item:hover {
+    background-color: #f0f0f0; /* Выделение тикета при наведении */
+}
+button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+button:hover {
+    background-color: #218838;
+}
+
+/* Стиль для вкладок */
+.tabs {
+    display: flex; /* Используем флекс для выравнивания вкладок */
+    margin-bottom: 20px;
+    border-bottom: 2px solid #28a745; /* Подчеркивание вкладок */
+}
+
+.tab {
+    flex: 0 0 auto; /* Каждая вкладка занимает только необходимое пространство */
+    margin-right: 5px; /* Отступ между вкладками */
+}
+
+.tab:last-child {
+    margin-right: 0; /* Убираем отступ у последней вкладки */
+}
+
+.tab-title {
+    display: inline-block; /* Выстраиваем по горизонтали */
+    background: #ccc; /* Цвет фона */
+    padding: 10px; /* Поля вокруг текста */
+    border: 1px solid #666; /* Параметры рамки */
+    border-bottom: none; /* Снизу линию убираем */
+    cursor: pointer;
+    transition: background 0.3s; /* Плавный переход цвета */
+}
+
+.tab-title.active {
+    background: #fff; /* Цвет фона для активной вкладки */
+    color: #28a745; /* Цвет текста для активной вкладки */
+    border-top: 2px solid #28a745; /* Обводка сверху для активной вкладки */
+    z-index: 1; /* Отображаем поверх содержимого */
+}
+
+.tab-content {
+    display: none; /* Прячем вкладки */
+    border: 1px solid #666; /* Параметры рамки */
+    padding: 10px; /* Поля вокруг текста */
+    position: relative; /* Позиционирование контейнера содержимого */
+    height: auto; /* Фиксированная высота для области контента */
+}
+
+.tab-content.active {
+    display: block; /* Показываем активную вкладку */
+}
+
+.avatar.selected {
+    border: 2px solid #28a745;
+}

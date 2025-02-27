@@ -137,6 +137,18 @@
     function connect() {
       const socket = new SockJS('/ws');
       stompClient = Stomp.over(socket);
+
+
+      stompClient.subscribe('/user/queue/messages', function(message) {
+        const messageData = JSON.parse(message.body);
+        displayMessage(messageData);
+      });
+
+      // Подписка на уведомления для администратора
+      stompClient.subscribe('/user/queue/notifications', function(notification) {
+        showNotification(notification.body);
+      });
+
       stompClient.connect({}, function (frame) {
         console.log('Connected: ' + frame);
         stompClient.subscribe('/topic/tickets', function (ticket) {
@@ -166,7 +178,7 @@
 
     window.onload = function() {
       connect();
-      loadTickets(); // Загрузка тикетов при загрузке страницы
+      loadTickets();
     }
 
     function formatDate(createdAt) {
@@ -253,6 +265,18 @@
       window.location.href = '/chat/admin?userId=' + userId + '&adminId=' + currentAdminId; // currentAdminId должен быть доступен на странице
     }
 
+
+    function showNotification(content) {
+      const notification = new Notification('Новое сообщение', {
+        body: content,
+        icon: 'path_to_icon.png' // Добавьте путь к иконке уведомления
+      });
+
+      notification.onclick = function(userId) {
+        console.log("Проверка значений" + userId)
+        window.location.href = '/chat/admin?userId=' + userId;
+      };
+    }
   </script>
 </head>
 <body>
@@ -283,6 +307,12 @@
       <h2>Выполненные задачи</h2>
       <div class="task-count" id="completed-count">0</div>
     </div>
+
+    <div class="task-status">
+      <h2>Уведомления от пользователей</h2>
+      <div class="task-count" id="chat">0</div>
+    </div>
+
   </div>
 
   <div class="task-list">

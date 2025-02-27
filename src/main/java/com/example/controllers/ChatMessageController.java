@@ -1,16 +1,24 @@
 package com.example.controllers;
 
+import com.example.DTO.MessageDTO;
+import com.example.config.MyUserDetails;
 import com.example.model.ChatMessage;
 import com.example.repo.ChatMessageRepository;
+import com.example.service.ChatMessageService;
 import com.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Controller
 public class ChatMessageController {
@@ -24,9 +32,28 @@ public class ChatMessageController {
     @Autowired
     private ChatMessageRepository chatMessageRepository;
 
+    @Autowired
+    private ChatMessageService chatMessageService;
+
+
     @MessageMapping("/app/chat")
-    public void processMessage(@Payload ChatMessage message) {
-       chatMessageRepository.save(message);
+    public void processMessage(@Payload MessageDTO messageDTO, @AuthenticationPrincipal MyUserDetails userDetails) {
+        System.out.println("Получено сообщение: " + messageDTO);
+        if (messageDTO.getContent() == null || messageDTO.getContent().isEmpty()) {
+            System.out.println("Контент сообщения пустой!");
+            return;
+        }
+
+        // Сохраняем сообщение в базу данных
+        ChatMessage message = ChatMessage.builder()
+                .senderType(messageDTO.getSenderType())
+                .content(messageDTO.getContent())
+                .senderId(messageDTO.getSenderId())
+                .recipientId(messageDTO.getRecipientId())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        chatMessageRepository.save(message);
 
         // Отправляем сообщение получателю
         String destination = "/queue/messages/" + message.getRecipientId();
@@ -35,6 +62,7 @@ public class ChatMessageController {
                 destination,
                 message
         );
+
         // Отправляем уведомление отправителю (если нужно)
         if (message.getSenderType().equals("ADMIN")) {
             messagingTemplate.convertAndSendToUser(
@@ -51,10 +79,11 @@ public class ChatMessageController {
         }
     }
 
+
     @GetMapping("/chat/admin")
-    public String chatPageAdmin(@RequestParam("userId") Long userId, @RequestParam("adminId") Long adminId, Model model) {
+    public String chatPageAdmin(@RequestParam("userId") Long userId, Model model) {
         model.addAttribute("userId", userId);
-        model.addAttribute("adminId", adminId);
+        model.addAttribute("adminId", userService.getCurrentUser().getId());
         return "admin-chat";
     }
 
@@ -65,6 +94,20 @@ public class ChatMessageController {
         return "chat";
     }
 
+    @GetMapping("/chat/notifications")
+    public String notificationsPage(Model model){
+        return "notifications";
+    }
+
+// нужно проверять
+
+
+    @GetMapping("/api/conversations")
+    @ResponseBody
+    public List<ChatMessage> getListMessagesUsers(@RequestParam Long recipient){
+        return chatMessageService.getChatUsers(recipient);
+
+    }
 
 
 }

@@ -2,6 +2,9 @@ package com.example.config;
 
 
 import com.example.model.User;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+@Data
+@NoArgsConstructor
 public class MyUserDetails implements UserDetails {
     private User user;
     public MyUserDetails(User user){
