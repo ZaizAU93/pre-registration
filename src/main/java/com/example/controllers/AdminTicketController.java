@@ -31,19 +31,10 @@ public class AdminTicketController {
    //     List<Ticket> tickets = ticketService.getAllTickets();
 
         List<Ticket> ticketsNew = ticketService.getTikecetStatusNew(Status.NEW);
-        for (Ticket tik: ticketsNew) {
-            System.out.println("новые  " + tik.getDescription());
-        }
+
         List<Ticket> ticketsInProgress = ticketService.getTikecetStatusProgResol(Status.IN_PROGRESS);
-        for (Ticket tik: ticketsInProgress) {
-            System.out.println("в работе  " + tik.getDescription());
-        }
+
         List<Ticket> ticketResolved = ticketService.getTikecetStatusProgResol(Status.RESOLVED);
-
-        for (Ticket tik: ticketResolved) {
-            System.out.println("закрытые  " + tik.getDescription());
-        }
-
 
 
         model.addAttribute("ticketsNew", ticketsNew);
@@ -55,7 +46,6 @@ public class AdminTicketController {
     }
 
 
-    // взять в работу тикет
     @GetMapping("/api/tickets")
     @ResponseBody
     public List<Ticket> getTickets() {

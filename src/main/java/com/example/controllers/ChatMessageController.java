@@ -1,7 +1,6 @@
 package com.example.controllers;
 
 import com.example.DTO.MessageDTO;
-import com.example.config.MyUserDetails;
 import com.example.model.ChatMessage;
 import com.example.repo.ChatMessageRepository;
 import com.example.service.ChatMessageService;
@@ -10,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,8 +34,8 @@ public class ChatMessageController {
     private ChatMessageService chatMessageService;
 
 
-    @MessageMapping("/app/chat")
-    public void processMessage(@Payload MessageDTO messageDTO, @AuthenticationPrincipal MyUserDetails userDetails) {
+    @MessageMapping("/chat")
+    public void processMessage(@Payload MessageDTO messageDTO) {
         System.out.println("Получено сообщение: " + messageDTO);
         if (messageDTO.getContent() == null || messageDTO.getContent().isEmpty()) {
             System.out.println("Контент сообщения пустой!");
@@ -51,17 +49,32 @@ public class ChatMessageController {
                 .senderId(messageDTO.getSenderId())
                 .recipientId(messageDTO.getRecipientId())
                 .timestamp(LocalDateTime.now())
+                .senderType(messageDTO.getSenderType())
                 .build();
 
         chatMessageRepository.save(message);
 
-        // Отправляем сообщение получателю
+
+        String usernameRecipint = userService.getUserById(message.getRecipientId()).getUsername();
+
+
         String destination = "/queue/messages/" + message.getRecipientId();
         messagingTemplate.convertAndSendToUser(
-                message.getRecipientId().toString(),
+                usernameRecipint,
                 destination,
                 message
         );
+
+ /*
+        //Отправляем сообщение получателю
+        messagingTemplate.convertAndSendToUser(
+                messageDTO.getRecipientId().toString(),
+                "/queue/messages",
+                message
+        );
+*/
+        System.out.println("Сообщение отправлено по адресу: " + messageDTO.getRecipientId().toString()+ "/queue/messages  Пользователем " + message.getSenderId());
+
 
         // Отправляем уведомление отправителю (если нужно)
         if (message.getSenderType().equals("ADMIN")) {
@@ -84,6 +97,7 @@ public class ChatMessageController {
     public String chatPageAdmin(@RequestParam("userId") Long userId, Model model) {
         model.addAttribute("userId", userId);
         model.addAttribute("adminId", userService.getCurrentUser().getId());
+        model.addAttribute("role", userService.getCurrentUser().getRole());
         return "admin-chat";
     }
 

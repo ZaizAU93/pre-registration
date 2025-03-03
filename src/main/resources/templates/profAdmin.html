@@ -137,18 +137,6 @@
     function connect() {
       const socket = new SockJS('/ws');
       stompClient = Stomp.over(socket);
-
-
-      stompClient.subscribe('/user/queue/messages', function(message) {
-        const messageData = JSON.parse(message.body);
-        displayMessage(messageData);
-      });
-
-      // Подписка на уведомления для администратора
-      stompClient.subscribe('/user/queue/notifications', function(notification) {
-        showNotification(notification.body);
-      });
-
       stompClient.connect({}, function (frame) {
         console.log('Connected: ' + frame);
         stompClient.subscribe('/topic/tickets', function (ticket) {
@@ -158,6 +146,8 @@
       }, function (error) {
         console.error('Ошибка подключения к WebSocket:', error);
       });
+
+
     }
 
     function loadTickets() {
@@ -169,12 +159,14 @@
                 return response.json();
               })
               .then(tickets => {
+                console.log(tickets); // Добавьте это для отладки
                 tickets.forEach(ticket => {
                   updateTicketList(ticket);
                 });
               })
               .catch(error => console.error('Ошибка при загрузке тикетов:', error));
     }
+
 
     window.onload = function() {
       connect();
@@ -223,9 +215,10 @@
       ` : ticket.status === 'NEW' ? `
         <button onclick="takeTask('${ticket.id}')">Взять в работу</button>
       ` : ''}
-    <div th:if="${ticket.status == 'IN_PROGRESS'}">
-        <button type="button" th:onclick="'openAdminChat(' + '\\'' + ${ticket.user.id} + '\\'' + ', ' + '\\'' + ${ticket.adminId} + '\\'' + ')'">Написать пользователю</button>
-    </div>
+<div th:if="${ticket.status == 'IN_PROGRESS'}">
+    <button type="button" onclick="openAdminChat('${ticket.user.id}')">Написать пользователю</button>
+</div>
+
     </td>
   `;
 
@@ -260,9 +253,12 @@
       }
     }
 
-    function openAdminChat(userId, currentAdminId) {
-      console.log("Проверка значений" + userId + " " + currentAdminId )
-      window.location.href = '/chat/admin?userId=' + userId + '&adminId=' + currentAdminId; // currentAdminId должен быть доступен на странице
+    function openAdminChat(userId) {
+      if (userId) {
+        window.location.href = '/chat/admin?userId=' + userId;
+      } else {
+        reportError("Ошибка идентификации пользователя");
+      }
     }
 
 
