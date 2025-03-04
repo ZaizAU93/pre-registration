@@ -40,4 +40,6 @@ public class User {
 
     private String workPhone;
 
+    private String avatar;
+
 }

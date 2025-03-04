@@ -53,17 +53,34 @@
     }
 
     .message {
-      margin: 10px 0;
+      margin: 8px 0;
+      padding: 8px;
+      border-radius: 15px;
+      max-width: 50%;
+      position: relative;
+      word-wrap: break-word;
+      width: fit-content; /* Ширина по содержимому */
+      min-width: 30%; /* Минимальная ширина */
     }
 
-    .message.user {
+    .right {
+      margin-left: auto; /* Справа */
+      background: #DCF8C6; /* Светло-зеленый для своих сообщений */
+      border-radius: 15px 15px 0 15px;
+    }
+
+    .left {
+      margin-right: auto; /* Слева */
+      background: #FFFFFF; /* Белый для чужих сообщений */
+      border-radius: 15px 15px 15px 0;
+      border: 1px solid #EEE;
+    }
+
+    .timestamp {
+      font-size: 0.75em;
+      color: #666;
+      margin-top: 4px;
       text-align: right;
-      color: blue; /* Цвет для пользователей */
-    }
-
-    .message.admin {
-      text-align: left;
-      color: green; /* Цвет для администраторов */
     }
 
     .form-group {
@@ -106,6 +123,7 @@
     let stompClient;
     let adminId; // Будет получен из параметра URL
     let sender =  '[[${sender}]]';
+    const role = '[[${role}]]';
 
     function connect() {
       adminId = new URLSearchParams(window.location.search).get('adminId');
@@ -122,28 +140,6 @@
     }
 
 
-    /*   function displayMessage(message) {
-         const messagesContainer = document.getElementById('messages');
-         const messageElement = document.createElement('div');
-         messageElement.className = 'message ' + (message.senderType === 'ADMIN' ? 'admin' : 'user');
-         messageElement.innerText = message.content;
-         messagesContainer.appendChild(messageElement);
-         messagesContainer.scrollTop = messagesContainer.scrollHeight;
-       }
-
-       function sendMessage() {
-         const messageInput = document.getElementById('messageInput');
-         const message = {
-           content: messageInput.value,
-           senderId: sender,
-           recipientId: adminId,
-           senderType: 'USER'
-         };
-         displayMessage(message); // Отображаем отправленное сообщение сразу
-         stompClient.send('/app/chat', {}, JSON.stringify(message));
-         messageInput.value = '';
-       }
-   */
 
 
     function sendMessage() {
@@ -165,10 +161,14 @@
       const messagesContainer = document.getElementById('messages');
       const messageElement = document.createElement('div');
 
-      // Определяем принадлежность сообщения (sender - ID текущего пользователя)
-      const isCurrentUser = message.senderId == sender;
+      // Определяем тип отправителя
+      let senderType = message.senderType || (message.senderId === adminId ? "USER" : "ADMIN");
 
-      messageElement.className = `message ${isCurrentUser ? 'right' : 'left'}`;
+      messageElement.className = 'message right';
+      if (role === "ADMIN" || senderType === "ADMIN") {
+        messageElement.className = 'message left';
+      }
+
       // Текст сообщения
       const textElement = document.createElement('div');
       textElement.textContent = message.content;
@@ -177,7 +177,7 @@
       const timeElement = document.createElement('div');
       timeElement.className = 'timestamp';
       const date = new Date(message.timestamp);
-      timeElement.textContent = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      timeElement.textContent = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
       messageElement.appendChild(textElement);
       messageElement.appendChild(timeElement);
@@ -194,6 +194,7 @@
                 const messagesContainer = document.getElementById('messages');
                 messagesContainer.innerHTML = ''; // Очистить предыдущие сообщения
 
+
                 messages.forEach(message => {
                   displayMessage(message); // Используем функцию displayMessage для отображения
                 });
@@ -203,6 +204,7 @@
                 console.error('Ошибка при загрузке сообщений:', error);
               });
     }
+
 
     // Обработчик нажатия клавиши Enter
     document.addEventListener('keydown', function(event) {

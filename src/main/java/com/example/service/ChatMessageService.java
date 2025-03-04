@@ -43,4 +43,15 @@ public class ChatMessageService {
     }
 
 
+    public List<ChatMessage> getChatUsersTurnover(Long id){
+        Long userOne = userService.getCurrentUser().getId();
+        Long userToo = id;
+
+        String jpql = "SELECT t FROM ChatMessage t WHERE t.recipientId =:userToo and t.senderId =:userOne";
+        TypedQuery<ChatMessage> query = entityManager.createQuery(jpql, ChatMessage.class);
+        query.setParameter("userOne", userOne );
+        query.setParameter("userToo", userToo);
+        return query.getResultList();
+    }
+
 }

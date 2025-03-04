@@ -79,26 +79,30 @@
       stompClient.connect({}, function(frame) {
         stompClient.subscribe('/user/queue/messages/' + adminId, function(message) {
           const msg = JSON.parse(message.body);
-          displayMessageOnline(msg);
+          displayMessage(msg);
         });
         loadMessageHistory(selectedUserId);
       });
     }
 
+
+    function getRole() {
+      console.log("Роль пользовтаеля " + role)
+    }
+
+
     function displayMessage(message) {
       const messagesContainer = document.getElementById('messages');
       const messageElement = document.createElement('div');
 
-      // Определяем принадлежность сообщения
-      const isCurrentUserAdmin = message.senderType === 'ADMIN'; // Проверяем, является ли текущий пользователь администратором
-      const isMessageFromAdmin = message.senderId === adminId; // Проверяем, отправлено ли сообщение администратором
+      // Определяем тип отправителя
+      let senderType = message.senderType || (message.senderId === adminId ? "ADMIN" : "USER");
 
-
-      if (role == "ADMIN") {
-        messageElement.className = 'message right';
-      }else{
+      messageElement.className = 'message right';
+      if (role === "USER" || senderType === "USER") {
         messageElement.className = 'message left';
       }
+
       // Текст сообщения
       const textElement = document.createElement('div');
       textElement.textContent = message.content;
@@ -116,41 +120,6 @@
       // Автопрокрутка к новому сообщению
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
-
-
-    function displayMessageOnline(message) {
-      const messagesContainer = document.getElementById('messages');
-      const messageElement = document.createElement('div');
-
-      // Определяем принадлежность сообщения
-      const isCurrentUserAdmin = message.senderType === 'ADMIN'; // Проверяем, является ли текущий пользователь администратором
-      const isMessageFromAdmin = message.senderId === adminId; // Проверяем, отправлено ли сообщение администратором
-
-
-      const isCurrentUserMessage = message.senderType
-      if (isCurrentUserMessage == "ADMIN") {
-        messageElement.className = 'message right';
-      }else{
-        messageElement.className = 'message left';
-      }
-      // Текст сообщения
-      const textElement = document.createElement('div');
-      textElement.textContent = message.content;
-
-      // Время сообщения
-      const timeElement = document.createElement('div');
-      timeElement.className = 'timestamp';
-      const date = new Date(message.timestamp);
-      timeElement.textContent = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      messageElement.appendChild(textElement);
-      messageElement.appendChild(timeElement);
-      messagesContainer.appendChild(messageElement);
-
-      // Автопрокрутка к новому сообщению
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-
 
 
     function sendMessage() {
@@ -175,14 +144,21 @@
                 const messagesContainer = document.getElementById('messages');
                 messagesContainer.innerHTML = ''; // Очистить предыдущие сообщения
 
+
                 messages.forEach(message => {
-                  displayMessageOnline(message); // Используем функцию displayMessage для отображения
+                  displayMessage(message); // Используем функцию displayMessage для отображения
                 });
                 messagesContainer.scrollTop = messagesContainer.scrollHeight; // Прокрутка вниз
               })
               .catch(error => {
                 console.error('Ошибка при загрузке сообщений:', error);
               });
+    }
+
+    // Функция для преобразования timestamp в Date
+    function parseTimestamp(timestamp) {
+      const formattedTimestamp = timestamp.replace(' ', 'T').split('.')[0];
+      return new Date(formattedTimestamp + 'Z'); // Добавляем 'Z' для указания на UTC
     }
 
     document.addEventListener('keydown', function(event) {
@@ -192,8 +168,9 @@
       }
     });
 
+
     window.onload = connect;
-    window.loadMessageHistory(selectedUserId);
+    //window.loadMessageHistory(selectedUserId);
   </script>
 </head>
 <body>

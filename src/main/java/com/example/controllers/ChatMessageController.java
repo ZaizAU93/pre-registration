@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Controller
@@ -65,17 +67,6 @@ public class ChatMessageController {
                 message
         );
 
- /*
-        //Отправляем сообщение получателю
-        messagingTemplate.convertAndSendToUser(
-                messageDTO.getRecipientId().toString(),
-                "/queue/messages",
-                message
-        );
-*/
-        System.out.println("Сообщение отправлено по адресу: " + messageDTO.getRecipientId().toString()+ "/queue/messages  Пользователем " + message.getSenderId());
-
-
         // Отправляем уведомление отправителю (если нужно)
         if (message.getSenderType().equals("ADMIN")) {
             messagingTemplate.convertAndSendToUser(
@@ -98,6 +89,7 @@ public class ChatMessageController {
         model.addAttribute("userId", userId);
         model.addAttribute("adminId", userService.getCurrentUser().getId());
         model.addAttribute("role", userService.getCurrentUser().getRole());
+
         return "admin-chat";
     }
 
@@ -105,6 +97,7 @@ public class ChatMessageController {
     public String chatPageUser(@RequestParam("adminId") Long adminId, Model model) {
         model.addAttribute("adminId", adminId);
         model.addAttribute("sender", userService.getCurrentUser().getId() );
+        model.addAttribute("role", userService.getCurrentUser().getRole());
         return "chat";
     }
 
@@ -119,7 +112,20 @@ public class ChatMessageController {
     @GetMapping("/api/conversations")
     @ResponseBody
     public List<ChatMessage> getListMessagesUsers(@RequestParam Long recipient){
-        return chatMessageService.getChatUsers(recipient);
+
+        List<ChatMessage> listA = new ArrayList<>(chatMessageService.getChatUsers(recipient));
+        List<ChatMessage> listB = new ArrayList<>(chatMessageService.getChatUsersTurnover(recipient));
+
+        List<ChatMessage> listJoin = new ArrayList<>(listA);
+        listJoin.addAll(listB);
+
+        for (ChatMessage messages: listJoin) {
+            System.out.println("Отправитель " + userService.getUserById(messages.getSenderId()).getUsername() + " Получатель " + userService.getUserById(messages.getRecipientId()).getUsername() + " Сообщение "+ messages.getContent());
+        }
+
+        listJoin.sort(Comparator.comparing(ChatMessage::getTimestamp));
+
+        return listJoin;
 
     }
 

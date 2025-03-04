@@ -86,4 +86,10 @@ public class UserService {
         return userRepository.findByUsername(username);
     };
 
+
+    public void updateAvatar(String avatar, User user){
+        userRepository.updateAvatar(avatar, user.getId());
+    }
+
+
 }

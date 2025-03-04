@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Профиль пользователя</title>
+  <title>Профиль сотрудника отдела ИТ</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -129,10 +129,86 @@
     .avatar.selected {
       border: 2px solid #28a745;
     }
+
+
+    /* Стили для модального окна */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+      background-color: #fff;
+      margin: 5% auto;
+      padding: 20px;
+      width: 60%;
+      border-radius: 5px;
+    }
+
+    .avatars-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+    }
+
+    .avatar-preview {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 3px solid #28a745;
+    }
+
+    .avatar-option {
+      width: 100px;
+      height: 100px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .avatar-option:hover {
+      transform: scale(1.1);
+    }
+
+    .change-avatar-text {
+      display: block;
+      margin-top: 10px;
+      color: #28a745;
+      cursor: pointer;
+    }
   </style>
 
   <script>
     var stompClient = null;
+
+
+    function loadUserAvatar() {
+      $.ajax({
+        type: "GET",
+        url: "/user/avatar",
+        success: function(avatar) {
+          if (avatar) {
+            // Исправленный селектор для текущего аватара
+            const avatarImage = document.getElementById('current-avatar');
+            avatarImage.src = `/avatars/${avatar}`;
+          }
+        },
+        error: function(xhr, status, error) {
+          console.error("Ошибка при загрузке аватара:", xhr.responseText);
+        }
+      });
+    }
+
+    // Вызов функции загрузки аватара при загрузке страницы
+
+
+
 
     function connect() {
       const socket = new SockJS('/ws');
@@ -167,11 +243,6 @@
               .catch(error => console.error('Ошибка при загрузке тикетов:', error));
     }
 
-
-    window.onload = function() {
-      connect();
-      loadTickets();
-    }
 
     function formatDate(createdAt) {
       if (Array.isArray(createdAt)) {
@@ -232,7 +303,8 @@
 
     window.onload = function() {
       connect();
-      loadTickets(); // Загрузка тикетов при загрузке страницы
+      loadTickets();
+      loadUserAvatar(); // Загрузка аватара пользователя
     }
 
     function switchTab(tabId) {
@@ -255,7 +327,7 @@
 
     function openAdminChat(userId) {
       if (userId) {
-        window.location.href = '/chat/admin?userId=' + userId;
+        window.location.href = '/chat/admin?userId=' + userId ;
       } else {
         reportError("Ошибка идентификации пользователя");
       }
@@ -283,11 +355,12 @@
 
 <div class="container">
   <div class="profile">
-    <div class="avatar-picker">
-      <img src="avatar1.png" alt="Аватар 1" class="avatar" onclick="selectAvatar(this)">
-      <!-- Добавьте остальные аватары по аналогии -->
+    <div class="current-avatar" onclick="openAvatarModal()">
+      <img id="current-avatar" th:src="@{/avatars/__${user.avatar}__}" alt="Текущий аватар" class="avatar-preview">
+      <span class="change-avatar-text">Нажмите для смены аватара</span>
     </div>
-    <h2>Информация о пользователе</h2>
+
+      <h2>Информация о сотруднике</h2>
     <div class="admin-info">
       <strong>Имя:</strong> <span th:text="${admin.surname} + ' ' + ${admin.name} + ' ' + ${admin.fathername}"></span><br>
       <strong>Должность:</strong> <span th:text="${admin.jobTitle}"></span><br>
@@ -309,6 +382,14 @@
       <div class="task-count" id="chat">0</div>
     </div>
 
+  </div>
+
+  <div id="avatarModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeAvatarModal()">&times;</span>
+      <h3>Выберите аватар</h3>
+      <div id="avatarsContainer" class="avatars-grid"></div>
+    </div>
   </div>
 
   <div class="task-list">
@@ -398,13 +479,6 @@
   const completedTasks = [];
   let selectedAvatar = null;
 
-  function selectAvatar(avatar) {
-    const avatars = document.querySelectorAll('.avatar');
-    avatars.forEach(a => a.classList.remove('selected'));
-    avatar.classList.add('selected');
-    selectedAvatar = avatar.src;
-    alert("Выбранный аватар: " + selectedAvatar);
-  }
 
   function takeTask(id) {
     $.ajax({
@@ -473,6 +547,79 @@
     document.getElementById('in-progress-count').innerText = inProgressTasks.length;
     document.getElementById('completed-count').innerText = completedTasks.length;
   }
+
+  function openAvatarPicker() {
+    document.getElementById('avatar-modal').style.display = 'block';
+  }
+
+  function selectAvatar(avatarName) {
+
+    fetch('/user/saveAvatar', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ avatar: avatarName })
+    })
+            .then(response => {
+              if (response.ok) {
+                // Обновляем аватар и добавляем параметр для избежания кэширования
+                const avatarElement = document.getElementById('current-avatar');
+                avatarElement.src = `/avatars/${avatarName}?t=${new Date().getTime()}`;
+                closeAvatarModal();
+              }
+            })
+            .catch(error => console.error('Ошибка:', error));
+  }
+
+  function openAvatarModal() {
+    fetch('/api/avatars')
+            .then(response => response.json())
+            .then(avatars => {
+              const container = document.getElementById('avatarsContainer');
+              container.innerHTML = '';
+              avatars.forEach(avatar => {
+                const img = document.createElement('img');
+                img.src = `/avatars/${avatar}`;
+                img.className = 'avatar-option';
+                img.onclick = () => selectAvatar(avatar);
+                container.appendChild(img);
+              });
+              document.getElementById('avatarModal').style.display = 'block';
+            });
+  }
+
+  function closeAvatarModal() {
+    document.getElementById('avatarModal').style.display = 'none';
+  }
+
+  function selectAvatar(avatarName) {
+    fetch('/user/saveAvatar', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
+      },
+      body: JSON.stringify({ avatar: avatarName })
+    })
+            .then(response => {
+              if (response.ok) {
+                document.getElementById('current-avatar').src = `/avatars/${avatarName}`;
+                closeAvatarModal();
+              }
+            })
+            .catch(error => console.error('Ошибка:', error));
+  }
+
+  // Закрытие модального окна при клике вне его
+  window.onclick = function(event) {
+    const modal = document.getElementById('avatarModal');
+    if (event.target == modal) {
+      closeAvatarModal();
+    }
+  }
+
+
 </script>
 
 </body>
