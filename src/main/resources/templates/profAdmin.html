@@ -7,6 +7,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -83,43 +84,42 @@
 
     /* Стиль для вкладок */
     .tabs {
-      display: flex; /* Используем флекс для выравнивания вкладок */
       margin-bottom: 20px;
-      border-bottom: 2px solid #28a745; /* Подчеркивание вкладок */
-    }
-
-    .tab {
-      flex: 0 0 auto; /* Каждая вкладка занимает только необходимое пространство */
-      margin-right: 5px; /* Отступ между вкладками */
-    }
-
-    .tab:last-child {
-      margin-right: 0; /* Убираем отступ у последней вкладки */
+      border-bottom: 2px solid #e0e0e0;
+      display: flex;
+      gap: 5px;
     }
 
     .tab-title {
-      display: inline-block; /* Выстраиваем по горизонтали */
-      background: #ccc; /* Цвет фона */
-      padding: 10px; /* Поля вокруг текста */
-      border: 1px solid #666; /* Параметры рамки */
-      border-bottom: none; /* Снизу линию убираем */
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 5px 5px 0 0;
       cursor: pointer;
-      transition: background 0.3s; /* Плавный переход цвета */
+      transition: all 0.3s ease;
+      color: #6c757d;
+      font-weight: 500;
+      border-bottom: none;
+      margin-bottom: -2px;
     }
 
+    .tab-title:hover,
     .tab-title.active {
-      background: #fff; /* Цвет фона для активной вкладки */
-      color: #28a745; /* Цвет текста для активной вкладки */
-      border-top: 2px solid #28a745; /* Обводка сверху для активной вкладки */
-      z-index: 1; /* Отображаем поверх содержимого */
+      background: #e9ecef;
+      color: #28a745;
+      border-color: #28a745;
     }
 
     .tab-content {
-      display: none; /* Прячем вкладки */
-      border: 1px solid #666; /* Параметры рамки */
-      padding: 10px; /* Поля вокруг текста */
-      position: relative; /* Позиционирование контейнера содержимого */
-      height: auto; /* Фиксированная высота для области контента */
+      display: none; /* По умолчанию скрываем все вкладки */
+      border: 1px solid #dee2e6;
+      border-radius: 0 5px 5px 5px;
+      padding: 20px;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
 
     .tab-content.active {
@@ -161,8 +161,7 @@
       width: 150px;
       height: 150px;
       border-radius: 50%;
-      cursor: pointer;
-      border: 3px solid #28a745;
+      cursor: pointer
     }
 
     .avatar-option {
@@ -182,11 +181,44 @@
       color: #28a745;
       cursor: pointer;
     }
+
+    .confirmation-modal {
+      display: none;
+      position: fixed;
+      z-index: 1001;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+      background-color: #fff;
+      margin: 15% auto;
+      padding: 20px;
+      width: 300px;
+      border-radius: 5px;
+      text-align: center;
+    }
+
+    .modal-buttons {
+      margin-top: 20px;
+    }
+
+    .modal-ok {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
   </style>
 
   <script>
     var stompClient = null;
-
+    const adminId = '[[${adminId}]]';
 
     function loadUserAvatar() {
       $.ajax({
@@ -194,9 +226,8 @@
         url: "/user/avatar",
         success: function(avatar) {
           if (avatar) {
-            // Исправленный селектор для текущего аватара
             const avatarImage = document.getElementById('current-avatar');
-            avatarImage.src = `/avatars/${avatar}`;
+            avatarImage.src = `/avatars/${avatar}?t=${new Date().getTime()}`;
           }
         },
         error: function(xhr, status, error) {
@@ -205,7 +236,6 @@
       });
     }
 
-    // Вызов функции загрузки аватара при загрузке страницы
 
 
 
@@ -219,12 +249,50 @@
           const ticketData = JSON.parse(ticket.body);
           updateTicketList(ticketData);
         });
+
+        stompClient.subscribe('/user/queue/notification/messages/' + adminId, function (notification) {
+          const notif = JSON.parse(notification.body);
+          displayNotifications(notif, notif.sender.id);
+        });
+
       }, function (error) {
         console.error('Ошибка подключения к WebSocket:', error);
       });
 
 
     }
+
+
+    function displayNotifications(message, userId) {
+      // Создаем элемент для уведомления
+      const notificationElement = document.createElement('div');
+
+      // Устанавливаем текст уведомления
+      notificationElement.textContent = message.content;
+
+      // Добавляем стили
+      notificationElement.style.position = 'fixed';
+      notificationElement.style.left = '20px'; // Размещаем уведомление слева
+      notificationElement.style.bottom = '20px'; // Размещаем уведомление снизу
+      notificationElement.style.padding = '15px';
+      notificationElement.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'; // Полупрозрачный черный фон
+      notificationElement.style.color = 'white';
+      notificationElement.style.borderRadius = '5px';
+      notificationElement.style.zIndex = '1000'; // Чтобы уведомление было поверх других элементов
+      notificationElement.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.5)';
+      notificationElement.style.marginBottom = '10px'; // Добавляем отступ между уведомлениями
+
+      // Обработчик события клика
+      notificationElement.addEventListener('click', () => {
+        openAdminChat(userId); // Замените на вашу логику маршрутизации
+      });
+
+      // Добавляем уведомление в тело документа
+      document.body.appendChild(notificationElement);
+    }
+
+
+
 
     function loadTickets() {
       fetch('/admin/tickets/api/tickets')
@@ -254,13 +322,11 @@
 
     function updateTicketList(ticket) {
       const ticketTableBody = document.querySelector(`.ticket-table-body[data-status="${ticket.status}"]`);
-      if (!ticketTableBody) {
-        console.error('Элемент .ticket-table-body не найден');
-        return;
-      }
+      if (!ticketTableBody) return;
 
       const newTicketRow = document.createElement('tr');
       newTicketRow.classList.add('task-item');
+      newTicketRow.setAttribute('data-task-id', ticket.id); // Добавляем ID задачи
       newTicketRow.innerHTML = `
     <td>
       <span>${ticket.user.surname} ${ticket.user.name} ${ticket.user.fathername} (${ticket.user.jobTitle})</span>
@@ -305,23 +371,27 @@
       connect();
       loadTickets();
       loadUserAvatar(); // Загрузка аватара пользователя
+      switchTab('new-tickets-content');
     }
 
     function switchTab(tabId) {
-      const tabContents = document.querySelectorAll('.tab-content');
-      const tabTitles = document.querySelectorAll('.tab-title');
+      // Снимаем активное состояние со всех вкладок
+      document.querySelectorAll('.tab-title').forEach(title => {
+        title.classList.remove('active');
+      });
 
-      tabContents.forEach(content => content.classList.remove('active'));
-      tabTitles.forEach(title => title.classList.remove('active'));
+      // Скрываем весь контент
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
 
-      const activeTabContent = document.getElementById(tabId);
-      if (activeTabContent) {
-        activeTabContent.classList.add('active');
-      }
+      // Активируем выбранную вкладку и контент
+      const activeTab = document.querySelector(`label[onclick="switchTab('${tabId}')"]`);
+      const activeContent = document.getElementById(tabId);
 
-      const activeTabTitle = document.querySelector(`label[for="${tabId}"]`);
-      if (activeTabTitle) {
-        activeTabTitle.classList.add('active');
+      if(activeTab && activeContent) {
+        activeTab.classList.add('active');
+        activeContent.classList.add('active');
       }
     }
 
@@ -350,19 +420,24 @@
 <body>
 
 <header>
-  <h1>Профиль пользователя</h1>
+  <h1><span th:text="'Журнал заявок от пользователей  ' + ${dep.name} "></span></h1>
 </header>
 
 <div class="container">
   <div class="profile">
     <div class="current-avatar" onclick="openAvatarModal()">
-      <img id="current-avatar" th:src="@{/avatars/__${user.avatar}__}" alt="Текущий аватар" class="avatar-preview">
-      <span class="change-avatar-text">Нажмите для смены аватара</span>
+      <div class="current-avatar" onclick="openAvatarModal()">
+        <img id="current-avatar"
+             src=""
+             alt="Текущий аватар"
+             class="avatar-preview"
+             onerror="this.src='/avatars/defav.png'">
+      </div>
     </div>
 
       <h2>Информация о сотруднике</h2>
     <div class="admin-info">
-      <strong>Имя:</strong> <span th:text="${admin.surname} + ' ' + ${admin.name} + ' ' + ${admin.fathername}"></span><br>
+      <strong>ФИО:</strong> <span th:text="${admin.surname} + ' ' + ${admin.name} + ' ' + ${admin.fathername}"></span><br>
       <strong>Должность:</strong> <span th:text="${admin.jobTitle}"></span><br>
       <strong>Рабочий телефон:</strong> <span th:text="${admin.workPhone}"></span><br>
     </div>
@@ -394,22 +469,29 @@
 
   <div class="task-list">
     <h1>Админ - Список тикетов</h1>
-    <div th:if="${!#lists.isEmpty(ticketsNew)}" id="ticketTable">
+    <div id="ticketTable">
       <h2>Список задач</h2>
       <div class="tabs">
         <div class="tab">
-          <input type="radio" id="new-tickets" name="tab-group" checked onclick="switchTab('new-tickets-content')">
-          <label for="new-tickets" class="tab-title">Новые</label>
+          <label class="tab-title active" onclick="switchTab('new-tickets-content')">
+            <i class="fas fa-plus-circle"></i>
+            Новые
+          </label>
         </div>
         <div class="tab">
-          <input type="radio" id="in-progress-tickets" name="tab-group" onclick="switchTab('in-progress-tickets-content')">
-          <label for="in-progress-tickets" class="tab-title">В работе</label>
+          <label class="tab-title" onclick="switchTab('in-progress-tickets-content')">
+            <i class="fas fa-tools"></i>
+            В работе
+          </label>
         </div>
         <div class="tab">
-          <input type="radio" id="completed-tickets" name="tab-group" onclick="switchTab('completed-tickets-content')">
-          <label for="completed-tickets" class="tab-title">Выполненные</label>
+          <label class="tab-title" onclick="switchTab('completed-tickets-content')">
+            <i class="fas fa-check-circle"></i>
+            Выполненные
+          </label>
         </div>
       </div>
+
 
 
       <div class="tab-content active" id="new-tickets-content">
@@ -464,12 +546,17 @@
       </div>
 
     </div>
-    <div th:if="${#lists.isEmpty(ticketsNew)}">
-      <p>Нет доступных тикетов.</p>
-    </div>
   </div>
 </div>
 
+<div id="confirmationModal" class="confirmation-modal">
+  <div class="modal-content">
+    <p>Заявка взята в работу!</p>
+    <div class="modal-buttons">
+      <button class="modal-ok" onclick="hideConfirmationModal()">OK</button>
+    </div>
+  </div>
+</div>
 <footer>
   <p>&copy; 2025 Все права защищены</p>
 </footer>
@@ -480,19 +567,48 @@
   let selectedAvatar = null;
 
 
+  // Функции для работы с модальным окном
+  function showConfirmationModal() {
+    document.getElementById('confirmationModal').style.display = 'block';
+  }
+
+  function hideConfirmationModal() {
+    document.getElementById('confirmationModal').style.display = 'none';
+  }
+
+  // Модифицированная функция takeTask
   function takeTask(id) {
     $.ajax({
       type: "POST",
       url: "/tickets/hire",
       data: { id: id },
       success: function(response) {
-        alert('Задача взята в работу!');
-        // Обновите статус тикета и переместите его в соответствующую вкладку
-        const taskElement = document.querySelector(`tr[data-id="${id}"]`);
-        if (taskElement) {
-          taskElement.remove();
-          updateTicketList(response); // response должен содержать обновленный тикет с новым статусом
+        // response содержит user.getId(), который возвращает сервер
+        const userId = response; // Сохраняем userId
+
+        // Удаляем задачу из списка новых
+        const taskRow = document.querySelector(`tr[data-task-id="${id}"]`);
+        if (taskRow) {
+          taskRow.remove();
         }
+
+        // Показываем модальное окно
+        showConfirmationModal();
+
+        // Обновляем счетчики задач
+        updateTaskCounters();
+
+        // Добавляем задачу в список "В работе"
+        updateTicketList(response);
+
+        const notification = {
+          content: "Ваша заявка взята в работу. Можете написать исполнителю",
+          sender: adminId,
+          adminId: userId // Используем userId здесь
+        };
+        console.log("Отправка сообщения:", notification);
+        stompClient.send('/app/notifications/task', {}, JSON.stringify(notification));
+
       },
       error: function(xhr, status, error) {
         console.error("Ошибка при принятии задачи:", xhr.responseText);
@@ -551,7 +667,7 @@
   function openAvatarPicker() {
     document.getElementById('avatar-modal').style.display = 'block';
   }
-
+/*
   function selectAvatar(avatarName) {
 
     fetch('/user/saveAvatar', {
@@ -571,7 +687,7 @@
             })
             .catch(error => console.error('Ошибка:', error));
   }
-
+*/
   function openAvatarModal() {
     fetch('/api/avatars')
             .then(response => response.json())
@@ -598,13 +714,14 @@
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
       },
       body: JSON.stringify({ avatar: avatarName })
     })
             .then(response => {
               if (response.ok) {
-                document.getElementById('current-avatar').src = `/avatars/${avatarName}`;
+                // Добавляем параметр времени для обхода кэша
+                const avatarElement = document.getElementById('current-avatar');
+                avatarElement.src = `/avatars/${avatarName}?t=${new Date().getTime()}`;
                 closeAvatarModal();
               }
             })
@@ -619,6 +736,15 @@
     }
   }
 
+
+  function updateTaskCounters() {
+    const newTasksCount = document.querySelectorAll('#new-tickets-content .task-item').length;
+    const inProgressCount = document.querySelectorAll('#in-progress-tickets-content .task-item').length;
+    const completedCount = document.querySelectorAll('#completed-tickets-content .task-item').length;
+
+    document.getElementById('in-progress-count').textContent = inProgressCount;
+    document.getElementById('completed-count').textContent = completedCount;
+  }
 
 </script>
 

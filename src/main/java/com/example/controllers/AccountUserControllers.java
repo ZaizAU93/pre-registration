@@ -35,6 +35,8 @@ public class AccountUserControllers {
 
         model.addAttribute("user", userService.getCurrentUser());
 
+        model.addAttribute("currentUserId", userService.getCurrentUser().getId());
+
         List<Problem> problems = problemService.getAllProblems();
 
         model.addAttribute("problems", problems);

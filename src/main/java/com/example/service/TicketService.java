@@ -117,4 +117,14 @@ public class TicketService implements Serializable {
         return query.getResultList(); // Получение списка результатов
     }
 
+
+    public User getUserByTicketId(Long id){
+
+        String jpql = "SELECT t.user FROM Ticket t WHERE t.id =:id";
+        TypedQuery<User> query = entityManager.createQuery(jpql, User.class);
+        query.setParameter("id", id);
+        return query.getSingleResult();
+    }
+
+
 }

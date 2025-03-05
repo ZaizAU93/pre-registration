@@ -1,7 +1,9 @@
 package com.example.controllers;
 
 import com.example.DTO.MessageDTO;
+import com.example.DTO.NotificationDTO;
 import com.example.model.ChatMessage;
+import com.example.model.Notification;
 import com.example.repo.ChatMessageRepository;
 import com.example.service.ChatMessageService;
 import com.example.service.UserService;
@@ -82,6 +84,57 @@ public class ChatMessageController {
             );
         }
     }
+
+
+
+    @MessageMapping("/notifications")
+    public void sendNotification(@Payload Notification notification) {
+
+        System.out.println("notification " + notification.getAdminId());
+
+        NotificationDTO notificationDTO = NotificationDTO.builder()
+                .sender(userService.getUserById(notification.getSender()))
+                .content(notification.getContent())
+                .build();
+
+        System.out.println("Уведомление " + notification.getContent() + " Отправитель " + notification.getSender());
+
+        String usernameRecipint = userService.getUserById(notification.getAdminId()).getUsername();
+        Long idCurrentUser = userService.getUserById(notification.getAdminId()).getId();
+
+        String destination = "/queue/notification/messages/" + idCurrentUser;
+        messagingTemplate.convertAndSendToUser(
+                usernameRecipint,
+                destination,
+                notificationDTO
+        );
+
+        System.out.println("Уведомление оправлено по адресу " + destination);
+    }
+
+    @MessageMapping("/notifications/task")
+    public void sendNotificationTask(@Payload Notification notification) {
+
+        NotificationDTO notificationDTO = NotificationDTO.builder()
+                .sender(userService.getUserById(notification.getSender()))
+                .content(notification.getContent())
+                .build();
+
+        System.out.println("Уведомление " + notification.getContent() + " Отправитель " + notification.getSender());
+
+        String usernameRecipint = userService.getUserById(notification.getAdminId()).getUsername();
+        Long idCurrentUser = userService.getUserById(notification.getAdminId()).getId();
+
+        String destination = "/queue/notification/task/" + idCurrentUser;
+        messagingTemplate.convertAndSendToUser(
+                usernameRecipint,
+                destination,
+                notificationDTO
+        );
+
+        System.out.println("Уведомление оправлено по адресу " + destination + "логин получателя :" + usernameRecipint);
+    }
+
 
 
     @GetMapping("/chat/admin")

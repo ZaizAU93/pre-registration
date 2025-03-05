@@ -88,11 +88,12 @@ public class TicketController {
 
     @PostMapping("/hire")
     @ResponseBody
-    public ResponseEntity<String> hireInProgressTicket(@RequestParam("id") Long id) {
+    public ResponseEntity<Long> hireInProgressTicket(@RequestParam("id") Long id) {
         Status status = Status.IN_PROGRESS;
         ticketService.jobs(status, id);
         messagingTemplate.convertAndSend("/topic/tickets", ticketService.getTiketById(id) );
-        return ResponseEntity.ok("Задача успешно принята в работу");
+        User user = ticketService.getUserByTicketId(id);
+        return ResponseEntity.ok(user.getId());
     }
 
 
