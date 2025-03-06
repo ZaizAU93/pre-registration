@@ -557,6 +557,18 @@
     </div>
   </div>
 </div>
+
+<div id="reportModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeReportModal()">&times;</span>
+    <h3>Введите отчет</h3>
+    <textarea id="reportText" rows="5" placeholder="Введите отчет здесь..."></textarea>
+    <div class="modal-buttons">
+      <button class="modal-ok" onclick="submitReport()">Сохранить отчет</button>
+    </div>
+    <div id="reportMessage"></div>
+  </div>
+</div>
 <footer>
   <p>&copy; 2025 Все права защищены</p>
 </footer>
@@ -617,12 +629,14 @@
   }
 
   function completeTask(id) {
+    document.getElementById('reportModal').style.display = 'block';
+    // Сохраняем ID задачи в глобальной переменной для дальнейшего использования
+    window.currentTaskId = id;
     $.ajax({
       type: "POST",
       url: "/tickets/close",
       data: { id: id },
       success: function(response) {
-        alert('Задача завершена!');
         // Обновите статус тикета и переместите его в соответствующую вкладку
         const taskElement = document.querySelector(`tr[data-id="${id}"]`);
         if (taskElement) {
@@ -744,6 +758,57 @@
 
     document.getElementById('in-progress-count').textContent = inProgressCount;
     document.getElementById('completed-count').textContent = completedCount;
+  }
+
+  function closeReportModal() {
+    document.getElementById('reportModal').style.display = 'none';
+    document.getElementById('reportText').value = ''; // Очищаем текстовое поле
+    document.getElementById('reportMessage').textContent = ''; // Очищаем сообщение
+  }
+
+
+  function submitReport() {
+    const content = document.getElementById('reportText').value;
+    const taskId = window.currentTaskId;
+
+    if (!content) {
+      alert('Пожалуйста, введите отчет!');
+      return;
+    }
+
+    // Отправляем отчет и закрываем тикет
+    console.log("Отправляем данные:", { id: taskId, content: content })
+    $.ajax({
+      type: "POST",
+      url: "/report",
+      contentType: "application/json",
+      data: JSON.stringify({
+        id: taskId,
+        content: content
+      }),
+
+      success: function(response) {
+        console.log(response.data)
+        $.ajax({
+          type: "POST",
+          url: "/tickets/close",
+          data: { id: taskId },
+          success: function(closeResponse) {
+            const taskRow = document.querySelector(`tr[data-task-id="${taskId}"]`);
+            if (taskRow) taskRow.remove();
+            updateTicketList(closeResponse);
+            closeReportModal();
+          },
+          error: function(xhr, status, error) {
+            console.error("Ошибка при закрытии тикета:", xhr.responseText);
+          }
+        });
+      },
+      error: function(xhr, status, error) {
+        console.error("Ошибка при сохранении отчета:", xhr.responseText);
+        document.getElementById('reportMessage').textContent = "Ошибка при сохранении отчета. Попробуйте еще раз.";
+      }
+    });
   }
 
 </script>

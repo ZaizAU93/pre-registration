@@ -1,15 +1,13 @@
 package com.example.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.List;
+
 
 @Data
 @Entity
@@ -44,4 +42,7 @@ public class Ticket  {
 
     @ManyToOne
     private Computer computer;
+
+
+    private Long reportId;
 }

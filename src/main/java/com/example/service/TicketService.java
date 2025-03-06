@@ -8,7 +8,10 @@ import com.example.repo.TicketRepo;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Service;
 
 import java.io.Serializable;
@@ -125,6 +128,9 @@ public class TicketService implements Serializable {
         query.setParameter("id", id);
         return query.getSingleResult();
     }
+
+
+
 
 
 }

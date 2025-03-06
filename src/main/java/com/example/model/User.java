@@ -36,9 +36,7 @@ public class User {
 
     private  Long departametId;
 
-    @ManyToOne
-    @JoinColumn(name = "position_id")
-    private Position jobTitle;
+    private Long jobTitleId;
 
     private String workPhone;
 

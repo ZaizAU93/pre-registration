@@ -41,6 +41,7 @@ public class SecurityConfig {
                                 .requestMatchers("/register").permitAll()
                                 .requestMatchers("/admin/register").permitAll()
                                 .requestMatchers("/admin/tickets").hasAnyRole("ADMIN")
+                                .requestMatchers("/report").hasAnyRole("ADMIN")
  //                       .requestMatchers("/resources/**").hasAnyRole("ADMIN", "USER")
                         .anyRequest().hasAnyRole("ADMIN", "USER") // Остальные запросы требуют одной из ролей
 

@@ -339,12 +339,63 @@
 
 
 
-
 <footer>
   <p>&copy; 2025 Все права защищены</p>
 </footer>
 
 <script>
+// модальное окно отчета
+  let currentTaskId = null;
+
+  function openReportModal(taskId) {
+    currentTaskId = taskId; // Сохраняем ID текущей задачи
+    document.getElementById('reportModal').style.display = 'block';
+  }
+
+  function closeReportModal() {
+    document.getElementById('reportModal').style.display = 'none';
+  }
+
+  function submitReport() {
+    const reportText = document.getElementById('reportText').value;
+
+    if (!reportText) {
+      alert('Пожалуйста, введите текст отчета.');
+      return;
+    }
+
+    const report = {
+      taskId: currentTaskId,
+      content: reportText
+    };
+
+    $.ajax({
+      type: "POST",
+      url: "/report",
+      contentType: "application/json",
+      data: JSON.stringify(report),
+      success: function(response) {
+        alert(response); // Выводим сообщение от сервера
+        closeReportModal(); // Закрываем модальное окно
+
+        // Убираем задачу из списка "В работе"
+        const taskRow = document.querySelector(`tr[data-task-id="${currentTaskId}"]`);
+        if (taskRow) {
+          taskRow.remove();
+        }
+
+        // Обновляем счетчики задач
+        updateTaskCounters();
+      },
+      error: function(xhr, status, error) {
+        console.error("Ошибка при сохранении отчета:", xhr.responseText);
+        alert('Произошла ошибка при сохранении отчета. Пожалуйста, попробуйте еще раз.');
+      }
+    });
+  }
+
+// --- модальное окно
+
   $(document).ready(function () {
     const tree = $('#locationTree').jstree({
       'core': {

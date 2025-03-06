@@ -2,6 +2,7 @@ package com.example.controllers;
 
 import com.example.model.User;
 import com.example.service.DepartmentService;
+import com.example.service.JobTitleService;
 import com.example.service.UserService;
 import org.springframework.core.io.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,8 @@ public class UserController {
     @Autowired
     private DepartmentService departmentService;
 
+    @Autowired
+    private JobTitleService jobTitleService;
     @GetMapping("/login")
     public String login() {
         return "login";
@@ -35,6 +38,7 @@ public class UserController {
     @GetMapping("/register")
     public String register(Model model) {
         model.addAttribute("departaments", departmentService.getAllDepartaments());
+        model.addAttribute("jobTitle", jobTitleService.getAllJobTitle());
         return "register";
     }
 
@@ -50,6 +54,7 @@ public class UserController {
     @GetMapping("/admin/register")
     public String registerAdmin(Model model) {
         model.addAttribute("departaments", departmentService.getAllDepartaments());
+        model.addAttribute("jobTitle", jobTitleService.getAllJobTitle());
         return "registerAdmin";
     }
 

@@ -85,6 +85,14 @@
             <input type="text" id="fathername" name="fathername" required />
         </div>
 
+        <label for="jobTitle">Должность:</label>
+        <select id="jobTitle" th:field="*{jobTitle}" required>
+            <option value="" disabled selected>Укажите должность</option>
+            <option th:each="job : ${jobTitle}"
+                    th:value="${job.id}"
+                    th:text="${job.name}"></option>
+        </select>
+
         <label for="departametId">Подразделение:</label>
         <select id="departametId" name="departametId" required>
             <option value="" disabled selected>Укажите подразделение</option>

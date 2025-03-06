@@ -34,5 +34,10 @@ public interface TicketRepo extends JpaRepository<Ticket, Long> {
     @Query("SELECT t FROM Ticket t WHERE t.status = :status AND t.adminId =:admin")
     List<Optional<Ticket>> ticketStatus(@Param("status") Status status, @Param("admin") Long admin);
 
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Ticket e SET e.reportId = ?1 WHERE e.id = ?2")
+    void updateReport(Long reportId, Long id);
 }
 
