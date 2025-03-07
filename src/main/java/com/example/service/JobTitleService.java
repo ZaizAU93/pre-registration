@@ -16,4 +16,9 @@ public class JobTitleService {
     public List<JobTitle> getAllJobTitle(){
         return job.findAllBy();
     }
+
+    public JobTitle getJobsById(Long id){
+        return job.getById(id);
+    }
+
 }

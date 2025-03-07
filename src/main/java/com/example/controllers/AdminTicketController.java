@@ -3,6 +3,7 @@ package com.example.controllers;
 import com.example.model.Status;
 import com.example.model.Ticket;
 import com.example.service.DepartmentService;
+import com.example.service.JobTitleService;
 import com.example.service.TicketService;
 import com.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,9 @@ public class AdminTicketController {
 
     @Autowired
     private DepartmentService departmentService;
+
+    @Autowired
+    private JobTitleService jobTitleService;
     @GetMapping()
     public String getAdminTicketsInProgress(Model model) throws UnknownHostException {
    //     List<Ticket> tickets = ticketService.getAllTickets();
@@ -45,8 +49,9 @@ public class AdminTicketController {
         model.addAttribute("ticketsResolved", ticketResolved);
         model.addAttribute("user", userService.getCurrentUser());
         model.addAttribute("admin", userService.getCurrentUser());
-        model.addAttribute("dep", departmentService.getDepById(userService.getCurrentUser().getDepartametId()).get());
+        model.addAttribute("dep", departmentService.getDepById(userService.getCurrentUser().getDepartametId()));
         model.addAttribute("adminId", userService.getCurrentUser().getId());
+        model.addAttribute("job", jobTitleService.getJobsById(userService.getCurrentUser().getJobTitleId()));
         return "profAdmin"; // имя шаблона Thymeleaf для админов
     }
 

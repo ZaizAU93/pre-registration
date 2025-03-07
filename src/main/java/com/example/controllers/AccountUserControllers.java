@@ -4,6 +4,7 @@ import com.example.model.Problem;
 import com.example.model.Status;
 import com.example.model.Ticket;
 import com.example.model.User;
+import com.example.service.JobTitleService;
 import com.example.service.ProblemService;
 import com.example.service.TicketService;
 import com.example.service.UserService;
@@ -29,11 +30,16 @@ public class AccountUserControllers {
     @Autowired
     private ProblemService problemService;
 
+    @Autowired
+    private JobTitleService jobTitleService;
+
     @GetMapping()
     public String getAccountUser(Model model){
         model.addAttribute("ticket", new Ticket());
 
         model.addAttribute("user", userService.getCurrentUser());
+
+        model.addAttribute("job", jobTitleService.getJobsById(userService.getCurrentUser().getJobTitleId()));
 
         model.addAttribute("currentUserId", userService.getCurrentUser().getId());
 
