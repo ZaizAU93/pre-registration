@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface Job extends JpaRepository<JobTitle, Long> {
+public interface JobRepo extends JpaRepository<JobTitle, Long> {
 
     List<JobTitle> findAllBy();
 

@@ -14,6 +14,9 @@ public class ComputerService {
     @Autowired
     private ComputerRepo computerRepo;
 
+    @Autowired
+    private PrinterInfoService printer;
+
     public Computer getSystemInfo() throws UnknownHostException {
 
         InetAddress localhost = InetAddress.getLocalHost();
@@ -23,8 +26,8 @@ public class ComputerService {
                 osArchitecture(System.getProperty("os.arch")).
                 osVersion(System.getProperty("os.version")).
                 name(System.getProperty("os.name")).
+                printer(printer.getPrintInfo()).
                 build();
-
 
         return computer;
     }

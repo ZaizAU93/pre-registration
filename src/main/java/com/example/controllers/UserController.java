@@ -1,5 +1,6 @@
 package com.example.controllers;
 
+import com.example.model.Ticket;
 import com.example.model.User;
 import com.example.service.DepartmentService;
 import com.example.service.JobTitleService;
@@ -37,6 +38,7 @@ public class UserController {
 
     @GetMapping("/register")
     public String register(Model model) {
+        model.addAttribute("user", new User());
         model.addAttribute("departaments", departmentService.getAllDepartaments());
         model.addAttribute("jobTitle", jobTitleService.getAllJobTitle());
         return "register";
@@ -53,6 +55,7 @@ public class UserController {
 
     @GetMapping("/admin/register")
     public String registerAdmin(Model model) {
+        model.addAttribute("user", new User());
         model.addAttribute("departaments", departmentService.getAllDepartaments());
         model.addAttribute("jobTitle", jobTitleService.getAllJobTitle());
         return "registerAdmin";

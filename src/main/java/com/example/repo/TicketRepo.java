@@ -39,5 +39,14 @@ public interface TicketRepo extends JpaRepository<Ticket, Long> {
     @Transactional
     @Query("UPDATE Ticket e SET e.reportId = ?1 WHERE e.id = ?2")
     void updateReport(Long reportId, Long id);
+
+
+    @Modifying
+    @Transactional
+    @Query("SELECT t FROM Ticket t WHERE t.user.departametId =:id")
+    List<Ticket> findByUserDepartametId(Long id);
+
+
+
 }
 

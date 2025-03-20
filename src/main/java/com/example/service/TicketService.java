@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class TicketService implements Serializable {
@@ -40,6 +41,7 @@ public class TicketService implements Serializable {
                 .status(Status.NEW)
                 .user(userService.getCurrentUser())
                 .computer(computer)
+                .locationText(ticket.getLocationText())
                 .build();
 
          ticketRepo.save(ticketNew);
@@ -130,6 +132,18 @@ public class TicketService implements Serializable {
     }
 
 
+    public List<Ticket> findTicketUserAndAdminDepartmentSame(Long adminId){
+
+        return ticketRepo.findByUserDepartametId(adminId);
+    }
+
+    public List<Ticket> searchSameTicket(List<Ticket> statusList, List<Ticket> sameDepartment){
+
+       List<Ticket> resultList = sameDepartment.stream()
+               .filter(statusList::contains)
+               .collect(Collectors.toList());
+        return resultList;
+    }
 
 
 

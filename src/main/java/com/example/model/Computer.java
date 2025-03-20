@@ -28,5 +28,7 @@ public class Computer {
 
     private String hostName;
 
+    private String printer;
+
 
 }

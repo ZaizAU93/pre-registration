@@ -94,7 +94,7 @@
     </select>
 
     <label for="departametId">Подразделение:</label>
-    <select id="departametId" th:field="*{departaments}" name="departametId" required>
+    <select id="departametId" name="departametId" required>
       <option value="" disabled selected>Укажите подразделение</option>
       <option th:each="departament : ${departaments}"
               th:value="${departament.id}"

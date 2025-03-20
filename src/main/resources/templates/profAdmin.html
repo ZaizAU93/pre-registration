@@ -220,6 +220,20 @@
     var stompClient = null;
     const adminId = '[[${adminId}]]';
 
+    const department = '[[${department}]]';
+
+    const  allJobs = '[[${allJobs}]]';
+
+    const mapDepAdminFilial = {
+      OBL: [1, 2, 3],
+      MOLODECHNO: [4, 5, 6, 7, 8, 9],
+      DERZINSK: [10, 11, 12, 13], // Используем userId здесь
+      SLUTSK: [14, 15, 16, 17],
+      BORISOV: [18, 19, 20, 21, 22, 23],
+    };
+
+
+
     function loadUserAvatar() {
       $.ajax({
         type: "GET",
@@ -239,7 +253,7 @@
 
 
 
-
+/*
     function connect() {
       const socket = new SockJS('/ws');
       stompClient = Stomp.over(socket);
@@ -247,7 +261,9 @@
         console.log('Connected: ' + frame);
         stompClient.subscribe('/topic/tickets', function (ticket) {
           const ticketData = JSON.parse(ticket.body);
-          updateTicketList(ticketData);
+          if ((ticketData.user.departametId).toString() === department.toString()) {
+            updateTicketList(ticketData);
+          }
         });
 
         stompClient.subscribe('/user/queue/notification/messages/' + adminId, function (notification) {
@@ -261,6 +277,41 @@
 
 
     }
+*/
+
+    function connect() {
+      const socket = new SockJS('/ws');
+      stompClient = Stomp.over(socket);
+      stompClient.connect({}, function (frame) {
+        console.log('Connected: ' + frame);
+
+        stompClient.subscribe('/topic/tickets', function (ticket) {
+          const ticketData = JSON.parse(ticket.body);
+
+          const key1 = isFindKeyByValue(ticketData.user.departametId);
+          const key2 = isFindKeyByValue(Number(department));
+          // Проверяем, принадлежит ли тикет текущему отделу или филиалу
+          if (key1 === key2) {
+            console.log("Условие выполянется ключи одинаковые")
+            console.log("key 1 = " + key1 + "key 2 = " + key2)
+            updateTicketList(ticketData);
+          } else {
+            console.log("Условие не выполянется ключи не совподают")
+            console.log("key 1 = " + key1 + "key 2 = " + key2)
+          }
+        });
+
+        stompClient.subscribe('/user/queue/notification/messages/' + adminId, function (notification) {
+          const notif = JSON.parse(notification.body);
+          displayNotifications(notif, notif.sender.id);
+        });
+
+      }, function (error) {
+        console.error('Ошибка подключения к WebSocket:', error);
+      });
+    }
+
+
 
 
     function displayNotifications(message, userId) {
@@ -331,6 +382,7 @@
     <td>
       <span>${ticket.user.surname} ${ticket.user.name} ${ticket.user.fathername} (${ticket.user.jobTitle})</span>
     </td>
+    <td>${ticket.locationText}</td>
     <td>${ticket.description}</td>
     <td>${formatDate(ticket.createdAt)}</td>
     <td>${ticket.problems ? ticket.problems.topic : ''}</td>
@@ -343,6 +395,7 @@
         <p><strong>Название ОС:</strong> <span>${ticket.computer.name}</span></p>
         <p><strong>Версия ОС:</strong> <span>${ticket.computer.osVersion}</span></p>
         <p><strong>Архитектура ОС:</strong> <span>${ticket.computer.osArchitecture}</span></p>
+        <p><strong>Принтер:</strong> <span>${ticket.computer.printer}</span></p>
       </div>
     </td>
     <td>
@@ -499,6 +552,7 @@
           <thead>
           <tr>
             <th>Пользователь</th>
+            <th>Местоположение</th>
             <th>Описание</th>
             <th>Дата создания</th>
             <th>Проблема</th>
@@ -516,6 +570,7 @@
           <thead>
           <tr>
             <th>Пользователь</th>
+            <th>Местоположение</th>
             <th>Описание</th>
             <th>Дата создания</th>
             <th>Проблема</th>
@@ -533,6 +588,7 @@
           <thead>
           <tr>
             <th>Пользователь</th>
+            <th>Местоположение</th>
             <th>Описание</th>
             <th>Дата создания</th>
             <th>Проблема</th>
@@ -810,6 +866,34 @@
       }
     });
   }
+
+
+  function isTicketForDepartmentOrFilial(ticketDepartmentId, department) {
+    // Проверяем, совпадает ли отдел
+    if (ticketDepartmentId.toString() === department.toString()) {
+      return true;
+    }
+
+    // Проверяем, есть ли идентификатор в филиалах
+    for (const filial in mapDepAdminFilial) {
+      if (mapDepAdminFilial[filial].includes(ticketDepartmentId)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+
+  function isFindKeyByValue(adminDep) {
+    for (const [key, values] of Object.entries(mapDepAdminFilial)) {
+      if (values.includes(adminDep)) {
+        return key; // Возвращаем ключ, если число найдено
+      }
+    }
+    return false; // Если число не найдено, возвращаем null
+  }
+
 
 </script>
 

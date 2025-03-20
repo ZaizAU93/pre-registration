@@ -1,7 +1,7 @@
 package com.example.service;
 
 import com.example.model.JobTitle;
-import com.example.repo.Job;
+import com.example.repo.JobRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -11,7 +11,7 @@ import java.util.List;
 public class JobTitleService {
 
     @Autowired
-    private Job job;
+    private JobRepo job;
 
     public List<JobTitle> getAllJobTitle(){
         return job.findAllBy();
@@ -20,5 +20,9 @@ public class JobTitleService {
     public JobTitle getJobsById(Long id){
         return job.getById(id);
     }
+
+
+
+
 
 }

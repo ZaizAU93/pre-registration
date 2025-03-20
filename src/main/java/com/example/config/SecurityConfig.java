@@ -38,6 +38,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/index").hasAnyRole( "USER")
                                 .requestMatchers("/ws/**").permitAll()
+                                .requestMatchers("/printer").permitAll()
                                 .requestMatchers("/register").permitAll()
                                 .requestMatchers("/admin/register").permitAll()
                                 .requestMatchers("/admin/tickets").hasAnyRole("ADMIN")

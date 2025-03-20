@@ -290,9 +290,10 @@
   <div class="ticket-section">
     <h1>Создать новый тикет</h1>
 
-    <form th:action="@{/tickets/create}" th:object="${ticket}" method="post">
+    <form th:action="@{/tickets/create}" th:object="${ticket}" method="post" onsubmit="return validateForm()">
       <!-- Скрытое поле для местоположения -->
-      <input type="hidden" id="selectedLocation" name="locationId">
+      <input type="hidden" id="selectedLocation" name="locationId" required>
+      <input type="hidden" id="selectedLocationText" name="locationText" required>
 
       <div class="form-group">
         <label for="description">Описание:</label>
@@ -316,6 +317,7 @@
 
       <button type="submit">Создать тикет</button>
     </form>
+
   </div>
   <div class="ticket-section">
     <h1>Оставленные заявки:</h1>
@@ -396,30 +398,52 @@
 
 // --- модальное окно
 
-  $(document).ready(function () {
-    const tree = $('#locationTree').jstree({
-      'core': {
-        'data': {
-          'url': '/locations/tree',
-          'dataType': 'json',
-          'data': function (node) {
-            return { 'id': node.id };
-          }
+$(document).ready(function () {
+  const tree = $('#locationTree').jstree({
+    'core': {
+      'data': {
+        'url': '/locations/tree',
+        'dataType': 'json',
+        'data': function (node) {
+          return { 'id': node.id };
         }
-      },
-      'plugins': ['types', 'wholerow']
-    });
-
-    tree.on('changed.jstree', function (e, data) {
-      const selectedNode = data.instance.get_node(data.selected[0]);
-      $('#selectedLocation').val(selectedNode.id);
-      console.log('Выбрано местоположение:', selectedNode.id);
-    });
+      }
+    },
+    'plugins': ['types', 'wholerow']
   });
 
-  function sendMessage(adminId, sender) {
-    window.location.href = '/chat/user?adminId=' + adminId + '&sender=' + sender;
+  tree.on('changed.jstree', function (e, data) {
+    const selectedNode = data.instance.get_node(data.selected[0]);
+    $('#selectedLocation').val(selectedNode.id); // ID местоположения
+    $('#selectedLocationText').val(getFullPath(selectedNode)); // Полный путь местоположения
+    console.log('Выбрано местоположение:', selectedNode.id, getFullPath(selectedNode));
+  });
+});
+
+// Функция для получения полного пути
+function getFullPath(node) {
+  let path = [];
+  let current = node;
+
+  while (current) {
+    path.unshift(current.text); // Добавляем название текущего узла в начало массива
+    current = current.parent ? $('#locationTree').jstree().get_node(current.parent) : null; // Получаем родительский узел
   }
+
+  return path.join(', '); // Возвращаем полный путь, разделённый слэшами
+}
+
+function sendMessage(adminId, sender) { window.location.href = '/chat/user?adminId=' + adminId + '&sender=' + sender; }
+
+function validateForm() {
+  const selectedLocation = document.getElementById('selectedLocation').value;
+  if (!selectedLocation) {
+    alert('Пожалуйста, выберите местоположение.');
+    return false; // Предотвращаем отправку формы
+  }
+  return true; // Разрешаем отправку формы
+}
+
 </script>
 </body>
 </html>

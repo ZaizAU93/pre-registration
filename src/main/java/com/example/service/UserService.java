@@ -1,6 +1,5 @@
 package com.example.service;
 
-import com.example.DTO.UserDTO;
 import com.example.model.Role;
 import com.example.model.User;
 import com.example.repo.UserRepo;
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserService {
 
-
     @Autowired
     private UserRepo userRepository;
 
@@ -22,12 +20,9 @@ public class UserService {
     private PasswordEncoder passwordEncoder;
 
 
+
     public void createUser(User user) {
 
-        System.out.println("Деапартамент ID: " + user.getDepartametId());
-
-
-        // Проверяем, существует ли пользователь с данным именем
         if (userRepository.findByUsername(user.getUsername()) == null) {
             User userNew = User.builder()
                     .username(user.getUsername())
@@ -37,6 +32,7 @@ public class UserService {
                     .name(user.getName())
                     .fathername(user.getFathername())
                     .departametId(user.getDepartametId())
+                    .jobTitleId(user.getJobTitleId())
                     .build();
 
             userRepository.save(userNew);
@@ -45,7 +41,9 @@ public class UserService {
 
 
     public void createAdmin(User user) {
-        // Проверяем, существует ли пользователь с данным именем
+
+        System.out.println("id департамент " + user.getDepartametId());
+
         if (userRepository.findByUsername(user.getUsername()) == null) {
             User userNew = User.builder()
                     .username(user.getUsername())
@@ -55,6 +53,7 @@ public class UserService {
                     .name(user.getName())
                     .fathername(user.getFathername())
                     .departametId(user.getDepartametId())
+                    .jobTitleId(user.getJobTitleId())
                     .build();
 
             userRepository.save(userNew);
