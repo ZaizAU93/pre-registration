@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,6 +47,10 @@ public interface TicketRepo extends JpaRepository<Ticket, Long> {
     @Query("SELECT t FROM Ticket t WHERE t.user.departametId =:id")
     List<Ticket> findByUserDepartametId(Long id);
 
+    @Modifying
+    @Transactional
+    @Query("SELECT t FROM Ticket t WHERE t.user.departametId in :listDep")
+    List<Ticket> findByUserDepartametList(@Param("listDep") List<Long> listDep);
 
 
 }

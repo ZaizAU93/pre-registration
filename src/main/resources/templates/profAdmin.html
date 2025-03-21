@@ -295,6 +295,7 @@
             console.log("Условие выполянется ключи одинаковые")
             console.log("key 1 = " + key1 + "key 2 = " + key2)
             updateTicketList(ticketData);
+            playSound();
           } else {
             console.log("Условие не выполянется ключи не совподают")
             console.log("key 1 = " + key1 + "key 2 = " + key2)
@@ -468,6 +469,11 @@
         window.location.href = '/chat/admin?userId=' + userId;
       };
     }
+
+    function playSound() {
+      var audio = document.getElementById('notification-sound');
+      audio.play();
+    }
   </script>
 </head>
 <body>
@@ -494,7 +500,7 @@
       <strong>Должность:</strong> <span th:text="${job.name}"></span><br>
       <strong>Рабочий телефон:</strong> <span th:text="${admin.workPhone}"></span><br>
     </div>
-
+    <audio id="notification-sound" src="/avatars/sound/sound.mp3" preload="auto"></audio>
     <div class="task-status">
       <h2>Задачи в работе</h2>
       <div class="task-count" id="in-progress-count">0</div>

@@ -1,5 +1,6 @@
 package com.example.service;
 
+import com.example.config.SchemeRedirectionConfig;
 import com.example.model.Computer;
 import com.example.model.Status;
 import com.example.model.Ticket;
@@ -8,17 +9,12 @@ import com.example.repo.TicketRepo;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
-import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Service;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,6 +29,7 @@ public class TicketService implements Serializable {
 
     public Long createTicket(Ticket ticket, Computer computer) {
 
+        String location = ticket.getLocationText().substring(2);
 
         Ticket ticketNew = Ticket.builder()
                 .description(ticket.getDescription())
@@ -41,7 +38,7 @@ public class TicketService implements Serializable {
                 .status(Status.NEW)
                 .user(userService.getCurrentUser())
                 .computer(computer)
-                .locationText(ticket.getLocationText())
+                .locationText(location)
                 .build();
 
          ticketRepo.save(ticketNew);
@@ -134,10 +131,39 @@ public class TicketService implements Serializable {
 
     public List<Ticket> findTicketUserAndAdminDepartmentSame(Long adminId){
 
-        return ticketRepo.findByUserDepartametId(adminId);
+        Map<String, List<Integer>> scheme = SchemeRedirectionConfig.schemeRedirections();
+
+        String key = findKeyByValue(scheme, Math.toIntExact(userService.getCurrentUser().getDepartametId()));
+
+        ArrayList<Integer> listDepartmentUsersFilial = (ArrayList<Integer>) scheme.get(key);
+
+        for (Integer i: listDepartmentUsersFilial) {
+            System.out.println("идентификаторы филиалов " + i);
+        }
+
+        List<Long> listDepartmentUsersFilialLong = listDepartmentUsersFilial.stream()
+                .map(Integer::longValue) // Преобразование каждого Integer в Long
+                .collect(Collectors.toList()); // Сбор результата в список
+
+        return ticketRepo.findByUserDepartametList(listDepartmentUsersFilialLong);
     }
 
+    public static String findKeyByValue(Map<String, List<Integer>> map, Integer value) {
+        for (Map.Entry<String, List<Integer>> entry : map.entrySet()) {
+                if (entry.getValue().contains(value)) {
+                return entry.getKey(); // Возвращаем ключ, если значение найдено
+            }
+        }
+        return null; // Если значение не найдено, возвращаем null
+    }
+
+
+
     public List<Ticket> searchSameTicket(List<Ticket> statusList, List<Ticket> sameDepartment){
+
+
+
+
 
        List<Ticket> resultList = sameDepartment.stream()
                .filter(statusList::contains)
