@@ -1,5 +1,6 @@
 package com.example.controllers;
 
+import com.example.DTO.AnchorDeleteTicketOverListDTO;
 import com.example.model.*;
 import com.example.service.ComputerService;
 import com.example.service.ProblemService;
@@ -8,6 +9,7 @@ import com.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
@@ -82,6 +84,12 @@ public class TicketController {
         ticket1.setUser(userService.getCurrentUser());
 
         return ticket1; // Возвращаем тикет, чтобы отправить его всем подписчикам
+    }
+
+
+    @MessageMapping("/delete/ticket")
+    public void deleteTicketOverList(@Payload AnchorDeleteTicketOverListDTO dto) {
+        messagingTemplate.convertAndSend("/topic/delete/ticket", dto);
     }
 
 

@@ -252,33 +252,6 @@
 
 
 
-
-/*
-    function connect() {
-      const socket = new SockJS('/ws');
-      stompClient = Stomp.over(socket);
-      stompClient.connect({}, function (frame) {
-        console.log('Connected: ' + frame);
-        stompClient.subscribe('/topic/tickets', function (ticket) {
-          const ticketData = JSON.parse(ticket.body);
-          if ((ticketData.user.departametId).toString() === department.toString()) {
-            updateTicketList(ticketData);
-          }
-        });
-
-        stompClient.subscribe('/user/queue/notification/messages/' + adminId, function (notification) {
-          const notif = JSON.parse(notification.body);
-          displayNotifications(notif, notif.sender.id);
-        });
-
-      }, function (error) {
-        console.error('Ошибка подключения к WebSocket:', error);
-      });
-
-
-    }
-*/
-
     function connect() {
       const socket = new SockJS('/ws');
       stompClient = Stomp.over(socket);
@@ -301,6 +274,22 @@
             console.log("key 1 = " + key1 + "key 2 = " + key2)
           }
         });
+
+
+        stompClient.subscribe('/topic/delete/ticket', function (deleteTicket){
+          const ticketData = JSON.parse(deleteTicket.body);
+          console.log(ticketData)
+          // Проверяем, был ли тикет удален
+          if (ticketData.deleteTicket) {
+            const taskRow = document.querySelector(`tr[data-task-id="${ticketData.id}"]`);
+            if (taskRow) {
+              taskRow.remove(); // Удаляем тикет из списка
+            }
+            return; // Прерываем дальнейшую обработку
+          }
+        });
+
+
 
         stompClient.subscribe('/user/queue/notification/messages/' + adminId, function (notification) {
           const notif = JSON.parse(notification.body);
@@ -650,14 +639,19 @@
     document.getElementById('confirmationModal').style.display = 'none';
   }
 
-  // Модифицированная функция takeTask
+  function deleteTicketOverall() {
+
+  }
+  
+  
+  
+  // Взять в работу заявку
   function takeTask(id) {
     $.ajax({
       type: "POST",
       url: "/tickets/hire",
       data: { id: id },
       success: function(response) {
-        // response содержит user.getId(), который возвращает сервер
         const userId = response; // Сохраняем userId
 
         // Удаляем задачу из списка новых
@@ -668,27 +662,21 @@
 
         // Показываем модальное окно
         showConfirmationModal();
-
-        // Обновляем счетчики задач
         updateTaskCounters();
 
-        // Добавляем задачу в список "В работе"
-        updateTicketList(response);
-
-        const notification = {
-          content: "Ваша заявка взята в работу. Можете написать исполнителю",
-          sender: adminId,
-          adminId: userId // Используем userId здесь
+        // Отправляем уведомление другим пользователям о том, что тикет был удален
+        const deleteTicket = {
+          deleteTicket: true,
+          id: id
         };
-        console.log("Отправка сообщения:", notification);
-        stompClient.send('/app/notifications/task', {}, JSON.stringify(notification));
-
+        stompClient.send('/topic/delete/ticket', {}, JSON.stringify(deleteTicket));
       },
       error: function(xhr, status, error) {
         console.error("Ошибка при принятии задачи:", xhr.responseText);
       }
     });
   }
+
 
   function completeTask(id) {
     document.getElementById('reportModal').style.display = 'block';
@@ -743,27 +731,7 @@
   function openAvatarPicker() {
     document.getElementById('avatar-modal').style.display = 'block';
   }
-/*
-  function selectAvatar(avatarName) {
 
-    fetch('/user/saveAvatar', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ avatar: avatarName })
-    })
-            .then(response => {
-              if (response.ok) {
-                // Обновляем аватар и добавляем параметр для избежания кэширования
-                const avatarElement = document.getElementById('current-avatar');
-                avatarElement.src = `/avatars/${avatarName}?t=${new Date().getTime()}`;
-                closeAvatarModal();
-              }
-            })
-            .catch(error => console.error('Ошибка:', error));
-  }
-*/
   function openAvatarModal() {
     fetch('/api/avatars')
             .then(response => response.json())
