@@ -235,11 +235,12 @@
     const department = '[[${department}]]';
 
     const  allJobs = '[[${allJobs}]]';
+    const notificationIds = '[[${notificationIds}]]';
 
     const mapDepAdminFilial = {
       OBL: [1, 2, 3],
       MOLODECHNO: [4, 5, 6, 7, 8, 9],
-      DERZINSK: [10, 11, 12, 13], // Используем userId здесь
+      DERZINSK: [10, 11, 12, 13],
       SLUTSK: [14, 15, 16, 17],
       BORISOV: [18, 19, 20, 21, 22, 23],
     };
@@ -315,7 +316,7 @@
 
 
 
-
+/*
     function displayNotifications(message, userId) {
       // Создаем элемент для уведомления
       const notificationElement = document.createElement('div');
@@ -343,8 +344,36 @@
       // Добавляем уведомление в тело документа
       document.body.appendChild(notificationElement);
     }
+*/
 
+    function displayNotifications(message, userId) {
+      // Создаем элемент для уведомления
+      const notificationElement = document.createElement('div');
 
+      // Устанавливаем текст уведомления
+      notificationElement.textContent = message.content;
+
+      // Добавляем стили
+      notificationElement.style.position = 'fixed';
+      notificationElement.style.left = '20px'; // Размещаем уведомление слева
+      notificationElement.style.bottom = '20px'; // Размещаем уведомление снизу
+      notificationElement.style.padding = '15px';
+      notificationElement.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'; // Полупрозрачный черный фон
+      notificationElement.style.color = 'white';
+      notificationElement.style.borderRadius = '5px';
+      notificationElement.style.zIndex = '1000'; // Чтобы уведомление было поверх других элементов
+      notificationElement.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.5)';
+      notificationElement.style.marginBottom = '10px'; // Добавляем отступ между уведомлениями
+
+      // Обработчик события клика
+      notificationElement.addEventListener('click', () => {
+        // Перенаправление на страницу чата с пользователем
+        window.location.href = '/chat/admin?userId=' + userId;
+      });
+
+      // Добавляем уведомление в тело документа
+      document.body.appendChild(notificationElement);
+    }
 
 
     function loadTickets() {
@@ -373,6 +402,8 @@
       return createdAt; // Если дата уже в строковом формате
     }
 
+
+/*
     function updateTicketList(ticket) {
       const ticketTableBody = document.querySelector(`.ticket-table-body[data-status="${ticket.status}"]`);
       if (!ticketTableBody) return;
@@ -385,44 +416,103 @@
       const notificationBadge = document.createElement('span');
       notificationBadge.className = 'notification-badge';
       notificationBadge.innerHTML = '<i class="fas fa-comment-dots"></i>';
-      notificationBadge.style.display = ticket.problems ? 'inline-block' : 'none'; // Условие для показа
+      // Проверка, есть ли ID тикета в списке уведомлений
+      notificationBadge.style.display = notificationIds.includes(ticket.id) ? 'inline-block' : 'none'; // Условие для показа
+
+      newTicketRow.innerHTML = `
+      <td>
+        <span>${ticket.user.surname} ${ticket.user.name} ${ticket.user.fathername} (${ticket.user.jobTitle})</span>
+        ${notificationBadge.outerHTML}
+      </td>
+      <td>${ticket.locationText}</td>
+      <td>${ticket.description}</td>
+      <td>${formatDate(ticket.createdAt)}</td>
+      <td>${ticket.problems ? ticket.problems.topic : ''}</td>
+      <td>
+        <button onclick="toggleSystemInfo(this)">Информация о системе</button>
+        <div class="system-info" style="display:none;">
+          <h2>Информация о системе</h2>
+          <p><strong>Имя компьютера:</strong> <span>${ticket.computer.hostName}</span></p>
+          <p><strong>IP-адрес:</strong> <span>${ticket.computer.ipAddress}</span></p>
+          <p><strong>Название ОС:</strong> <span>${ticket.computer.name}</span></p>
+          <p><strong>Версия ОС:</strong> <span>${ticket.computer.osVersion}</span></p>
+          <p><strong>Архитектура ОС:</strong> <span>${ticket.computer.osArchitecture}</span></p>
+          <p><strong>Принтер:</strong> <span>${ticket.computer.printer}</span></p>
+        </div>
+      </td>
+      <td>
+        ${ticket.status === 'IN_PROGRESS' ? `
+          <button onclick="completeTask('${ticket.id}')">Завершить задачу</button>
+          <button onclick="redirectTask('${ticket.id}')">Перенаправить задачу</button>
+        ` : ticket.status === 'NEW' ? `
+          <button onclick="takeTask('${ticket.id}')">Взять в работу</button>
+        ` : ''}
+        <div th:if="${ticket.status == 'IN_PROGRESS'}">
+          <button type="button" onclick="openAdminChat('${ticket.user.id}')">
+  <i class="fas fa-comment-dots" style="font-size: 14px; color: white;"></i> Написать пользователю
+</button>
+        </div>
+      </td>
+    `;
+
+      ticketTableBody.prepend(newTicketRow);
+    }
+
+*/
+
+
+    function updateTicketList(ticket) {
+      const ticketTableBody = document.querySelector(`.ticket-table-body[data-status="${ticket.status}"]`);
+      if (!ticketTableBody) return;
+
+      const newTicketRow = document.createElement('tr');
+      newTicketRow.classList.add('task-item');
+      newTicketRow.setAttribute('data-task-id', ticket.id);
+
+      const notificationBadge = document.createElement('span');
+      notificationBadge.className = 'notification-badge';
+      notificationBadge.innerHTML = '<i class="fas fa-comment-dots"></i>';
+      notificationBadge.style.display = notificationIds.includes(ticket.id) ? 'inline-block' : 'none';
 
       newTicketRow.innerHTML = `
     <td>
-      <span>${ticket.user.surname} ${ticket.user.name} ${ticket.user.fathername} (${ticket.user.jobTitle})</span>
-      ${notificationBadge.outerHTML}
+        <span>${ticket.user.surname} ${ticket.user.name} ${ticket.user.fathername} (${ticket.user.jobTitle})</span>
+        ${notificationBadge.outerHTML}
     </td>
     <td>${ticket.locationText}</td>
     <td>${ticket.description}</td>
     <td>${formatDate(ticket.createdAt)}</td>
     <td>${ticket.problems ? ticket.problems.topic : ''}</td>
     <td>
-      <button onclick="toggleSystemInfo(this)">Информация о системе</button>
-      <div class="system-info" style="display:none;">
-        <h2>Информация о системе</h2>
-        <p><strong>Имя компьютера:</strong> <span>${ticket.computer.hostName}</span></p>
-        <p><strong>IP-адрес:</strong> <span>${ticket.computer.ipAddress}</span></p>
-        <p><strong>Название ОС:</strong> <span>${ticket.computer.name}</span></p>
-        <p><strong>Версия ОС:</strong> <span>${ticket.computer.osVersion}</span></p>
-        <p><strong>Архитектура ОС:</strong> <span>${ticket.computer.osArchitecture}</span></p>
-        <p><strong>Принтер:</strong> <span>${ticket.computer.printer}</span></p>
-      </div>
+        <button onclick="toggleSystemInfo(this)">Информация о системе</button>
+        <div class="system-info" style="display:none;">
+            <h2>Информация о системе</h2>
+            <p><strong>Имя компьютера:</strong> <span>${ticket.computer.hostName}</span></p>
+            <p><strong>IP-адрес:</strong> <span>${ticket.computer.ipAddress}</span></p>
+            <p><strong>Название ОС:</strong> <span>${ticket.computer.name}</span></p>
+            <p><strong>Версия ОС:</strong> <span>${ticket.computer.osVersion}</span></p>
+            <p><strong>Архитектура ОС:</strong> <span>${ticket.computer.osArchitecture}</span></p>
+            <p><strong>Принтер:</strong> <span>${ticket.computer.printer}</span></p>
+        </div>
     </td>
     <td>
-      ${ticket.status === 'IN_PROGRESS' ? `
-        <button onclick="completeTask('${ticket.id}')">Завершить задачу</button>
-        <button onclick="redirectTask('${ticket.id}')">Перенаправить задачу</button>
-      ` : ticket.status === 'NEW' ? `
-        <button onclick="takeTask('${ticket.id}')">Взять в работу</button>
-      ` : ''}
-      <div th:if="${ticket.status == 'IN_PROGRESS'}">
-        <button type="button" onclick="openAdminChat('${ticket.user.id}')">Написать пользователю</button>
-      </div>
+        ${ticket.status === 'IN_PROGRESS' ? `
+            <button onclick="completeTask('${ticket.id}')">Завершить задачу</button>
+            <button onclick="redirectTask('${ticket.id}')">Перенаправить задачу</button>
+        ` : ticket.status === 'NEW' ? `
+            <button onclick="takeTask('${ticket.id}')">Взять в работу</button>
+        ` : ''}
+        <div th:if="${ticket.status == 'IN_PROGRESS'}">
+            <button type="button" onclick="openAdminChat('${ticket.user.id}')" style="${ticket.chatAvailable ? 'background-color: red; color: white;' : ''}">
+                <i class="fas fa-comment-dots" style="font-size: 14px; color: white;"></i> ${ticket.chatAvailable ? 'Ответить пользователю' : 'Написать пользователю'}
+            </button>
+        </div>
     </td>
-  `;
+    `;
 
       ticketTableBody.prepend(newTicketRow);
     }
+
 
 
 

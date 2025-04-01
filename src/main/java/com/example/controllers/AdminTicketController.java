@@ -1,11 +1,9 @@
 package com.example.controllers;
 
+import com.example.model.Notification;
 import com.example.model.Status;
 import com.example.model.Ticket;
-import com.example.service.DepartmentService;
-import com.example.service.JobTitleService;
-import com.example.service.TicketService;
-import com.example.service.UserService;
+import com.example.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.stream.Collectors;
 
 
 @Controller
@@ -32,6 +30,10 @@ public class AdminTicketController {
 
     @Autowired
     private JobTitleService jobTitleService;
+
+    @Autowired
+    private NotificationsService notificationsService;
+
     @GetMapping()
     public String getAdminTicketsInProgress(Model model) throws UnknownHostException {
 
@@ -44,18 +46,18 @@ public class AdminTicketController {
 
         model.addAttribute("allJobs", jobTitleService.getAllJobTitle());
 
+        List<Notification> notifications = notificationsService.getAllNotificationsRecipient(userService.getCurrentUser().getId());
+        List<Long> notificationIds = notifications.stream().map(Notification::getTicketId).collect(Collectors.toList());
 
-        return "profAdmin"; // имя шаблона Thymeleaf для админов
+        model.addAttribute("notificationIds", notificationIds); // передаем список ID уведомлений
+
+        return "profAdmin"; // имяшаблона  Thymeleaf для админов
     }
 
 
     @GetMapping("/api/tickets")
     @ResponseBody
     public List<Ticket> getTickets() {
-//        List<Ticket> ticketsNew = ticketService.getTikecetStatusNew(Status.NEW);
-//        List<Ticket> ticketsInProgress = ticketService.getTikecetStatusProgResol(Status.IN_PROGRESS);
-//        List<Ticket> ticketsResolved = ticketService.getTikecetStatusProgResol(Status.RESOLVED);
-
 
         List<Ticket> sameTicketList = ticketService.findTicketUserAndAdminDepartmentSame(userService.getCurrentUser().getId());
 

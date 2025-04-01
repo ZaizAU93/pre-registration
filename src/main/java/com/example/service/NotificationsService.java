@@ -1,11 +1,17 @@
 package com.example.service;
 
 import com.example.model.Notification;
+import com.example.model.Status;
+import com.example.model.Ticket;
 import com.example.repo.NotificationRepo;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -15,6 +21,9 @@ public class NotificationsService {
 
     @Autowired
     private NotificationRepo repo;
+
+    @Autowired
+    private UserService userService;
 
 
     public List<Notification> getAllNotificationsRecipient(Long id){
@@ -28,7 +37,26 @@ public class NotificationsService {
                 .sender(notification.getSender())
                 .localDate(LocalDate.now())
                 .content(notification.getContent())
+                .ticketId(notification.getTicketId())
+                .actual(true)
                 .build();
+
+        repo.save(saveNotifications);
+    }
+
+
+
+    @PersistenceContext
+    private EntityManager entityManager;
+    public List<Ticket> getAllNotificationUser() {
+
+        Long admin = userService.getCurrentUser().getId();
+
+        String jpql = "SELECT t FROM Notification t WHERE t.adminId =:admin";
+        TypedQuery<Ticket> query = entityManager.createQuery(jpql, Ticket.class);
+        query.setParameter("admin",  admin);
+
+        return query.getResultList(); // Получение списка результатов
     }
 
 

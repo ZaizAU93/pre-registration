@@ -226,7 +226,7 @@
           button.type = 'button';
           button.className = 'send-message-button';
           button.innerText = 'Отправить сообщение системотехнику';
-          button.onclick = function () { sendMessage(ticketData.adminId, ticketData.user.id); };
+          button.onclick = function () { sendMessage(ticketData.adminId, ticketData.user.id, ticketData.id); };
           ticketElement.appendChild(button);
         }
       } else {
@@ -433,7 +433,7 @@ function getFullPath(node) {
   return path.join(', '); // Возвращаем полный путь, разделённый слэшами
 }
 
-function sendMessage(adminId, sender) { window.location.href = '/chat/user?adminId=' + adminId + '&sender=' + sender; }
+function sendMessage(adminId, sender, ticket) { window.location.href = '/chat/user?adminId=' + adminId + '&sender=' + sender + '&ticket=' + ticket; }
 
 function validateForm() {
   const selectedLocation = document.getElementById('selectedLocation').value;

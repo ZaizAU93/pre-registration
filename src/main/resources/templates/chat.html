@@ -121,12 +121,14 @@
   <script>
 
     let stompClient;
-    let adminId; // Будет получен из параметра URL
+    let adminId;
+    let ticket;// Будет получен из параметра URL
     let sender =  '[[${sender}]]';
     const role = '[[${role}]]';
 
     function connect() {
       adminId = new URLSearchParams(window.location.search).get('adminId');
+      ticket = new URLSearchParams(window.location.search).get('ticket');
       const socket = new SockJS('/ws');
       stompClient = Stomp.over(socket);
       stompClient.connect({}, function (frame) {
@@ -159,7 +161,8 @@
       const notification ={
         content: "Новое сообщение от пользователя",
         sender: sender,
-        adminId: adminId
+        adminId: adminId,
+        ticketId: ticket,
       };
       console.log("Отправка сообщения:", notification);
       stompClient.send('/app/notifications', {}, JSON.stringify(notification));

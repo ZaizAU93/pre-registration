@@ -96,13 +96,14 @@ public class ChatMessageController {
     @MessageMapping("/notifications")
     public void sendNotification(@Payload Notification notification) {
 
-        System.out.println("notification " + notification.getAdminId());
-
+        System.out.println("Проверка id тикета из уведомления " + notification.getTicketId());
+        System.out.println("Проверка типа " + notification.getTicketId().getClass().getName());
         //Сохраняем уведомление в бд
         Notification notif = Notification.builder()
                 .sender(notification.getSender())
-                .adminId(notification.getAdminId())
+                .adminId(notification.getAdminId()) // получатель сообщения
                 .content(notification.getContent())
+                .ticketId(notification.getTicketId())
                 .actual(true)
                 .build();
 
