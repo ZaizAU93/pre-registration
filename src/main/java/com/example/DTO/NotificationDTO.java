@@ -11,6 +11,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class NotificationDTO {
-    private User sender;
+    private Long sender;
     private String content;
+
+    private Long recipient;
 }

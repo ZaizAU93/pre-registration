@@ -7,6 +7,7 @@ import com.example.model.ChatMessage;
 import com.example.model.Notification;
 import com.example.repo.ChatMessageRepository;
 import com.example.service.ChatMessageService;
+import com.example.service.NotificationsService;
 import com.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -37,6 +38,10 @@ public class ChatMessageController {
 
     @Autowired
     private ChatMessageService chatMessageService;
+
+    @Autowired
+    private NotificationsService notificationsService;
+
 
 
     @MessageMapping("/chat")
@@ -93,8 +98,19 @@ public class ChatMessageController {
 
         System.out.println("notification " + notification.getAdminId());
 
+        //Сохраняем уведомление в бд
+        Notification notif = Notification.builder()
+                .sender(notification.getSender())
+                .adminId(notification.getAdminId())
+                .content(notification.getContent())
+                .actual(true)
+                .build();
+
+        notificationsService.saveNotifications(notif);
+
+
         NotificationDTO notificationDTO = NotificationDTO.builder()
-                .sender(userService.getUserById(notification.getSender()))
+                .sender(notification.getSender())
                 .content(notification.getContent())
                 .build();
 
@@ -117,7 +133,7 @@ public class ChatMessageController {
     public void sendNotificationTask(@Payload Notification notification) {
 
         NotificationDTO notificationDTO = NotificationDTO.builder()
-                .sender(userService.getUserById(notification.getSender()))
+                .sender(notification.getSender())
                 .content(notification.getContent())
                 .build();
 

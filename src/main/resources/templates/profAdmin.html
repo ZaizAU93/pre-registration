@@ -6,6 +6,7 @@
   <title>Профиль сотрудника отдела ИТ</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -214,6 +215,17 @@
       border-radius: 4px;
       cursor: pointer;
     }
+
+
+    .notification-badge {
+      display: inline-block;
+      width: 20px; /* Убедитесь, что ширина достаточная для значка */
+      height: 20px; /* Убедитесь, что высота достаточная для значка */
+      color: #28a745; /* Цвет значка */
+      margin-left: 5px; /* Отступ от текста */
+      position: relative;
+      top: -3px; /* Поднимаем иконку на уровень текста */
+    }
   </style>
 
   <script>
@@ -368,9 +380,17 @@
       const newTicketRow = document.createElement('tr');
       newTicketRow.classList.add('task-item');
       newTicketRow.setAttribute('data-task-id', ticket.id); // Добавляем ID задачи
+
+      // Создание элемента для уведомления
+      const notificationBadge = document.createElement('span');
+      notificationBadge.className = 'notification-badge';
+      notificationBadge.innerHTML = '<i class="fas fa-comment-dots"></i>';
+      notificationBadge.style.display = ticket.problems ? 'inline-block' : 'none'; // Условие для показа
+
       newTicketRow.innerHTML = `
     <td>
       <span>${ticket.user.surname} ${ticket.user.name} ${ticket.user.fathername} (${ticket.user.jobTitle})</span>
+      ${notificationBadge.outerHTML}
     </td>
     <td>${ticket.locationText}</td>
     <td>${ticket.description}</td>
@@ -395,15 +415,16 @@
       ` : ticket.status === 'NEW' ? `
         <button onclick="takeTask('${ticket.id}')">Взять в работу</button>
       ` : ''}
-<div th:if="${ticket.status == 'IN_PROGRESS'}">
-    <button type="button" onclick="openAdminChat('${ticket.user.id}')">Написать пользователю</button>
-</div>
-
+      <div th:if="${ticket.status == 'IN_PROGRESS'}">
+        <button type="button" onclick="openAdminChat('${ticket.user.id}')">Написать пользователю</button>
+      </div>
     </td>
   `;
 
       ticketTableBody.prepend(newTicketRow);
     }
+
+
 
     function toggleSystemInfo(button) {
       const systemInfo = button.nextElementSibling;
@@ -516,9 +537,8 @@
   </div>
 
   <div class="task-list">
-    <h1>Админ - Список тикетов</h1>
     <div id="ticketTable">
-      <h2>Список задач</h2>
+      <h2>Заявки пользователей</h2>
       <div class="tabs">
         <div class="tab">
           <label class="tab-title active" onclick="switchTab('new-tickets-content')">

@@ -4,6 +4,8 @@ import com.example.model.Notification;
 import com.example.repo.NotificationRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -13,6 +15,7 @@ public class NotificationsService {
 
     @Autowired
     private NotificationRepo repo;
+
 
     public List<Notification> getAllNotificationsRecipient(Long id){
         return repo.findByAdminId(id);

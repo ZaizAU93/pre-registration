@@ -70,8 +70,7 @@ public class TicketController {
 
         messagingTemplate.convertAndSend("/topic/tickets", ticketService.getTiketById(idTicketNew));
 
-        return "redirect:/tickets"; // перенаправление на список тикетов
-
+        return "redirect:/account";
     }
 
 

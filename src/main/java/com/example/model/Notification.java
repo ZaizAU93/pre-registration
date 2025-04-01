@@ -24,4 +24,7 @@ public class Notification {
     private String content;
     private Long adminId;
     private LocalDate localDate;
+    private boolean actual;
+    private Long ticketId;
+
 }
