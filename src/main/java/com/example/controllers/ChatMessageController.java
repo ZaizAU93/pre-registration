@@ -113,6 +113,7 @@ public class ChatMessageController {
         NotificationDTO notificationDTO = NotificationDTO.builder()
                 .sender(notification.getSender())
                 .content(notification.getContent())
+                .ticketId(notification.getTicketId())
                 .build();
 
         System.out.println("Уведомление " + notification.getContent() + " Отправитель " + notification.getSender());

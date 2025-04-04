@@ -114,9 +114,9 @@ public class TicketController {
 
     @PostMapping("/close")
     @ResponseBody
-    public  ResponseEntity<String> closeTiket(@RequestParam("id") Long id){
+    public  Ticket closeTiket(@RequestParam("id") Long id){
         Status status = Status.RESOLVED;
         ticketService.jobs(status, id);
-        return ResponseEntity.ok("Задача завершена");
+        return ticketService.getTiketById(id);
     }
 }

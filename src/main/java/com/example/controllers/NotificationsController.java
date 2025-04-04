@@ -1,6 +1,5 @@
 package com.example.controllers;
 
-import com.example.DTO.NotificationDTO;
 import com.example.model.Notification;
 import com.example.service.NotificationsService;
 import com.example.service.UserService;
@@ -20,24 +19,23 @@ public class NotificationsController {
     @Autowired
     private UserService userService;
 
-/*
-    @PostMapping("/save")
-    public void save(@ModelAttribute NotificationDTO dto){
 
-        Notification notification = Notification.builder()
-                .content(dto.getContent())
-                .adminId(dto.getRecipient())
-                .sender(dto.getSender())
-                .build();
-
-        service.saveNotifications(notification);
-    }
-*/
     @GetMapping("/all")
     @ResponseBody
     public List<Notification> getNotificationsRecipient(){
         return service.getAllNotificationsRecipient(userService.getCurrentUser().getId());
     }
+
+    @PostMapping("/delete")
+    @ResponseBody
+    public void deleteHistoryNotifications(@RequestParam Long id, @RequestParam Long user, @RequestParam Long ticket ){
+        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        System.out.println("id отправителя " + id);
+        System.out.println("id получателя " + user);
+        System.out.println("id тикета " + ticket);
+        service.deleteHistoryNotifications(id, user, ticket);
+    }
+
 
 
 }

@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 public class NotificationDTO {
     private Long sender;
     private String content;
-
     private Long recipient;
+
+    private Long ticketId;
 }

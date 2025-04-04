@@ -18,8 +18,8 @@ public interface NotificationRepo extends JpaRepository<Notification, Long> {
     List<Notification> findBySender(Long adSender);
     @Modifying
     @Transactional
-    @Query("delete Notification e WHERE e.adminId =:id")
-    void deleteAllNotificationUser(@Param("id") Long id);
+    @Query("delete Notification e WHERE e.adminId =:id and e.sender =:user and e.ticketId =:ticket")
+    void deleteAllNotificationUser(@Param("id") Long id, @Param(("user")) Long user, @Param(("ticket")) Long ticket );
 
 
 

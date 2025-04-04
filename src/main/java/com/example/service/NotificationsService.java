@@ -60,4 +60,13 @@ public class NotificationsService {
     }
 
 
+    public void deleteHistoryNotifications(Long id, Long user, Long ticket){
+
+        System.out.println("id отправителя " + id);
+        System.out.println("id получателя " + id);
+        System.out.println("id тикета " + id);
+        repo.deleteAllNotificationUser(id, user, ticket);
+    }
+
+
 }
