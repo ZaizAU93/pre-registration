@@ -33,6 +33,11 @@
       width: 100%;
     }
 
+    #adminTickets{
+      padding-top: 20px;
+      margin: 10px;
+    }
+
     .container {
       flex: 1;
       display: flex;
@@ -40,9 +45,16 @@
       align-items: flex-start;
       padding: 20px;
     }
+    .container_1 {
+      flex: 3;
+      display: initial;
+      justify-content: flex-start;
+      align-items: flex-start;
+      padding: 20px;
+      width: 30%;
+    }
 
     .profile {
-      width: 19%;
       border: 1px solid #ccc;
       border-radius: 5px;
       background: #fff;
@@ -50,6 +62,7 @@
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
       margin-right: 20px;
       text-align: center;
+      padding-bottom: 20px;
     }
 
     .task-list {
@@ -491,7 +504,7 @@
         <td>
             ${ticket.status === 'IN_PROGRESS' ? `
                 <button onclick="completeTask('${ticket.id}')">Завершить задачу</button>
-                <button onclick="redirectTask('${ticket.id}')">Перенаправить задачу</button>
+                <button onclick="askForHelp('${ticket.id}')" >Попросить помощи</button>
             ` : ticket.status === 'NEW' ? `
                 <button onclick="takeTask('${ticket.id}')">Взять в работу</button>
             ` : ''}
@@ -521,6 +534,7 @@
       loadTickets();
       loadUserAvatar(); // Загрузка аватара пользователя
       switchTab('new-tickets-content');
+      loadAdminTickets();
     }
 
     function switchTab(tabId) {
@@ -578,6 +592,7 @@
 </header>
 
 <div class="container">
+  <div class="container_1">
   <div class="profile">
     <div class="current-avatar" onclick="openAvatarModal()">
       <div class="current-avatar" onclick="openAvatarModal()">
@@ -597,7 +612,22 @@
     </div>
     <audio id="notification-sound" src="/avatars/sound/sound.mp3" preload="auto"></audio>
   </div>
-
+    <div id="adminTickets" class="profile" th:if="${admin.departametId == 1}">
+      <h2>Заявки от администратора</h2>
+      <table>
+        <thead>
+        <tr>
+          <th>Администартор(подразделение)</th>
+          <th>Проблема</th>
+          <th>В чем проблема</th>
+        </tr>
+        </thead>
+        <tbody class="admin-tickets-table-body">
+        <!-- Заявки от администратора будут добавлены сюда -->
+        </tbody>
+      </table>
+    </div>
+  </div>
   <div id="avatarModal" class="modal">
     <div class="modal-content">
       <span class="close" onclick="closeAvatarModal()">&times;</span>
@@ -960,6 +990,57 @@
       }
     }
     return false; // Если число не найдено, возвращаем null
+  }
+
+  //перенаправвление задачи
+  function askForHelp(ticketId) {
+    const reason = prompt("Введите причину, по которой вы хотите попросить помощи:");
+    if (reason) {
+      $.ajax({
+        type: "POST",
+        url: "/rup/admin/ticket/save",
+        data: {
+          id: ticketId,
+          reason: reason
+        },
+        success: function(response) {
+          alert("Запрос на помощь отправлен!");
+          // Обновите интерфейс, если необходимо
+        },
+        error: function(xhr, status, error) {
+          console.error("Ошибка при отправке запроса на помощь:", xhr.responseText);
+        }
+      });
+    }
+  }
+
+  function loadAdminTickets() {
+    fetch('/rup/admin/ticket/all')
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('Ошибка сети: ' + response.status);
+              }
+              return response.json();
+            })
+            .then(tickets => {
+              tickets.forEach(ticket => {
+                updateAdminTicketList(ticket);
+              });
+            })
+            .catch(error => console.error('Ошибка при загрузке заявок от администратора:', error));
+  }
+
+  function updateAdminTicketList(ticket) {
+    const adminTicketTableBody = document.querySelector('.admin-tickets-table-body');
+
+    const newTicketRow = document.createElement('tr');
+    newTicketRow.innerHTML = `
+        <td>${ticket.user.surname}</td>
+        <td>${ticket.ticket.problems.topic}</td>
+        <td>${ticket.description}</td>
+    `;
+
+    adminTicketTableBody.appendChild(newTicketRow);
   }
 
 
