@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Установка свободных промежутков</title>
+  <script>
+    function addTimeInterval() {
+      const container = document.getElementById('intervalsContainer');
+
+      const div = document.createElement('div');
+
+      div.innerHTML = `
+                <input type="time" name="startTimes" required /> -
+                <input type="time" name="endTimes" required />
+                <button type="button" onclick="this.parentNode.remove()">Удалить</button>
+            `;
+      container.appendChild(div);
+    }
+  </script>
+</head>
+<body>
+<h1>Регистратор: установите свои свободные промежутки</h1>
+
+<form th:action="@{/registrar/free-slots}" method="post">
+  <label for="date">Выберите дату:</label>
+  <input type="date" id="date" name="date" required/>
+
+  <h3>Добавьте промежутки времени:</h3>
+  <div id="intervalsContainer"></div>
+  <button type="button" onclick="addTimeInterval()">Добавить промежуток</button>
+  <br/><br/>
+  <button type="submit">Сохранить промежутки</button>
+</form>
+
+<div th:if="${param.success}">
+  <p>Свободные промежутки успешно сохранены!</p>
+</div>
+</body>
+</html>

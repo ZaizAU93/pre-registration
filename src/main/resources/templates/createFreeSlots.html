@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Установка свободных промежутков</title>
+  <style>
+    /* Общие стили для страницы */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 30px;
+      font-size: 2.5em;
+    }
+
+    /* Стиль для блока доступных таймслотов */
+    div {
+      max-width: 600px;
+      margin: 0 auto 40px auto;
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #34495e;
+      font-size: 2em;
+    }
+
+    /* Стили для списка таймслотов */
+    ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    li {
+      padding: 10px 0;
+      border-bottom: 1px solid #ecf0f1;
+    }
+
+    /* Стиль для формы */
+    form {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    h3 {
+      text-align: center;
+      margin-bottom: 15px;
+      color: #2980b9;
+      font-size: 1.8em;
+    }
+
+    /* Поля ввода */
+    label {
+      display: inline-block;
+      margin-top: 10px;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    input[type="date"],
+    input[type="time"] {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 1em;
+    }
+
+    /* Кнопка */
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 4px;
+      background-color: #27ae60;
+      color: #fff;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    button:hover {
+      background-color: #2ecc71;
+      transform: scale(1.05);
+    }
+
+    /* Адаптивность */
+    @media(max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+      h1 {
+        font-size: 2em;
+      }
+      h2 {
+        font-size: 1.5em;
+      }
+      h3 {
+        font-size: 1.4em;
+      }
+      input[type="date"],
+      input[type="time"],
+      button {
+        font-size: 1em;
+      }
+    }
+  </style>
+  <script>
+    function saveInterval() {
+      const dateInput = document.getElementById('date');
+      const startTimeInput = document.getElementById('startTime');
+      const endTimeInput = document.getElementById('endTime');
+
+      const date = dateInput.value;
+      const startTime = startTimeInput.value;
+      const endTime = endTimeInput.value;
+
+      if (!date) {
+        alert('Пожалуйста, выберите дату.');
+        return;
+      }
+
+      if (!startTime || !endTime) {
+        alert('Пожалуйста, заполните оба поля времени.');
+        return;
+      }
+
+      if (startTime >= endTime) {
+        alert('Время начала должно быть раньше времени конца.');
+        return;
+      }
+
+      // Создаем скрытые поля для передачи данных
+      const hiddenFieldsDiv = document.getElementById('hiddenInterval');
+      hiddenFieldsDiv.innerHTML = '';
+
+      const dateHidden = document.createElement('input');
+      dateHidden.type = 'hidden';
+      dateHidden.name = 'date';
+      dateHidden.value = date;
+
+      const startHidden = document.createElement('input');
+      startHidden.type = 'hidden';
+      startHidden.name = 'startTime';
+      startHidden.value = startTime;
+
+      const endHidden = document.createElement('input');
+      endHidden.type = 'hidden';
+      endHidden.name = 'endTime';
+      endHidden.value = endTime;
+
+      hiddenFieldsDiv.appendChild(dateHidden);
+      hiddenFieldsDiv.appendChild(startHidden);
+      hiddenFieldsDiv.appendChild(endHidden);
+
+      // Отправляем форму
+      document.getElementById('intervalForm').submit();
+
+      // После отправки очищаем поля
+      document.getElementById('startTime').value = '';
+      document.getElementById('endTime').value = '';
+      document.getElementById('date').value = '';
+    }
+  </script>
+</head>
+<body>
+
+<h1>Установите свободный промежуток времени</h1>
+
+<!-- Отображение доступных таймслотов -->
+<div>
+  <h2>Доступные таймслоты:</h2>
+  <div th:if="${hasTimeSlots}">
+    <ul>
+      <li th:each="ts : ${timeSlot}">
+        <span th:text="'Дата: ' + ${ts.data} + ', ' + 'Начало: ' + ${#temporals.format(ts.startTime, 'HH:mm')} + ', ' + 'Конец: ' + ${#temporals.format(ts.endTime, 'HH:mm')}"></span>
+      </li>
+    </ul>
+  </div>
+  <div th:if="${!hasTimeSlots}">
+    <p>Таймслоты еще не назначены.</p>
+  </div>
+</div>
+
+<!-- Форма для добавления интервала -->
+<form th:action="@{/timeslots/save-interval}" method="post" id="intervalForm">
+  <h3>Введите промежуток времени и выберите дату:</h3>
+  <input type="hidden" name="registrarId" th:value="${registrarId}" /> <!-- Передайте registrarId из модели -->
+
+  <label for="date">Дата:</label>
+  <input type="date" id="date" name="date" required />
+
+  <label for="startTime">Начало:</label>
+  <input type="time" id="startTime" name="startTime" required />
+
+  <label for="endTime">Конец:</label>
+  <input type="time" id="endTime" name="endTime" required />
+
+  <button type="submit">Сохранить интервал</button>
+</form>
+
+</body>
+</html>

@@ -17,9 +17,10 @@ public class TicketAdmin {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
-    private Ticket ticket;
+    private Long ticketId;
 
     private Long rupAdmin;
+
+    private String description;
 
 }

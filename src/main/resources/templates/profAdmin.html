@@ -740,6 +740,23 @@
     <div id="reportMessage"></div>
   </div>
 </div>
+
+
+<!-- Модальное окно для заявок от администратора -->
+<div id="ticketDetailsModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeTicketDetailsModal()">&times;</span>
+    <h3>Детали тикета</h3>
+    <div id="ticketDetailsContent">
+      <!-- Содержимое тикета будет загружено сюда -->
+    </div>
+    <div class="modal-buttons">
+      <button class="modal-ok" id="takeTaskButton">Взять в работу</button>
+      <button class="modal-ok" id="closeTicketButton">Закрыть задачу</button>
+    </div>
+  </div>
+</div>
+
 <footer>
   <p>&copy; 2025 Все права защищены</p>
 </footer>
@@ -824,28 +841,6 @@
     });
   }
 
-  function redirectTask(id) {
-    const newAssigneeId = prompt("Введите ID нового исполнителя:");
-    if (newAssigneeId) {
-      $.ajax({
-        type: "POST",
-        url: "http://localhost:8080/tickets/redirect",
-        data: { id: id, newAssigneeId: newAssigneeId },
-        success: function(response) {
-          alert('Задача перенаправлена!');
-          // Обновите статус тикета и переместите его в соответствующую вкладку
-          const taskElement = document.querySelector(`tr[data-id="${id}"]`);
-          if (taskElement) {
-            taskElement.remove();
-            updateTicketList(response); // response должен содержать обновленный тикет с новым статусом
-          }
-        },
-        error: function(xhr, status, error) {
-          console.error("Ошибка при перенаправлении задачи:", xhr.responseText);
-        }
-      });
-    }
-  }
 
   function updateTaskLists() {
     document.getElementById('in-progress-count').innerText = inProgressTasks.length;
@@ -1025,23 +1020,107 @@
             .then(tickets => {
               tickets.forEach(ticket => {
                 updateAdminTicketList(ticket);
+                console.log(ticket);
               });
             })
             .catch(error => console.error('Ошибка при загрузке заявок от администратора:', error));
   }
+
+  //Взять в работу задачу администратора
+  function takeTicketAdminInJobs(id) {
+    $.ajax({
+      type: "POST",
+      url: "/rup/admin/ticket/hire",
+      contentType: "application/json",
+      data: JSON.stringify({ id: id }),
+      success: function(response) {
+        alert("Задача успешно взята в работу!");
+        closeTicketDetailsModal();
+        loadAdminTickets();
+      },
+      error: function(xhr, status, error) {
+        console.error("Ошибка при взятии задачи:", xhr.responseText);
+        alert("Ошибка при взятии задачи!");
+      }
+    });
+  }
+
+
 
   function updateAdminTicketList(ticket) {
     const adminTicketTableBody = document.querySelector('.admin-tickets-table-body');
 
     const newTicketRow = document.createElement('tr');
     newTicketRow.innerHTML = `
-        <td>${ticket.user.surname}</td>
+        <td>${ticket.admin.surname}</td>
         <td>${ticket.ticket.problems.topic}</td>
         <td>${ticket.description}</td>
     `;
 
+    // Добавление обработчика клика
+    newTicketRow.onclick = function() {
+      openTicketDetailsModal(ticket); // Передаем весь объект тикета
+    };
+
     adminTicketTableBody.appendChild(newTicketRow);
   }
+
+  function openTicketDetailsModal(ticket) {
+    const content = `
+        <input type="hidden" id="adminTicketId" value="${ticket.id}">
+        <p><strong>От кого:</strong> ${ticket.ticket.user.surname} ${ticket.ticket.user.name} ${ticket.ticket.user.fathername}</p>
+        <p><strong>Проблема:</strong> ${ticket.ticket.problems.topic}</p>
+        <p><strong>Описание:</strong> ${ticket.ticket.description}</p>
+        <p><strong>Описание задачи:</strong> ${ticket.description}</p>
+        <p><strong>Дата создания:</strong> ${formatDate(ticket.createdAt)}</p>
+    `;
+
+
+
+    // Заполнение содержимого модального окна
+    document.getElementById('ticketDetailsContent').innerHTML = content;
+
+    // Обработчики для кнопок
+    document.getElementById('takeTaskButton').onclick = function() {
+      const ticketId = document.getElementById('adminTicketId').value;
+      console.log("ticket " + ticket.id);
+      takeTicketAdminInJobs(ticketId);
+
+    };
+
+    document.getElementById('closeTicketButton').onclick = function() {
+      closeTask(ticket.id); // Вызов функции для закрытия задачи
+      closeTicketDetailsModal(); // Закрытие модального окна
+    };
+
+    // Открытие модального окна
+    document.getElementById('ticketDetailsModal').style.display = 'block';
+  }
+
+
+  function closeTicketDetailsModal() {
+    document.getElementById('ticketDetailsModal').style.display = 'none';
+  }
+
+
+  function closeTask(ticketId) {
+    // Логика для закрытия задачи
+    $.ajax({
+      type: "POST",
+      url: "/tickets/close",
+      data: { id: ticketId },
+      success: function(response) {
+        // Логика после успешного закрытия задачи
+        alert("Задача закрыта!");
+        // Обновите интерфейс, если необходимо
+        loadAdminTickets(); // Например, перезагрузить список заявок от администратора
+      },
+      error: function(xhr, status, error) {
+        console.error("Ошибка при закрытии задачи:", xhr.responseText);
+      }
+    });
+  }
+
 
 
 </script>

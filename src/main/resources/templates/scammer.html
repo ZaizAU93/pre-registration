@@ -1,0 +1,80 @@
+<!-- admin.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Админка</title>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+</head>
+<body>
+<h1>Общая таблица регистраторов</h1>
+<table border="1">
+  <thead>
+  <tr>
+    <th>Регистратор</th>
+    <th>Время</th>
+    <th>Свободно</th>
+    <th>Бронирование</th>
+  </tr>
+  </thead>
+  <tbody id="scheduleBody">
+  <!-- динамически заполняется -->
+  <tr th:each="slot : ${allTimeSlots}">
+    <td th:text="${slot.registrar.name}"></td>
+    <td th:text="${#dates.format(slot.startTime, 'HH:mm')}"></td>
+    <td th:text="${slot.isFree ? 'Да' : 'Нет'}"></td>
+    <td>
+      <button th:if="${slot.isFree}" th:onclick="'showBookingForm(' + ${slot.id} + ')'">Забронировать</button>
+    </td>
+  </tr>
+  </tbody>
+</table>
+
+<!-- Форма бронирования -->
+<div id="bookingForm" style="display:none;">
+  <h3>Назначить клиента</h3>
+  <input type="hidden" id="slotId" />
+  <label>Имя:</label>
+  <input type="text" id="clientFirstName"/>
+  <label>Фамилия:</label>
+  <input type="text" id="clientLastName"/>
+  <button onclick="submitBooking()">Назначить</button>
+  <button onclick="closeForm()">Отмена</button>
+</div>
+
+<script>
+  var socket = new SockJS('/ws');
+  var stompClient = Stomp.over(socket);
+  stompClient.connect({}, function() {
+    stompClient.subscribe('/topic/availability', function(message) {
+      location.reload(); // обновление таблицы
+    });
+    stompClient.subscribe('/topic/registrar/*', function(message) {
+      location.reload();
+    });
+  });
+
+  function showBookingForm(slotId) {
+    document.getElementById('slotId').value = slotId;
+    document.getElementById('bookingForm').style.display = 'block';
+  }
+
+  function closeForm() {
+    document.getElementById('bookingForm').style.display = 'none';
+  }
+
+  function submitBooking() {
+    const slotId = document.getElementById('slotId').value;
+    const firstName = document.getElementById('clientFirstName').value;
+    const lastName = document.getElementById('clientLastName').value;
+    fetch('/api/admin/book', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({slotId: slotId, firstName: firstName, lastName: lastName})
+    }).then(() => {
+      closeForm();
+    });
+  }
+</script>
+</body>
+</html>

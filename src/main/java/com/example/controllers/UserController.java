@@ -2,6 +2,8 @@ package com.example.controllers;
 
 import com.example.model.Ticket;
 import com.example.model.User;
+import com.example.scammer.repo.RegistratorRepo;
+import com.example.scammer.service.RegistratorService;
 import com.example.service.DepartmentService;
 import com.example.service.JobTitleService;
 import com.example.service.UserService;
@@ -31,6 +33,10 @@ public class UserController {
 
     @Autowired
     private JobTitleService jobTitleService;
+
+    @Autowired
+    private RegistratorService registratorService;
+
     @GetMapping("/login")
     public String login() {
         return "login";
@@ -47,7 +53,12 @@ public class UserController {
     @PostMapping("/register")
     public String registerUser(@ModelAttribute User user) {
 
-        userService.createUser(user);
+        User saveUser = user;
+
+        Long id = userService.createUser(saveUser);
+
+        registratorService.save(user, id);
+
 
         return "redirect:/login"; // Перенаправление на страницу входа после регистрации
     }

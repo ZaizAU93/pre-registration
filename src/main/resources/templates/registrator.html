@@ -1,0 +1,40 @@
+<!-- registrar.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Регистратор</title>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+</head>
+<body>
+<h1>Выберите свободные промежутки</h1>
+<form id="availabilityForm">
+  <div th:each="slot : ${timeSlots}">
+    <input type="checkbox" th:id="'slot' + ${slot.id}" th:value="${slot.startTime}" th:disabled="${!slot.isFree}">
+    <label th:for="'slot' + ${slot.id}" th:text="${#dates.format(slot.startTime, 'HH:mm')}"></label>
+  </div>
+  <button type="button" onclick="submitAvailability()">Сохранить</button>
+</form>
+
+<script>
+  var socket = new SockJS('/ws');
+  var stompClient = Stomp.over(socket);
+  stompClient.connect({}, function() {
+    // подписка на обновления
+    stompClient.subscribe('/topic/availability', function(message) {
+      location.reload();
+    });
+  });
+
+  function submitAvailability() {
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+    const times = Array.from(checkboxes).map(cb => cb.value);
+    fetch('/api/registrar/{registrarId}/availability', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(times)
+    });
+  }
+</script>
+</body>
+</html>

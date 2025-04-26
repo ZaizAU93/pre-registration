@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Регистраторы и временные слоты</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    .filters-panel {
+      flex: 1;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+      background-color: #ffffff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      transition: all 0.3s ease;
+    }
+
+    /* Заголовок панели фильтров */
+    .filters-panel h3 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      color: #2980b9;
+      font-size: 1.6em;
+      font-weight: 600;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+
+    /* Надписи для фильтров */
+    .filters-panel label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #34495e;
+      font-size: 1em;
+    }
+
+    /* Поля ввода фильтров */
+    .filters-panel input[type="text"],
+    .filters-panel input[type="date"],
+    .filters-panel input[type="time"] {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #bdc3c7;
+      border-radius: 8px;
+      font-size: 1em;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .filters-panel input[type="text"]:focus,
+    .filters-panel input[type="date"]:focus,
+    .filters-panel input[type="time"]:focus {
+      border-color: #2980b9;
+      box-shadow: 0 0 8px rgba(41, 128, 185, 0.2);
+      outline: none;
+    }
+
+    /* Кнопка применения фильтров */
+    .applyFilters {
+      width: 100%;
+      padding: 12px;
+      margin-top: 20px;
+      background-color: #2980b9;
+      color: #fff;
+      font-weight: 600;
+      font-size: 1.1em;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    .applyFilters:hover {
+      background-color: #3498db;
+      transform: scale(1.02);
+    }
+
+
+
+
+
+    /* Адаптивность для мобильных устройств */
+    @media(max-width: 768px) {
+      .filters-panel {
+        padding: 15px;
+      }
+      .applyFilters {
+        padding: 14px;
+        font-size: 1.2em;
+      }
+    }
+
+    /* Общие стили */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 30px;
+      font-size: 2.5em;
+    }
+
+    /* Контейнер для двух частей */
+    .main-container {
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+    }
+
+    /* Левая часть - основной контент */
+    .content {
+      flex: 3;
+    }
+
+    /* Правая часть - панель фильтров */
+    .filters-panel {
+      flex: 1;
+      position: sticky;
+      top: 20px; /* отступ сверху при прокрутке */
+      height: fit-content;
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+    }
+
+    /* Заголовок панели фильтров */
+    .filters-panel h3 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      color: #2980b9;
+      font-size: 1.4em;
+      text-align: center;
+    }
+
+    /* Общие стили для регистраторов */
+    .registrar {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .registrar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .registrar h2 {
+      margin: 0;
+      color: #34495e;
+      font-size: 1.8em;
+    }
+
+    /* Кнопка "Посмотреть свободное время" */
+    .toggle-slots {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      background-color: #2980b9;
+      color: #fff;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    .toggle-slots:hover {
+      background-color: #3498db;
+      transform: scale(1.05);
+    }
+
+    /* Скрываем слоты по умолчанию */
+    .slots-container {
+      display: none;
+      margin-top: 10px;
+    }
+
+    /* Заголовок временных слотов */
+    h3 {
+      margin-top: 20px;
+      margin-bottom: 10px;
+      color: #2980b9;
+      font-size: 1.4em;
+    }
+
+    /* Таблица со слотами */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fafafa;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    thead {
+      background-color: #34495e;
+      color: #fff;
+    }
+
+    th, td {
+      padding: 12px 15px;
+      text-align: center;
+    }
+
+    th {
+      font-weight: 600;
+      font-size: 1em;
+    }
+
+    /* Строки таблицы */
+    tbody tr:nth-child(even) {
+      background-color: #ecf0f1;
+    }
+
+    tbody tr:nth-child(odd) {
+      background-color: #fff;
+    }
+
+    /* Стиль для статуса */
+    td:nth-child(4) {
+      font-weight: 600;
+    }
+
+    /* Кнопки */
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      background-color: #27ae60;
+      color: #fff;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    button:hover {
+      background-color: #2ecc71;
+      transform: scale(1.05);
+    }
+
+    /* Кнопка при недоступности */
+    button:disabled {
+      background-color: #95a5a6;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    /* Адаптивность */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+      .main-container {
+        flex-direction: column;
+      }
+      .filters-panel {
+        position: relative;
+        top: auto;
+        max-height: none;
+        width: 100%;
+        margin-top: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+<script>
+  // Изначально WebSocket подключение
+  const socket = new SockJS('/ws');
+  const stompClient = Stomp.over(socket);
+  let isConnected = false;
+
+  function connectWebSocket() {
+    if (isConnected) return;
+    stompClient.connect({}, function(frame) {
+      isConnected = true;
+      console.log('Connected: ' + frame);
+      stompClient.subscribe('/topic/slots', function(message) {
+        const slotId = JSON.parse(message.body);
+        console.log("Пришло сообщение с сервера: " + slotId);
+        // Удаляем слот по ID
+        $('button[data-slot-id="'+slotId+'"]').closest('tr').fadeOut(300, function() {
+          $(this).remove();
+        });
+      });
+    });
+  }
+
+  connectWebSocket();
+
+  function updateRegistrars(registrars) {
+    console.log("Обновляем регистраторов:", registrars);
+    try {
+      $('.content').empty();
+
+      if (!registrars || registrars.length === 0) {
+        $('.content').html('<p class="no-data">Нет данных для отображения</p>');
+        return;
+      }
+
+      registrars.forEach(registrar => {
+        let registrarDiv = $(`div[data-registrar-id="${registrar.id}"]`);
+
+        if (registrarDiv.length === 0) {
+          registrarDiv = $(`
+            <div class="registrar" data-registrar-id="${registrar.id}">
+              <div class="registrar-header">
+                <h2>${registrar.name} ${registrar.surname}</h2>
+                <button type="button" class="toggle-slots">Посмотреть свободное время</button>
+              </div>
+              <div class="slots-container" style="display: none;">
+                <h3>Временные слоты:</h3>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Дата</th>
+                      <th>Время начала</th>
+                      <th>Время конца</th>
+                      <th>Статус</th>
+                      <th>Действие</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          `);
+          $('.content').append(registrarDiv);
+        }
+
+        const tbody = registrarDiv.find('tbody');
+        tbody.empty();
+
+        if (!registrar.timeSlots || !Array.isArray(registrar.timeSlots) || registrar.timeSlots.length === 0) {
+          tbody.append('<tr><td colspan="5">Нет доступных слотов</td></tr>');
+          return;
+        }
+
+        // Фильтр: показываем только свободные слоты (isFree === true)
+        registrar.timeSlots.forEach(slot => {
+          if (slot.isFree !== true) {
+            // пропускаем слоты, которые не свободны
+            return;
+          }
+          const row = $(`
+            <tr>
+              <td>${slot.data || 'Нет данных'}</td>
+              <td>${formatTime(slot.startTime)}</td>
+              <td>${formatTime(slot.endTime)}</td>
+              <td>${slot.isFree  ? 'Свободно' : 'Занято'}</td>
+              <td>
+                ${slot.isFree  ? `<button type="button" data-slot-id="${slot.id}" onclick="placeAnOrder(${slot.id})">Занять</button>` : `<button type="button" disabled>Занято</button>`}
+              </td>
+            </tr>
+          `);
+          tbody.append(row);
+        });
+      });
+
+      // Обработка кнопки "Посмотреть свободное время" для каждого регистратора
+      $(document).off('click', '.toggle-slots').on('click', '.toggle-slots', function() {
+        const container = $(this).closest('.registrar').find('.slots-container');
+        container.slideToggle();
+        const currentText = $(this).text();
+        $(this).text(currentText === 'Посмотреть свободное время' ? 'Скрыть' : 'Посмотреть свободное время');
+      });
+
+    } catch (error) {
+      console.error("Ошибка при обновлении регистраторов:", error);
+      $('.content').html('<p class="error">Ошибка загрузки данных</p>');
+    }
+  }
+
+  function formatTime(timeString) {
+    if (!timeString) return '--:--';
+    try {
+      const [hours, minutes] = timeString.split(':');
+      return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+    } catch (e) {
+      return timeString;
+    }
+  }
+
+  // Обработка фильтров
+  function applyFilters() {
+    const surname = $('#surnameFilter').val().trim();
+    const date = $('#dateFilter').val();
+    const startTime = $('#startTimeFilter').val();
+    const endTime = $('#endTimeFilter').val();
+
+    const params = {};
+    let url = '';
+
+    if (surname) {
+      url = '/api/registrars/filter/by-surname';
+      params.surname = surname;
+    } else if (date) {
+      if (startTime && endTime) {
+        url = '/api/registrars/filter/free-in-interval';
+        params.date = date;
+        params.startTime = startTime;
+        params.endTime = endTime;
+      } else {
+        url = '/api/registrars/filter/free-on-date';
+        params.date = date;
+      }
+    } else {
+      alert('Заполните фамилию или дату');
+      return;
+    }
+
+    $('.content').hide();
+
+    $.ajax({
+      url: url,
+      method: 'GET',
+      data: params,
+      success: function(data) {
+        console.log('Получены данные:', data);
+        updateRegistrars(data);
+        $('.content').show();
+      },
+      error: function(xhr, status, error) {
+        console.error('Ошибка:', error);
+        alert('Ошибка: ' + xhr.statusText + '\n' + xhr.responseText);
+        $('.content').show();
+      }
+    });
+  }
+
+  // Функция для сброса фильтров
+  function resetFilters() {
+    $('#surnameFilter').val('');
+    $('#dateFilter').val('');
+    $('#startTimeFilter').val('');
+    $('#endTimeFilter').val('');
+    // Загружаем все регистраторы без фильтров
+    // Предполагается, что есть API для получения всех данных
+    // Или можно вызвать тот же API без фильтров
+    $.ajax({
+      url: '/api/registrars/all', // предполагаемый эндпоинт для всех данных
+      method: 'GET',
+      success: function(data) {
+        updateRegistrars(data);
+      },
+      error: function(xhr, status, error) {
+        console.error('Ошибка при загрузке всех данных:', error);
+        alert('Ошибка при загрузке данных');
+      }
+    });
+  }
+
+  // Функция для показа всех слотов (без фильтрации)
+  function showAll() {
+    // Можно просто вызвать тот же API, что и при сбросе фильтров
+    resetFilters();
+  }
+
+  // Обработчики кнопок
+  $(document).ready(function() {
+    // Обработка кнопки "Сбросить фильтры"
+    $('.filters-panel').on('click', 'button:contains("Сбросить фильтры")', function() {
+      resetFilters();
+    });
+
+    // Обработка кнопки "Показать всех"
+    $('.filters-panel').on('click', 'button:contains("Показать всех")', function() {
+      showAll();
+    });
+  });
+
+  // Обработка клика по кнопке "Посмотреть свободное время" (уже есть)
+  $(document).on('click', '.toggle-slots', function() {
+    const container = $(this).closest('.registrar').find('.slots-container');
+    container.slideToggle();
+    const currentText = $(this).text();
+    $(this).text(currentText === 'Посмотреть свободное время' ? 'Скрыть' : 'Посмотреть свободное время');
+  });
+</script>
+
+
+<h1>Список регистраторов</h1>
+
+<div class="main-container">
+  <!-- Левая часть: список регистраторов -->
+  <div class="content">
+    <!-- Изначально сюда вставляется вся информация -->
+  </div>
+  <!-- Правая часть: панель фильтров -->
+  <div class="filters-panel">
+    <h3>Фильтры</h3>
+    <div style="margin-top: 15px; text-align: center;">
+      <button type="button" class="applyFilters" onclick="">Сбросить фильтры</button>
+    </div>
+    <div style="margin-top: 15px; text-align: center;">
+      <button type="button" class="applyFilters" onclick="">Показать всех</button>
+    </div>
+    <div>
+      <label for="surnameFilter">Фамилия:</label>
+      <input type="text" id="surnameFilter" name="surnameFilter">
+    </div>
+    <div style="margin-top: 10px;">
+      <label for="dateFilter">Дата:</label>
+      <input type="date" id="dateFilter" name="dateFilter">
+    </div>
+    <div style="margin-top: 10px;">
+      <label for="startTimeFilter">Время начала:</label>
+      <input type="time" id="startTimeFilter" name="startTimeFilter">
+    </div>
+    <div style="margin-top: 10px;">
+      <label for="endTimeFilter">Время конца:</label>
+      <input type="time" id="endTimeFilter" name="endTimeFilter">
+    </div>
+    <div style="margin-top: 15px; text-align: center;">
+      <button type="button" class="applyFilters" onclick="applyFilters()">Применить</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

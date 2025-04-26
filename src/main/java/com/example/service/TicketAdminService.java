@@ -16,13 +16,7 @@ public class TicketAdminService {
     private UserService userService;
 
     public void save(TicketAdmin ticketAdmin){
-
-        TicketAdmin saveAdminTicket = TicketAdmin.builder()
-                .ticket(ticketAdmin.getTicket())
-            //    .rupAdmin(userService.getCurrentUser().getId())
-                .build();
-
-        repo.save(saveAdminTicket);
+        repo.save(ticketAdmin);
     }
 
 
