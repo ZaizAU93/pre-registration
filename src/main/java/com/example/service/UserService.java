@@ -21,7 +21,8 @@ public class UserService {
 
 
 
-    public Long createUser(User user) {
+    public void createUser(User user) {
+
         if (userRepository.findByUsername(user.getUsername()) == null) {
             User userNew = User.builder()
                     .username(user.getUsername())
@@ -34,10 +35,8 @@ public class UserService {
                     .jobTitleId(user.getJobTitleId())
                     .build();
 
-            User savedUser = userRepository.save(userNew);
-            return savedUser.getId();
+            userRepository.save(userNew);
         }
-        return null;
     }
 
 

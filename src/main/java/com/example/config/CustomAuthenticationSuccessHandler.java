@@ -23,10 +23,10 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         // Определяем URL в зависимости от роли
         for (GrantedAuthority authority : authorities) {
             if (authority.getAuthority().equals("ROLE_ADMIN")) {
-                redirectUrl = "/admin/tickets"; // URL для администраторов
+                redirectUrl = "/registrar"; // URL для администраторов
                 break;
             } else if (authority.getAuthority().equals("ROLE_USER")) {
-                redirectUrl = "/account"; // URL для пользователей
+                redirectUrl = "/registrar/free-slots"; // URL для пользователей
                 break;
             }
         }

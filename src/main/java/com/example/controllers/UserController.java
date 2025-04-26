@@ -1,11 +1,6 @@
 package com.example.controllers;
 
-import com.example.model.Ticket;
 import com.example.model.User;
-import com.example.scammer.repo.RegistratorRepo;
-import com.example.scammer.service.RegistratorService;
-import com.example.service.DepartmentService;
-import com.example.service.JobTitleService;
 import com.example.service.UserService;
 import org.springframework.core.io.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,14 +23,6 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private DepartmentService departmentService;
-
-    @Autowired
-    private JobTitleService jobTitleService;
-
-    @Autowired
-    private RegistratorService registratorService;
 
     @GetMapping("/login")
     public String login() {
@@ -45,21 +32,12 @@ public class UserController {
     @GetMapping("/register")
     public String register(Model model) {
         model.addAttribute("user", new User());
-        model.addAttribute("departaments", departmentService.getAllDepartaments());
-        model.addAttribute("jobTitle", jobTitleService.getAllJobTitle());
         return "register";
     }
 
     @PostMapping("/register")
     public String registerUser(@ModelAttribute User user) {
-
-        User saveUser = user;
-
-        Long id = userService.createUser(saveUser);
-
-        registratorService.save(user, id);
-
-
+        userService.createUser(user);
         return "redirect:/login"; // Перенаправление на страницу входа после регистрации
     }
 
@@ -67,8 +45,6 @@ public class UserController {
     @GetMapping("/admin/register")
     public String registerAdmin(Model model) {
         model.addAttribute("user", new User());
-        model.addAttribute("departaments", departmentService.getAllDepartaments());
-        model.addAttribute("jobTitle", jobTitleService.getAllJobTitle());
         return "registerAdmin";
     }
 
