@@ -46,8 +46,6 @@ public class AdminController {
             if (slot.isFree()) {
                 Booking booking = new Booking();
                 booking.setTimeSlot(slot);
-                booking.setClientFirstName(request.getFirstName());
-                booking.setClientLastName(request.getLastName());
                 bookingRepository.save(booking);
 
                 slot.setFree(false);

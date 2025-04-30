@@ -15,8 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class TimeSlotService {
@@ -27,6 +27,9 @@ public class TimeSlotService {
     private EntityManager entityManager;
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private BookingService bookingService;
 
     public TimeSlotService(RegistratorRepo registrarRepository, TimeSlotRepository timeSlotRepository) {
         this.registrarRepository = registrarRepository;
@@ -88,5 +91,10 @@ public class TimeSlotService {
         // или добавить отдельное поле статус
         timeSlotRepository.save(slot);
     }
+
+    public Optional<TimeSlot> findById(Long id){
+        return timeSlotRepository.findById(id);
+    }
+
 
 }

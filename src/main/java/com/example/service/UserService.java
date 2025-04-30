@@ -21,8 +21,7 @@ public class UserService {
 
 
 
-    public void createUser(User user) {
-
+    public Long createUser(User user) {
         if (userRepository.findByUsername(user.getUsername()) == null) {
             User userNew = User.builder()
                     .username(user.getUsername())
@@ -31,12 +30,14 @@ public class UserService {
                     .surname(user.getSurname())
                     .name(user.getName())
                     .fathername(user.getFathername())
-                    .departametId(user.getDepartametId())
                     .jobTitleId(user.getJobTitleId())
                     .build();
 
-            userRepository.save(userNew);
+            User savedUser = userRepository.save(userNew);
+            return savedUser.getId(); // возвращаем id сохраненного пользователя
         }
+        // Можно вернуть null или бросить исключение, если пользователь уже существует
+        return null;
     }
 
 

@@ -1,6 +1,7 @@
 package com.example.controllers;
 
 import com.example.model.User;
+import com.example.scammer.service.RegistratorService;
 import com.example.service.UserService;
 import org.springframework.core.io.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,8 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private RegistratorService registratorService;
 
     @GetMapping("/login")
     public String login() {
@@ -37,7 +40,8 @@ public class UserController {
 
     @PostMapping("/register")
     public String registerUser(@ModelAttribute User user) {
-        userService.createUser(user);
+        Long idUser = userService.createUser(user);
+        registratorService.save(user,idUser );
         return "redirect:/login"; // Перенаправление на страницу входа после регистрации
     }
 

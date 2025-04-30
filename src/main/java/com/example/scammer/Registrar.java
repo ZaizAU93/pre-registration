@@ -17,6 +17,8 @@ public class Registrar {
     @Id
     @GeneratedValue
     private Long id;
+
+    private String regCode;
     private String name;
 
     private String surname;

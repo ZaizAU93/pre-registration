@@ -17,6 +17,7 @@ public class RegistratorService {
 
     public void save(User user, Long id){
         Registrar registrar = Registrar.builder()
+                .regCode(user.getUsername())
                 .name(user.getName())
                 .surname(user.getSurname())
                 .fathername(user.getFathername())
@@ -24,5 +25,10 @@ public class RegistratorService {
                 .build();
         registratorRepo.save(registrar);
     }
+
+    public Registrar findById(Long id){
+        return registratorRepo.findById(id).get();
+    }
+
 
 }

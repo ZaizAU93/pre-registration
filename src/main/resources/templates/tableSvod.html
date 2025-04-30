@@ -2,10 +2,11 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <title>Регистраторы и временные слоты</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.8/jquery.inputmask.min.js"></script>
   <style>
     .filters-panel {
       flex: 1;
@@ -304,6 +305,46 @@
 
   connectWebSocket();
 
+
+  $(document).ready(function() {
+    // Инициализация маски для телефона
+    $('#phone').inputmask({"mask": "375(99)999-99-99"});
+
+    // Обработка отправки формы
+    $('#bookingForm').on('submit', function(e) {
+      e.preventDefault();
+
+      const purpose = $('input[name="purpose"]:checked').val();
+      if (!purpose) {
+        alert('Выберите цель визита');
+        return;
+      }
+
+      $.ajax({
+        url: '/booking/save',
+        method: 'POST',
+        data: {
+          timeSlot: $('#slotId').val(),
+          customerName: $('#customerName').val(),
+          purposeId: purpose,
+          info: $('#info').val(),
+          phone: $('#phone').val(),
+        },
+        success: function() {
+          alert('Бронирование успешно создано!');
+          $('#bookingFormContainer').hide();
+        },
+        error: function(xhr) {
+          alert('Ошибка: ' + xhr.status + ' - ' + xhr.responseText);
+        }
+      });
+    });
+
+    // Обработка отмены
+    $('#cancelBooking').on('click', function() {
+      $('#bookingFormContainer').hide();
+    });
+  });
   function updateRegistrars(registrars) {
     console.log("Обновляем регистраторов:", registrars);
     try {
@@ -354,7 +395,7 @@
 
         // Фильтр: показываем только свободные слоты (isFree === true)
         registrar.timeSlots.forEach(slot => {
-          if (slot.isFree !== true) {
+          if (slot.Free === false) {
             // пропускаем слоты, которые не свободны
             return;
           }
@@ -363,9 +404,9 @@
               <td>${slot.data || 'Нет данных'}</td>
               <td>${formatTime(slot.startTime)}</td>
               <td>${formatTime(slot.endTime)}</td>
-              <td>${slot.isFree  ? 'Свободно' : 'Занято'}</td>
+              <td>${!slot.Free  ? 'Свободно' : 'Занято'}</td>
               <td>
-                ${slot.isFree  ? `<button type="button" data-slot-id="${slot.id}" onclick="placeAnOrder(${slot.id})">Занять</button>` : `<button type="button" disabled>Занято</button>`}
+                ${!slot.Free  ? `<button type="button" data-slot-id="${slot.id}" onclick="placeAnOrder(${slot.id})">Занять</button>` : `<button type="button" disabled>Занято</button>`}
               </td>
             </tr>
           `);
@@ -437,7 +478,7 @@
         $('.content').show();
       },
       error: function(xhr, status, error) {
-        console.error('Ошибка:', error);
+        console.log('Ошибка:', error);
         alert('Ошибка: ' + xhr.statusText + '\n' + xhr.responseText);
         $('.content').show();
       }
@@ -492,6 +533,35 @@
     const currentText = $(this).text();
     $(this).text(currentText === 'Посмотреть свободное время' ? 'Скрыть' : 'Посмотреть свободное время');
   });
+
+
+  // Функция для бронирования слота
+  function placeAnOrder(id) {
+    const url = "/registrar/registrars/" + id;
+    $.ajax({
+      type: "POST",
+      url: url,
+      data: { id: id },
+      success: function(response) {
+        // Удаляем строку слота
+        $('button[data-slot-id="'+id+'"]').closest('tr').fadeOut(300, function() {
+          $(this).remove();
+        });
+        // Отправляем сообщение через WebSocket
+        if (isConnected) {
+          stompClient.send('/topic/slots', {}, JSON.stringify(id));
+        }
+        console.log("Отправлено на сервер: " + id);
+      },
+      error: function(xhr, status, error) {
+        alert('Ошибка при бронировании: ' + xhr.responseText);
+      }
+    });
+
+    $('#slotId').val(id);
+    $('#bookingFormContainer').css('display', 'flex');
+
+  }
 </script>
 
 
@@ -530,6 +600,49 @@
     <div style="margin-top: 15px; text-align: center;">
       <button type="button" class="applyFilters" onclick="applyFilters()">Применить</button>
     </div>
+  </div>
+</div>
+
+<!-- Модальное окно или скрытая форма для заказа -->
+<div id="bookingFormContainer" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000;">
+  <div style="background: #fff; padding: 20px; border-radius: 8px; max-width: 400px; width: 100%; position: relative;">
+    <h3>Заполните информацию о заказе</h3>
+    <form id="bookingForm">
+      <input type="hidden" id="slotId" name="slotId" value="">
+
+
+      <div style="margin-bottom: 10px;">
+        <label for="customerName">Имя клиента:</label>
+        <input type="text" id="customerName" name="customerName" required>
+      </div>
+
+      <div style="margin-bottom: 10px;">
+        <label for="phone">Телефон:</label>
+        <input type="text" id="phone" name="phone" required>
+      </div>
+
+      <div style="margin-bottom: 10px;">
+        <label for="info">Дополнительная информация:</label>
+        <textarea id="info" name="info" rows="3" style="width:100%;"></textarea>
+      </div>
+
+      <div style="margin-bottom: 10px;">
+        <label>Цель (Purpose):</label>
+        <div>
+          <input type="radio" id="purpose1" name="purpose" value="1" required>
+          <label for="purpose1">Цель 1</label>
+        </div>
+        <div>
+          <input type="radio" id="purpose2" name="purpose" value="2" required>
+          <label for="purpose2">Цель 2</label>
+        </div>
+      </div>
+
+      <div style="text-align: right;">
+        <button type="submit">Отправить</button>
+        <button type="button" id="cancelBooking" style="margin-left: 10px;">Отмена</button>
+      </div>
+    </form>
   </div>
 </div>
 

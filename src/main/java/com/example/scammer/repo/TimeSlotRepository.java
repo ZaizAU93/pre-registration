@@ -11,12 +11,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface TimeSlotRepository extends JpaRepository<TimeSlot, Long> {
 
     TimeSlot findByRegistrarIdAndStartTime(Long registrarId, LocalDateTime time);
 
     List<TimeSlot> findByRegistrar(Registrar registrar);
+    Optional<TimeSlot> findById(Long id);
 
     @Modifying
     @Transactional

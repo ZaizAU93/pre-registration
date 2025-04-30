@@ -45,6 +45,7 @@ public class SecurityConfig {
                                 .requestMatchers("/report").hasAnyRole("ADMIN")
                                 .requestMatchers("/notifications/**").hasAnyRole("ADMIN")
                                 .requestMatchers("/rup/**").hasAnyRole("ADMIN")
+                                .requestMatchers("/booking/**").hasAnyRole("ADMIN")
  //                       .requestMatchers("/resources/**").hasAnyRole("ADMIN", "USER")
                         .anyRequest().hasAnyRole("ADMIN", "USER") // Остальные запросы требуют одной из ролей
 
