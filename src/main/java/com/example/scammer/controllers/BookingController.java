@@ -3,6 +3,7 @@ package com.example.scammer.controllers;
 import com.example.scammer.Booking;
 import com.example.scammer.DTO.BookingDto;
 import com.example.scammer.TimeSlot;
+import com.example.scammer.repo.PreEntryRepository;
 import com.example.scammer.service.BookingService;
 import com.example.scammer.service.OraclePackageService;
 import com.example.scammer.service.RegistratorService;
@@ -28,6 +29,9 @@ public class BookingController {
     @Autowired
     private OraclePackageService oraclePackageService;
 
+    @Autowired
+    private PreEntryRepository preEntryRepository;
+
     @PostMapping("/save")
     public ResponseEntity<?> save(
             @RequestParam Long timeSlot,
@@ -36,26 +40,50 @@ public class BookingController {
             @RequestParam String info,
             @RequestParam String phone) {
 
+
         try {
             Optional<TimeSlot> slotOptional = timeSlotService.findById(timeSlot);
             if (!slotOptional.isPresent()) {
                 return ResponseEntity.badRequest().body("Слот не найден");
             }
 
-            TimeSlot slot = slotOptional.get();
 
+
+
+
+            TimeSlot slot = slotOptional.get();
             Booking booking = new Booking();
+
+            // Получаем regCode из объекта Registrar
+            String regCode = slot.getRegistrar().getRegCode();
+
+
+            if (regCode != null && regCode.length() > 1) {
+                try {
+                    // Удаляем первый символ и преобразуем в Integer
+                    String numericPart = regCode.substring(1);
+                    int regCodeInt = Integer.parseInt(numericPart);
+                    booking.setRegCode(regCodeInt);
+                } catch (NumberFormatException e) {
+                    // Обработка ошибки: часть после первого символа не является числом
+                    throw new IllegalArgumentException("Invalid regCode format: " + regCode);
+                }
+            } else {
+                // Обработка случая, когда regCode отсутствует или слишком короткий
+                throw new IllegalArgumentException("regCode is null or too short: " + regCode);
+            }
+
             booking.setCustomerName(customerName);
             booking.setInfo(info);
             booking.setPhone(phone);
             booking.setTimeSlot(slot);
             booking.setReceiptDate(slot.getData());
             booking.setPurposeId(purposeId);
-            booking.setRegCode(slot.getRegistrar().getRegCode());
             bookingService.save(booking);
 
 
-            oraclePackageService.callAddEntryProcedure(booking);
+           // oraclePackageService.callAddEntryProcedure(booking);
+            preEntryRepository.addPreEntry(booking);
 
             return ResponseEntity.ok().build();
 

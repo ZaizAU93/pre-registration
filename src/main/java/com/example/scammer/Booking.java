@@ -1,10 +1,7 @@
 package com.example.scammer;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,11 +20,12 @@ public class Booking {
     private Long id;
     @OneToOne
     @JsonIgnore
+    @JoinColumn( unique = true)
     private TimeSlot timeSlot;
     private LocalDate receiptDate;             // p_receiptdate — дата получения
     private String customerName;               // p_customername — имя клиента
     private Integer purposeId;                 // p_purposeid — идентификатор цели
     private String info;                       // p_info — дополнительная информация
     private String phone;                      // p_phone — телефон клиента
-    private String regCode;                    // p_regcode — регистрационный код
+    private Integer regCode;                    // p_regcode — регистрационный код
 }
