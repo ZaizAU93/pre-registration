@@ -1,10 +1,12 @@
 package com.example.scammer.controllers;
 import com.example.scammer.Registrar;
 import com.example.scammer.TimeSlot;
+import com.example.scammer.repo.PreEntryRepository;
 import com.example.scammer.repo.RegistratorRepo;
 import com.example.scammer.repo.TimeSlotRepository;
 import com.example.scammer.service.TimeSlotService;
 import com.example.service.UserService;
+import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -34,6 +37,9 @@ public class RegistrarController {
 
     @Autowired
     private TimeSlotService timeSlotService;
+
+    @Autowired
+    private PreEntryRepository preEntryRepository;
 
     public RegistrarController(RegistratorRepo registrarRepository, TimeSlotRepository timeSlotRepository) {
         this.registrarRepository = registrarRepository;
@@ -84,9 +90,10 @@ public class RegistrarController {
 
     // Отобразить всех регистраторов и их слоты
     @GetMapping
-    public String listRegistrars(Model model) {
+    public String listRegistrars(Model model, Principal principal) {
         List<Registrar> registrars = registrarRepository.findAll();
         model.addAttribute("registrars", registrars);
+        System.out.println("строка запроса к rsds600: " + preEntryRepository.getUser(principal.getName()).getUSERNAME());
         return "tableSvod"; // название шаблона
     }
 

@@ -28,4 +28,6 @@ public class Booking {
     private String info;                       // p_info — дополнительная информация
     private String phone;                      // p_phone — телефон клиента
     private Integer regCode;                    // p_regcode — регистрационный код
+
+    private Integer userUid;
 }

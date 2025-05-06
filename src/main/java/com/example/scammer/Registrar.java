@@ -24,7 +24,7 @@ public class Registrar {
     private String surname;
 
     private String fathername;
-
+    @Column(name = "USERIDREG")
     private Long userIdReg;
 
     @OneToMany(mappedBy = "registrar", cascade = CascadeType.ALL)

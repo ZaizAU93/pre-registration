@@ -1,5 +1,6 @@
 package com.example.scammer.controllers;
 
+import com.example.model.User;
 import com.example.scammer.Booking;
 import com.example.scammer.DTO.BookingDto;
 import com.example.scammer.TimeSlot;
@@ -8,6 +9,7 @@ import com.example.scammer.service.BookingService;
 import com.example.scammer.service.OraclePackageService;
 import com.example.scammer.service.RegistratorService;
 import com.example.scammer.service.TimeSlotService;
+import com.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -32,6 +34,9 @@ public class BookingController {
     @Autowired
     private PreEntryRepository preEntryRepository;
 
+    @Autowired
+    private UserService userService;
+
     @PostMapping("/save")
     public ResponseEntity<?> save(
             @RequestParam Long timeSlot,
@@ -46,9 +51,6 @@ public class BookingController {
             if (!slotOptional.isPresent()) {
                 return ResponseEntity.badRequest().body("Слот не найден");
             }
-
-
-
 
 
             TimeSlot slot = slotOptional.get();
@@ -73,17 +75,21 @@ public class BookingController {
                 throw new IllegalArgumentException("regCode is null or too short: " + regCode);
             }
 
+            User user = userService.getCurrentUser();
+
             booking.setCustomerName(customerName);
             booking.setInfo(info);
             booking.setPhone(phone);
             booking.setTimeSlot(slot);
             booking.setReceiptDate(slot.getData());
             booking.setPurposeId(purposeId);
+            booking.setUserUid(user.getUserUID());
             bookingService.save(booking);
 
 
            // oraclePackageService.callAddEntryProcedure(booking);
-            preEntryRepository.addPreEntry(booking);
+        //    preEntryRepository.addPreEntry(booking);
+            preEntryRepository.addPreEntryAPI(booking);
 
             return ResponseEntity.ok().build();
 

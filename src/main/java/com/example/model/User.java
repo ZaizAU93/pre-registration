@@ -38,8 +38,6 @@ public class User {
 
     private Long jobTitleId;
 
-    private String workPhone;
-
-    private String avatar;
+    private Integer userUID;
 
 }

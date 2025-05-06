@@ -16,11 +16,4 @@ public interface UserRepo extends JpaRepository<User, Long> {
     Optional<User> findById(Long id);
 
 
-    @Modifying
-    @Transactional
-    @Query("UPDATE User e SET e.avatar = ?1 WHERE e.id = ?2")
-    void updateAvatar(String newValue, Long id);
-
-
-
 }

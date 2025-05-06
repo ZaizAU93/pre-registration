@@ -3,6 +3,7 @@ package com.example.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -10,11 +11,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 
 @Configuration
 @EnableWebSecurity
@@ -43,6 +40,7 @@ public class SecurityConfig {
                       .authorizeHttpRequests(auth -> auth
                               .requestMatchers("/index").hasAnyRole( "USER")
                                       .requestMatchers("/ws/**").permitAll()
+                                      .requestMatchers("/registrar/**").permitAll()
                                       .requestMatchers("/printer").permitAll()
                                       .requestMatchers("/register").permitAll()
                                       .requestMatchers("/admin/register").permitAll()
@@ -68,13 +66,14 @@ public class SecurityConfig {
 
               return http.build();
           }
-       */
+    */
         @Bean
         public PasswordEncoder passwordEncoder() {
             return new BCryptPasswordEncoder();
         }
 
-        @Autowired
+       @Autowired
+       @Lazy
         private OracleAuthenticationProvider oracleAuthProvider;
 
         @Bean
@@ -82,24 +81,27 @@ public class SecurityConfig {
             http
                     .csrf(csrf -> csrf.disable())
                     .authorizeHttpRequests(auth -> auth
-                            .anyRequest().authenticated()
+                            .anyRequest().permitAll()
                     )
                     .formLogin(form -> form
                             .loginPage("/login")
                             .permitAll()
-                    )
-                    .logout(logout -> logout
-                            .permitAll()
+                            .successHandler((request, response, authentication) -> {
+                                response.sendRedirect("/registrar");
+                            })
                     );
 
             return http.build();
         }
 
         @Bean
-        public AuthenticationManager authManager(HttpSecurity http) throws Exception {
-            return http.getSharedObject(AuthenticationManagerBuilder.class)
+       public AuthenticationManager authManager(HttpSecurity http) throws Exception {
+           return http.getSharedObject(AuthenticationManagerBuilder.class)
                     .authenticationProvider(oracleAuthProvider)
                     .build();
-        }
+       }
+
+
+
     }
 

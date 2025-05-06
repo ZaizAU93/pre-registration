@@ -31,6 +31,7 @@ public class UserService {
                     .name(user.getName())
                     .fathername(user.getFathername())
                     .jobTitleId(user.getJobTitleId())
+                    .userUID(user.getUserUID())
                     .build();
 
             User savedUser = userRepository.save(userNew);
@@ -67,9 +68,10 @@ public class UserService {
         // Получаем детали пользователя
         Object principal = authentication.getPrincipal();
 
-        UserDetails userDetails = (UserDetails) principal;
-        String username = userDetails.getUsername();
+   //     UserDetails userDetails = (UserDetails) principal;
+  //      String username = userDetails.getUsername();
 
+        String username = authentication.getName();
         User user = userRepository.findByUsername(username);
 
 
@@ -87,9 +89,6 @@ public class UserService {
     };
 
 
-    public void updateAvatar(String avatar, User user){
-        userRepository.updateAvatar(avatar, user.getId());
-    }
 
 
 }
