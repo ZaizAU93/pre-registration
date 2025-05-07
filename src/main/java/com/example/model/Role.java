@@ -5,5 +5,6 @@ public enum Role {
     ADMIN,
     USER,
     REGISTRATOR,
+    KOORDINATOR,
     ADMINISTRATOR
 }

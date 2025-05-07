@@ -1,0 +1,30 @@
+<!-- src/main/resources/templates/display.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Результат</title>
+    <style>
+        table {
+            border-collapse: collapse;
+        }
+        td {
+            border: 1px solid #999;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+<h1>Загруженный Excel</h1>
+<table>
+    <tbody>
+    <tr th:each="row : ${sheetData}">
+        <td th:each="cell : ${row}"
+            th:text="${cell.value}"
+            th:style="'background-color:' + (${cell.bgColor} != null ? ${cell.bgColor} : 'white')">
+        </td>
+    </tr>
+    </tbody>
+</table>
+<a href="/schedule">Загрузить другой файл</a>
+</body>
+</html>

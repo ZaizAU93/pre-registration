@@ -100,6 +100,12 @@
 			<artifactId>HikariCP</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>5.2.3</version> <!-- Используйте последнюю стабильную версию -->
+		</dependency>
+
 	</dependencies>
 
 	<build>
