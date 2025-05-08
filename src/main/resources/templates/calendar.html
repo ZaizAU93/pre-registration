@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Яндекс.Календарь — Аналог</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fff;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .navigation {
+      display: flex;
+      gap: 10px;
+    }
+
+    .navigation button {
+      padding: 8px 12px;
+      background-color: #f2f2f2;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.2s;
+    }
+
+    .navigation button:hover {
+      background-color: #e0e0e0;
+    }
+
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+    }
+
+    .day-header {
+      background-color: #f7f7f7;
+      padding: 8px;
+      text-align: center;
+      font-weight: bold;
+      border: 1px solid #ddd;
+    }
+
+    .day {
+      min-height: 80px;
+      padding: 4px;
+      border: 1px solid #ddd;
+      position: relative;
+      background-color: #fff;
+    }
+
+    .day.other-month {
+      background-color: #f0f0f0;
+      color: #999;
+    }
+
+    .date-number {
+      font-size: 12px;
+      font-weight: bold;
+      position: absolute;
+      top: 4px;
+      right: 4px;
+    }
+
+    /* Example event styling */
+    .event {
+      background-color: #d0eaff;
+      margin-top: 20px;
+      padding: 4px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    /* Responsive adjustments */
+    @media(max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+      .title {
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="title">Календарь</div>
+  <div class="navigation">
+    <button id="prevMonth">&lt; Предыдущий</button>
+    <button id="nextMonth">Следующий &gt;</button>
+  </div>
+</div>
+
+<div id="calendar-container">
+  <!-- Календарь будет вставляться сюда через JavaScript -->
+</div>
+
+<script>
+  const calendarContainer = document.getElementById('calendar-container');
+
+  const months = [
+    'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+  ];
+
+  let currentDate = new Date();
+
+  function generateCalendar(year, month) {
+    // Очистить контейнер
+    calendarContainer.innerHTML = '';
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+
+    const startDayOfWeek = firstDay.getDay(); // 0 (воскресенье) - 6 (суббота)
+    const totalDays = lastDay.getDate();
+
+    // Определить день начала отображения (учитывая, что неделя начинается с понедельника)
+    const startOffset = (startDayOfWeek + 6) % 7; // с понедельника=0
+
+    const totalCells = startOffset + totalDays;
+    const totalRows = Math.ceil(totalCells / 7);
+
+    // Создаем заголовки дней недели
+    const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'calendar';
+
+    daysOfWeek.forEach(day => {
+      const dayHeader = document.createElement('div');
+      dayHeader.className = 'day-header';
+      dayHeader.textContent = day;
+      headerDiv.appendChild(dayHeader);
+    });
+
+    calendarContainer.appendChild(headerDiv);
+
+    // Создаем все ячейки календаря
+    const calendarGrid = document.createElement('div');
+    calendarGrid.className = 'calendar';
+
+    // Заполняем пустые ячейки перед первым днем месяца
+    for (let i = 0; i < startOffset; i++) {
+      const emptyCell = document.createElement('div');
+      emptyCell.className = 'day other-month';
+      calendarGrid.appendChild(emptyCell);
+    }
+
+    // Заполняем дни месяца
+    for (let day = 1; day <= totalDays; day++) {
+      const dayCell = document.createElement('div');
+      dayCell.className = 'day';
+
+      // Можно добавить условие для текущего дня
+      const today = new Date();
+      if (
+              day === today.getDate() &&
+              month === today.getMonth() &&
+              year === today.getFullYear()
+      ) {
+        dayCell.style.backgroundColor = '#fff9c4'; // подсветка текущего дня
+      }
+
+      const dateNumber = document.createElement('div');
+      dateNumber.className = 'date-number';
+      dateNumber.textContent = day;
+      dayCell.appendChild(dateNumber);
+
+      // Можно добавить пример события
+      if (day === 10) {
+        const eventDiv = document.createElement('div');
+        eventDiv.className = 'event';
+        eventDiv.textContent = 'Встреча с друзьями';
+        dayCell.appendChild(eventDiv);
+      }
+
+      calendarGrid.appendChild(dayCell);
+    }
+
+    // Заполняем оставшиеся ячейки после последнего дня месяца
+    const remainingCells = totalRows * 7 - (startOffset + totalDays);
+    for (let i = 0; i < remainingCells; i++) {
+      const emptyCell = document.createElement('div');
+      emptyCell.className = 'day other-month';
+      calendarGrid.appendChild(emptyCell);
+    }
+
+    calendarContainer.appendChild(calendarGrid);
+  }
+
+  function render() {
+    generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+  }
+
+  document.getElementById('prevMonth').addEventListener('click', () => {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    render();
+  });
+
+  document.getElementById('nextMonth').addEventListener('click', () => {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    render();
+  });
+
+  // Инициализация
+  render();
+</script>
+
+</body>
+</html>

@@ -6,5 +6,7 @@ public enum Role {
     USER,
     REGISTRATOR,
     KOORDINATOR,
-    ADMINISTRATOR
+    ADMINISTRATOR,
+    BOSSREGISR,
+    GUEST
 }

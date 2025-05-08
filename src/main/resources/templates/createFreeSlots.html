@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!--<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <title>Установка свободных промежутков</title>
@@ -185,6 +185,367 @@
 
 <h1>Установите свободный промежуток времени</h1>
 
+
+<div>
+  <h2>Доступные таймслоты:</h2>
+  <div th:if="${hasTimeSlots}">
+    <ul>
+      <li th:each="ts : ${timeSlot}">
+        <span th:text="'Дата: ' + ${ts.data} + ', ' + 'Начало: ' + ${#temporals.format(ts.startTime, 'HH:mm')} + ', ' + 'Конец: ' + ${#temporals.format(ts.endTime, 'HH:mm')}"></span>
+      </li>
+    </ul>
+  </div>
+  <div th:if="${!hasTimeSlots}">
+    <p>Таймслоты еще не назначены.</p>
+  </div>
+</div>
+
+
+<form th:action="@{/timeslots/save-interval}" method="post" id="intervalForm">
+  <h3>Введите промежуток времени и выберите дату:</h3>
+  <input type="hidden" name="registrarId" th:value="${registrarId}" />
+
+  <label for="date">Дата:</label>
+  <input type="date" id="date" name="date" required />
+
+  <label for="startTime">Начало:</label>
+  <input type="time" id="startTime" name="startTime" required />
+
+  <label for="endTime">Конец:</label>
+  <input type="time" id="endTime" name="endTime" required />
+
+  <button type="submit">Сохранить интервал</button>
+</form>
+
+</body>
+</html>
+-->
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Установка свободных промежутков</title>
+  <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css' rel='stylesheet' />
+</head>
+
+<header>
+  <h1>Установка свободных промежутков</h1>
+  <div class="header-buttons">
+    <a href="/logout">Выйти</a>
+    <a href="/registrar">Назначение</a>
+    <a href="/schedule/graph">График работы</a>
+  </div>
+</header>
+
+
+
+<!-- Подключение скриптов в конце body -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js'></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация календаря после полной загрузки DOM и скриптов
+    const calendarEl = document.getElementById('calendar');
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      },
+      events: [], // сюда будем загружать события
+    });
+
+    // функция загрузки таймслотов
+    function loadTimeSlots() {
+      fetch('/timeslots/create') // API для получения таймслотов
+              .then(response => response.json())
+              .then(data => {
+                const events = data.map(ts => ({
+                  id: ts.id,
+                  title: 'Свободно',
+                  start: ts.startTime,
+                  end: ts.endTime,
+                  color: ts.isFree ? '#27ae60' : '#c0392b'
+                }));
+                calendar.removeAllEvents();
+                calendar.addEventSource(events);
+              })
+              .catch(console.error);
+    }
+
+    calendar.render();
+
+    // Загружаем при старте
+    loadTimeSlots();
+
+      // Обработка формы добавления интервала
+      document.getElementById('intervalForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // собираем данные формы
+        const formData = new FormData(this);
+        fetch('/timeslots//save-interval', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            date: formData.get('date'),
+            startTime: formData.get('startTime'),
+            endTime: formData.get('endTime'),
+            registrarId: formData.get('registrarId')
+          })
+        })
+                .then(response => {
+                  if (response.ok) {
+                    // успешно добавлено, обновляем календарь
+                    loadTimeSlots();
+                    // очищаем поля формы
+                    document.getElementById('startTime').value = '';
+                    document.getElementById('endTime').value = '';
+                    document.getElementById('date').value = '';
+                  } else {
+                    alert('Ошибка при сохранении интервала');
+                  }
+                })
+                .catch(error => {
+                  console.error(error);
+                  alert('Ошибка при соединении с сервером');
+                });
+      });
+    });
+  </script>
+
+  <style>
+    /* Общие стили для страницы */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    /* Шапка страницы */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #2c3e50;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+
+    header h1 {
+      color: #ffffff;
+      margin: 0;
+      font-size: 2em;
+    }
+
+    /* Контейнер для кнопок */
+    .header-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    /* Стили для кнопок */
+    .header-buttons a {
+      text-decoration: none;
+      padding: 10px 15px;
+      background-color: #3498db;
+      color: #fff;
+      border-radius: 5px;
+      font-weight: 600;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    .header-buttons a:hover {
+      background-color: #2980b9;
+      transform: scale(1.05);
+    }
+
+    /* Стиль для блока доступных таймслотов */
+    div {
+      max-width: 600px;
+      margin: 0 auto 40px auto;
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #34495e;
+      font-size: 2em;
+    }
+
+    /* Стили для списка таймслотов */
+    ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    li {
+      padding: 10px 0;
+      border-bottom: 1px solid #ecf0f1;
+    }
+
+    /* Стиль для формы */
+    form {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    h3 {
+      text-align: center;
+      margin-bottom: 15px;
+      color: #2980b9;
+      font-size: 1.8em;
+    }
+
+    /* Поля ввода */
+    label {
+      display: inline-block;
+      margin-top: 10px;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    input[type="date"],
+    input[type="time"] {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 1em;
+    }
+
+    /* Кнопка */
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 4px;
+      background-color: #27ae60;
+      color: #fff;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    button:hover {
+      background-color: #2ecc71;
+      transform: scale(1.05);
+    }
+
+    /* Адаптивность */
+    @media(max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+      h1 {
+        font-size: 2em;
+      }
+      h2 {
+        font-size: 1.5em;
+      }
+      h3 {
+        font-size: 1.4em;
+      }
+      input[type="date"],
+      input[type="time"],
+      button {
+        font-size: 1em;
+      }
+      header h1 {
+        font-size: 1.5em;
+      }
+    }
+  </style>
+  <script>
+    function saveInterval() {
+      const dateInput = document.getElementById('date');
+      const startTimeInput = document.getElementById('startTime');
+      const endTimeInput = document.getElementById('endTime');
+
+      const date = dateInput.value;
+      const startTime = startTimeInput.value;
+      const endTime = endTimeInput.value;
+
+      if (!date) {
+        alert('Пожалуйста, выберите дату.');
+        return;
+      }
+
+      if (!startTime || !endTime) {
+        alert('Пожалуйста, заполните оба поля времени.');
+        return;
+      }
+
+      if (startTime >= endTime) {
+        alert('Время начала должно быть раньше времени конца.');
+        return;
+      }
+
+      // Создаем скрытые поля для передачи данных
+      const hiddenFieldsDiv = document.getElementById('hiddenInterval');
+      hiddenFieldsDiv.innerHTML = '';
+
+      const dateHidden = document.createElement('input');
+      dateHidden.type = 'hidden';
+      dateHidden.name = 'date';
+      dateHidden.value = date;
+
+      const startHidden = document.createElement('input');
+      startHidden.type = 'hidden';
+      startHidden.name = 'startTime';
+      startHidden.value = startTime;
+
+      const endHidden = document.createElement('input');
+      endHidden.type = 'hidden';
+      endHidden.name = 'endTime';
+      endHidden.value = endTime;
+
+      hiddenFieldsDiv.appendChild(dateHidden);
+      hiddenFieldsDiv.appendChild(startHidden);
+      hiddenFieldsDiv.appendChild(endHidden);
+
+      // Отправляем форму
+      document.getElementById('intervalForm').submit();
+
+      // После отправки очищаем поля
+      document.getElementById('startTime').value = '';
+      document.getElementById('endTime').value = '';
+      document.getElementById('date').value = '';
+    }
+  </script>
+</head>
+<body>
+
+<header>
+  <h1>Установка свободных промежутков</h1>
+  <div class="header-buttons">
+    <a href="/logout">Выйти</a>
+    <a href="/registrar">Назначение</a>
+    <a href="/schedule/graph">График работы</a>
+  </div>
+</header>
+
+<!-- Остальной контент остается без изменений -->
+<h2>Календарь таймслотов</h2>
+<div id='calendar'></div>
 <!-- Отображение доступных таймслотов -->
 <div>
   <h2>Доступные таймслоты:</h2>

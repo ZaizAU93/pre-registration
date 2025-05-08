@@ -40,4 +40,6 @@ public class User {
 
     private Integer userUID;
 
+    private Integer userTypeCode;
+
 }

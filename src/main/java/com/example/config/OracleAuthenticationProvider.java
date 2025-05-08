@@ -1,5 +1,6 @@
 package com.example.config;
 
+import com.example.model.Role;
 import com.example.model.User;
 import com.example.scammer.DTO.UserDTO;
 import com.example.scammer.repo.PreEntryRepository;
@@ -11,12 +12,14 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.Collections;
 
 @Component
@@ -60,6 +63,7 @@ public class OracleAuthenticationProvider implements AuthenticationProvider {
                         .name(userDTO.getUSERNAME())
                         .password(password)
                         .userUID(userDTO.getUSERUID())
+                        .userTypeCode(userDTO.getUSERTYPECODE())
                         .build();
                 userService.createUser(user);
 
@@ -67,14 +71,19 @@ public class OracleAuthenticationProvider implements AuthenticationProvider {
                 registratorService.saveDTO(userDTO, userD);
             }
 
-            // Сохраняем DTO
+            String userRole = determineUserRole(userDTO); // ваш метод или логика
+
+
+            GrantedAuthority authority = new SimpleGrantedAuthority( "ROLE_" +userRole);
+            Collection<GrantedAuthority> authorities = Collections.singletonList(authority);
 
 
             // Возвращаем успешную аутентификацию
             return new UsernamePasswordAuthenticationToken(
                     username,
                     password,
-                    Collections.emptyList()
+                  //  Collections.emptyList()
+                    authorities
             );
 
         } catch (SQLException e) {
@@ -86,5 +95,32 @@ public class OracleAuthenticationProvider implements AuthenticationProvider {
     @Override
     public boolean supports(Class<?> authentication) {
         return authentication.equals(UsernamePasswordAuthenticationToken.class);
+    }
+
+
+    private String determineUserRole(UserDTO userDTO) {
+        int typeCode = userDTO.getUSERTYPECODE();
+
+        Role role = switch (typeCode) {
+            case 99 -> {
+                // сложные операции
+                yield Role.ADMINISTRATOR;
+            }
+            case 0,3 -> {
+
+                yield Role.REGISTRATOR;
+            }
+            case 1 -> {
+                yield Role.BOSSREGISR;
+            }
+            case 51 -> {
+                yield Role.KOORDINATOR;
+            }
+
+            default -> {
+                yield Role.GUEST;
+            }
+        };
+        return role.toString();
     }
 }

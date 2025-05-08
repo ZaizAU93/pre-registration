@@ -2,13 +2,22 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <title>Загрузка Excel файла</title>
+  <title>Загрузка файла</title>
 </head>
 <body>
-<h1>Загрузите Excel файл</h1>
-<form method="POST" enctype="multipart/form-data" th:action="@{/schedule/upload}">
-  <input type="file" name="file" accept=".xlsx,.xls"/>
+<h1>Загрузить Excel файл</h1>
+<form th:action="@{/schedule/upload}" method="post" enctype="multipart/form-data">
+  <input type="file" name="file" required />
   <button type="submit">Загрузить</button>
 </form>
+
+<!-- Если файл загружен, показываем кнопку для графика -->
+<div th:if="${sheetData != null}">
+  <form th:action="@{/schedule/graph}" method="get">
+    <!-- Можно передавать имя файла через скрытое поле -->
+    <input type="hidden" name="file" th:value="${uploadedFileName}" />
+    <button type="submit">Показать график</button>
+  </form>
+</div>
 </body>
 </html>

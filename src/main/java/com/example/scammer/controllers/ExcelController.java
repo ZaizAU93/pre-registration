@@ -1,28 +1,32 @@
 package com.example.scammer.controllers;
 
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFPalette;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFColor;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Controller
 @RequestMapping("/schedule")
 public class ExcelController {
+
+    private static final String UPLOAD_DIR = "uploads";
 
     @GetMapping
     public String showUploadPage() {
@@ -31,16 +35,114 @@ public class ExcelController {
 
     @PostMapping("/upload")
     public String handleFileUpload(@RequestParam("file") MultipartFile file, Model model) throws IOException {
+        Path uploadPath = Paths.get(UPLOAD_DIR);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        } else {
+            // Удаляем все файлы в папке uploads
+            try (Stream<Path> files = Files.list(uploadPath)) {
+                files.forEach(f -> {
+                    try {
+                        Files.deleteIfExists(f);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
+        }
+
+        String filename = file.getOriginalFilename();
+        Path filePath = uploadPath.resolve(filename);
+
+        if (Files.exists(filePath)) {
+            try (InputStream is = Files.newInputStream(filePath);
+                 Workbook workbook = WorkbookFactory.create(is)) {
+                List<List<CellData>> sheetData = processWorkbook(workbook, filename);
+                model.addAttribute("sheetData", sheetData);
+                model.addAttribute("uploadedFileName", filename);
+            }
+        } else {
+            Files.copy(file.getInputStream(), filePath);
+            try (InputStream is = Files.newInputStream(filePath);
+                 Workbook workbook = WorkbookFactory.create(is)) {
+                List<List<CellData>> sheetData = processWorkbook(workbook, filename);
+                model.addAttribute("sheetData", sheetData);
+                model.addAttribute("uploadedFileName", filename);
+            }
+        }
+        return "display"; // или нужная страница
+    }
+
+    @GetMapping("/graph")
+    public String showGraphPage(Model model) {
+        Path uploadPath = Paths.get(UPLOAD_DIR);
+        if (!Files.exists(uploadPath)) {
+            model.addAttribute("sheetData", new ArrayList<>());
+            return "graph";
+        }
+
+        try (Stream<Path> files = Files.list(uploadPath)) {
+            Path latestFile = files
+                    .filter(Files::isRegularFile)
+                    .max(Comparator.comparingLong(f -> {
+                        try {
+                            return Files.getLastModifiedTime(f).toMillis();
+                        } catch (IOException e) {
+                            return 0L;
+                        }
+                    }))
+                    .orElse(null);
+
+            if (latestFile != null && Files.exists(latestFile)) {
+                try (InputStream is = Files.newInputStream(latestFile);
+                     Workbook workbook = WorkbookFactory.create(is)) {
+                    List<List<CellData>> sheetData = processWorkbook(workbook, latestFile.getFileName().toString());
+                    model.addAttribute("sheetData", sheetData);
+                }
+            } else {
+                model.addAttribute("sheetData", new ArrayList<>());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            model.addAttribute("sheetData", new ArrayList<>());
+        }
+        return "graph";
+    }
+
+    private List<List<CellData>> processWorkbook(Workbook workbook, String filename) {
         List<List<CellData>> sheetData = new ArrayList<>();
+        Sheet sheet = workbook.getSheetAt(0);
+        int maxColumnCount = 0;
+        DataFormatter dataFormatter = new DataFormatter();
 
-        try (InputStream is = file.getInputStream(); Workbook workbook = WorkbookFactory.create(is)) {
-            Sheet sheet = workbook.getSheetAt(0);
-            for (Row row : sheet) {
-                List<CellData> rowData = new ArrayList<>();
-                for (Cell cell : row) {
-                    CellData cellData = new CellData();
+        // Первый проход: найти последний заполненный столбец в каждой строке
+        List<Integer> lastFilledCells = new ArrayList<>();
+        for (Row row : sheet) {
+            int lastFilled = -1;
+            for (int cn = 0; cn < row.getLastCellNum(); cn++) {
+                Cell cell = row.getCell(cn, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                if (cell != null && cell.getCellType() != CellType.BLANK) {
+                    lastFilled = cn;
+                }
+            }
+            lastFilledCells.add(lastFilled);
+        }
 
-                    // Получение значения
+        // Найти максимум
+        for (Integer lastIndex : lastFilledCells) {
+            if (lastIndex != -1 && lastIndex + 1 > maxColumnCount) {
+                maxColumnCount = lastIndex + 1;
+            }
+        }
+
+        // Обработка строк
+        for (Row row : sheet) {
+            List<CellData> rowData = new ArrayList<>();
+            for (int cn = 0; cn < maxColumnCount; cn++) {
+                Cell cell = row.getCell(cn, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                CellData cellData = new CellData();
+
+                if (cell.getCellType() != CellType.BLANK) {
                     switch (cell.getCellType()) {
                         case STRING:
                             cellData.setValue(cell.getStringCellValue());
@@ -49,7 +151,8 @@ public class ExcelController {
                             if (DateUtil.isCellDateFormatted(cell)) {
                                 cellData.setValue(cell.getDateCellValue().toString());
                             } else {
-                                cellData.setValue(Double.toString(cell.getNumericCellValue()));
+                                String formattedNumber = dataFormatter.formatCellValue(cell);
+                                cellData.setValue(formattedNumber);
                             }
                             break;
                         case BOOLEAN:
@@ -63,68 +166,61 @@ public class ExcelController {
                         default:
                             cellData.setValue("");
                     }
+                } else {
+                    cellData.setValue("");
+                }
 
-                    // Получение стилей
-                    CellStyle style = cell.getCellStyle();
-                    if (style != null) {
-                        // Проверяем тип стиля
-                        if (style instanceof XSSFCellStyle) {
-                            XSSFCellStyle xssfStyle = (XSSFCellStyle) style;
-                            XSSFColor color = xssfStyle.getFillBackgroundColorColor();
-                            if (color != null) {
-                                String hexColor = color.getARGBHex();
-                                if (hexColor != null && !hexColor.isEmpty()) {
-                                    // Убираем альфа-канал (если есть)
-                                    cellData.setBgColor("#" + hexColor.substring(2));
-                                }
+                // Цвет фона
+                CellStyle style = cell.getCellStyle();
+                String bgColorHex = null;
+
+                if (style != null) {
+                    if (style instanceof XSSFCellStyle) {
+                        XSSFCellStyle xssfStyle = (XSSFCellStyle) style;
+                        XSSFColor color = xssfStyle.getFillForegroundXSSFColor();
+                        if (color != null && !color.isAuto()) {
+                            String argbHex = color.getARGBHex();
+                            if (argbHex != null && argbHex.length() == 8) {
+                                bgColorHex = "#" + argbHex.substring(2);
                             }
-                            // Можно добавить обработку шрифтов, границ и других стилей
-                        } else {
-                            // Для HSSF (XLS) можно получать цвета через другие методы
-                            short fillForegroundColor = style.getFillForegroundColor();
-                            if (fillForegroundColor != 0) {
-                                // Получение цвета из палитры
-                                HSSFPalette palette = ((HSSFWorkbook) workbook).getCustomPalette();
-                                HSSFColor color = palette.getColor(fillForegroundColor);
-                                if (color != null) {
-                                    short[] rgb = color.getTriplet();
-                                    String hexColor = String.format("#%02X%02X%02X", rgb[0], rgb[1], rgb[2]);
-                                    cellData.setBgColor(hexColor);
+                        }
+                    } else if (style instanceof HSSFCellStyle) {
+                        HSSFCellStyle hssfStyle = (HSSFCellStyle) style;
+                        short fillForegroundColor = hssfStyle.getFillForegroundColor();
+                        if (fillForegroundColor != 0) {
+                            HSSFPalette palette = ((HSSFWorkbook) workbook).getCustomPalette();
+                            HSSFColor color = palette.getColor(fillForegroundColor);
+                            if (color != null) {
+                                short[] triplet = color.getTriplet();
+                                if (triplet != null && triplet.length == 3) {
+                                    bgColorHex = String.format("#%02X%02X%02X", triplet[0], triplet[1], triplet[2]);
                                 }
                             }
                         }
                     }
-
-                    rowData.add(cellData);
                 }
-                sheetData.add(rowData);
+
+                if (bgColorHex != null) {
+                    cellData.setBgColor(bgColorHex);
+                }
+
+                rowData.add(cellData);
             }
+            sheetData.add(rowData);
         }
 
-        model.addAttribute("sheetData", sheetData);
-        return "display";
+        return sheetData;
     }
 
 
-    // Внутренний класс для хранения данных о ячейке
+    // Внутренний класс
     public static class CellData {
         private String value;
-        private String bgColor; // В формате ARGB, например "#FF0000"
+        private String bgColor;
 
-        public String getValue() {
-            return value;
-        }
-
-        public void setValue(String value) {
-            this.value = value;
-        }
-
-        public String getBgColor() {
-            return bgColor;
-        }
-
-        public void setBgColor(String bgColor) {
-            this.bgColor = bgColor;
-        }
+        public String getValue() { return value; }
+        public void setValue(String value) { this.value = value; }
+        public String getBgColor() { return bgColor; }
+        public void setBgColor(String bgColor) { this.bgColor = bgColor; }
     }
 }

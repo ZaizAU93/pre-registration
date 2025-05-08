@@ -9,9 +9,11 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -72,12 +74,23 @@ public class SecurityConfig {
             return new BCryptPasswordEncoder();
         }
 
+
+    @Bean
+    public UserDetailsService userDetailsService() {
+        return new MyUserDetailsService();
+    }
        @Autowired
        @Lazy
-        private OracleAuthenticationProvider oracleAuthProvider;
+       private OracleAuthenticationProvider oracleAuthProvider;
+
+    @Bean
+    public AuthenticationSuccessHandler mySuccessHandler() {
+        return new CustomAuthenticationSuccessHandler();
+    }
 
         @Bean
         public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
             http
                     .csrf(csrf -> csrf.disable())
                     .authorizeHttpRequests(auth -> auth
@@ -86,9 +99,10 @@ public class SecurityConfig {
                     .formLogin(form -> form
                             .loginPage("/login")
                             .permitAll()
-                            .successHandler((request, response, authentication) -> {
-                                response.sendRedirect("/registrar");
-                            })
+                                    .successHandler(mySuccessHandler())
+                         //   .successHandler((request, response, authentication) -> {
+                         //       response.sendRedirect("/registrar");
+                        //    })
                     );
 
             return http.build();

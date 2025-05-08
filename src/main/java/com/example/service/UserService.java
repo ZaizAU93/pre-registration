@@ -22,11 +22,38 @@ public class UserService {
 
 
     public Long createUser(User user) {
+
+        //Role role
+
+        int typeCode = user.getUserTypeCode();
+
+        Role role = switch (typeCode) {
+            case 99 -> {
+                // сложные операции
+                yield Role.ADMINISTRATOR;
+            }
+            case 0,3 -> {
+
+                yield Role.REGISTRATOR;
+            }
+            case 1 -> {
+                yield Role.BOSSREGISR;
+            }
+            case 51 -> {
+                yield Role.KOORDINATOR;
+            }
+
+            default -> {
+                yield Role.GUEST;
+            }
+        };
+
+
         if (userRepository.findByUsername(user.getUsername()) == null) {
             User userNew = User.builder()
                     .username(user.getUsername())
                     .password(passwordEncoder.encode(user.getPassword()))
-                    .role(Role.USER)
+                    .role(role)
                     .surname(user.getSurname())
                     .name(user.getName())
                     .fathername(user.getFathername())
