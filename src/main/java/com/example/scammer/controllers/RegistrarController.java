@@ -1,6 +1,7 @@
 package com.example.scammer.controllers;
 import com.example.scammer.Registrar;
 import com.example.scammer.TimeSlot;
+import com.example.scammer.repo.BookingRepository;
 import com.example.scammer.repo.PreEntryRepository;
 import com.example.scammer.repo.RegistratorRepo;
 import com.example.scammer.repo.TimeSlotRepository;
@@ -30,6 +31,8 @@ public class RegistrarController {
     private final RegistratorRepo registrarRepository;
     private final TimeSlotRepository timeSlotRepository;
 
+    @Autowired
+    private BookingRepository bookingRepository;
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
     @Autowired
@@ -103,6 +106,15 @@ public class RegistrarController {
     public ResponseEntity<Void> bookTimeSlot(@PathVariable Long timeSlotId) {
         timeSlotRepository.updateIsFreeById(timeSlotId, false);
         messagingTemplate.convertAndSend("/topic/slots", timeSlotId);
+        return ResponseEntity.ok().build();
+    }
+
+
+    @PostMapping("/slots/{slotId}/cancel")
+    public ResponseEntity<Void> bookTimeSlotTrue(@PathVariable Long slotId) {
+        timeSlotRepository.updateIsFreeById(slotId, true);
+        messagingTemplate.convertAndSend("/topic/slots", slotId);
+        bookingRepository.deleteBooking(slotId);
         return ResponseEntity.ok().build();
     }
 

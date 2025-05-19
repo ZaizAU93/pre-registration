@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Request Entries</title>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 8px;
+      border: 1px solid #ccc;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    form {
+      margin-bottom: 20px;
+    }
+
+    input[type="text"], input[type="date"], input[type="number"] {
+      width: 150px;
+      padding: 5px;
+      margin-right: 10px;
+    }
+
+    button {
+      padding: 5px 10px;
+    }
+  </style>
+</head>
+<body>
+<h1>Фильтр и список запросов</h1>
+
+<form th:action="@{/prentry}" method="get">
+  <input type="number" name="preentryid" th:value="${preentryid}"/>
+  <input type="date" name="receiptdate" th:value="${#dates.format(receiptdate, 'yyyy-MM-dd')}"/>
+  <input type="number" name="purposeid" th:value="${purposeid}"/>
+  <input type="text" name="info" th:value="${info}"/>
+  <input type="text" name="phone" th:value="${phone}"/>
+  <input type="date" name="datein" th:value="${#dates.format(datein, 'yyyy-MM-dd')}"/>
+  <input type="number" name="entrystate" th:value="${entrystate}"/>
+  <input type="number" name="regcode" th:value="${regcode}"/>
+  <button type="submit">Фильтровать</button>
+</form>
+
+<table>
+  <thead>
+  <tr>
+    <th>Preentry ID</th>
+    <th>Receipt Date</th>
+    <th>Purpose ID</th>
+    <th>Info</th>
+    <th>Phone</th>
+    <th>Date In</th>
+    <th>Entry State</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr th:each="request : ${requests}">
+    <td th:text="${request.preentryid}">1</td>
+    <td th:text="${#dates.format(request.receiptdate, 'yyyy-MM-dd')}">2023-10-01</td>
+    <td th:text="${request.purposeid}">1</td>
+    <td th:text="${request.info}">Some info</td>
+    <td th:text="${request.phone}">1234567890</td>
+    <td th:text="${#dates.format(request.datein, 'yyyy-MM-dd')}">2023-10-01</td>
+    <td th:text="${request.entrystate}">1</td>
+    <td th:text="${request.regcode}">1</td>
+  </tr>
+  </tbody>
+</table>
+
+</body>
+</html>

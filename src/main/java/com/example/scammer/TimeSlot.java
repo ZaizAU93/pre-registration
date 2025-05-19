@@ -28,4 +28,6 @@ public class TimeSlot {
 
     @OneToOne(mappedBy = "timeSlot")
     private Booking booking; // если есть
+
+    private Integer prentryUid;
 }

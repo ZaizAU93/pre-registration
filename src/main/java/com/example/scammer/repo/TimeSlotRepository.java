@@ -35,4 +35,11 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, Long> {
                                                           @Param("startTime") LocalDateTime startTime,
                                                           @Param("endTime") LocalDateTime endTime);
 
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE TimeSlot e SET e.prentryUid = ?2 WHERE e.id = ?1")
+    void updateUidPrentry(@Param("id") Long id, @Param("isFree") int uid);
+
+
 }

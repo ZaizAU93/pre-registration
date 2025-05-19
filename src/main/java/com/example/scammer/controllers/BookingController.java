@@ -2,12 +2,10 @@ package com.example.scammer.controllers;
 
 import com.example.model.User;
 import com.example.scammer.Booking;
-import com.example.scammer.DTO.BookingDto;
 import com.example.scammer.TimeSlot;
 import com.example.scammer.repo.PreEntryRepository;
 import com.example.scammer.service.BookingService;
 import com.example.scammer.service.OraclePackageService;
-import com.example.scammer.service.RegistratorService;
 import com.example.scammer.service.TimeSlotService;
 import com.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,7 +87,13 @@ public class BookingController {
 
            // oraclePackageService.callAddEntryProcedure(booking);
         //    preEntryRepository.addPreEntry(booking);
-            preEntryRepository.addPreEntryAPI(booking);
+             int uidPrentry =  preEntryRepository.addPreEntryAPIExemple(booking);
+
+             timeSlotService.setPrentryUid(slot.getId(), uidPrentry);
+
+
+            System.out.println("айди заказа: " + uidPrentry);
+
 
             return ResponseEntity.ok().build();
 

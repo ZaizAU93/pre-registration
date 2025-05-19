@@ -341,9 +341,55 @@
     });
 
     // Обработка отмены
+    // Обработка кнопки "Отмена"
     $('#cancelBooking').on('click', function() {
-      $('#bookingFormContainer').hide();
+      const slotId = $('#slotId').val();
+      if (!slotId) {
+        alert('Нет выбранного слота');
+        return;
+      }
+
+      // AJAX-запрос для обновления статуса таймслота
+      $.ajax({
+        url: "/registrar/slots/" + slotId + "/cancel", // предполагаемый API для отмены
+        method: "POST",
+        success: function() {
+        //  alert('Статус слота обновлен на доступен');
+          $('#bookingFormContainer').hide();
+        },
+        error: function(xhr) {
+          console.log('Ошибка при отмене: ' + xhr.responseText);
+        }
+      });
     });
+
+// Обработка кнопки "Проверить телефон"
+    $('#checkPhone').on('click', function() {
+      const phoneNumber = $('#phone').val().trim();
+      $('#phoneCheckResult').text('');
+      if (!phoneNumber) {
+        $('#phoneCheckResult').text('Введите номер телефона');
+        return;
+      }
+
+      // AJAX-запрос для проверки телефона
+      $.ajax({
+        url: "/timeslots/phones/check",
+        method: "GET",
+        data: { phone: phoneNumber },
+        success: function(response) {
+          if (response > 0) {
+            $('#phoneCheckResult').text('Количество броней за последние 3 месяца: ' + response);
+          } else {
+            $('#phoneCheckResult').text('За последние 3 месяца броней не было');
+          }
+        },
+        error: function(xhr) {
+          $('#phoneCheckResult').text('Ошибка проверки: ' + xhr.responseText);
+        }
+      });
+    });
+
   });
   function updateRegistrars(registrars) {
     console.log("Обновляем регистраторов:", registrars);
@@ -544,6 +590,7 @@
 
 
   // Функция для бронирования слота
+  // В функции placeAnOrder(id)
   function placeAnOrder(id) {
     const url = "/registrar/registrars/" + id;
     $.ajax({
@@ -551,7 +598,7 @@
       url: url,
       data: { id: id },
       success: function(response) {
-        // Удаляем строку слота
+        // Удаляем слот
         $('button[data-slot-id="'+id+'"]').closest('tr').fadeOut(300, function() {
           $(this).remove();
         });
@@ -565,11 +612,12 @@
         console.log('Ошибка при бронировании: ' + xhr.responseText);
       }
     });
-
+    // Устанавливаем выбранный слот
     $('#slotId').val(id);
+    // Показываем модалку только при нажатии
     $('#bookingFormContainer').css('display', 'flex');
-
   }
+
 </script>
 
 
@@ -612,47 +660,54 @@
 </div>
 
 <!-- Модальное окно или скрытая форма для заказа -->
-<div id="bookingFormContainer" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000;">
-  <div style="background: #fff; padding: 20px; border-radius: 8px; max-width: 400px; width: 100%; position: relative;">
-    <h3>Заполните информацию о заказе</h3>
-    <form id="bookingForm">
+
+
+<!-- Модальное окно или скрытая форма для заказа -->
+<div id="bookingFormContainer" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; transition: opacity 0.3s ease;">
+  <div style="background: #fff; padding: 25px; border-radius: 12px; max-width: 450px; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.2); position: relative; opacity: 1; transition: opacity 0.3s ease;">
+    <h3 style="text-align: center; margin-bottom: 20px; color: #2980b9;">Заполните информацию о заказе</h3>
+    <form id="bookingForm" style="display: flex; flex-direction: column; gap: 15px;">
       <input type="hidden" id="slotId" name="slotId" value="">
 
+      <label for="customerName" style="font-weight: 600; font-size: 1em;">Имя клиента:</label>
+      <input type="text" id="customerName" name="customerName" placeholder="Введите ваше имя" required style="padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1em;">
 
-      <div style="margin-bottom: 10px;">
-        <label for="customerName">Имя клиента:</label>
-        <input type="text" id="customerName" name="customerName" required>
+      <label for="phone" style="font-weight: 600; font-size: 1em;">Телефон:</label>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <input type="text" id="phone" name="phone" placeholder="375(__)___-__-__" required style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1em;">
+        <button type="button" id="checkPhone" style="padding: 8px 12px; border: none; border-radius: 8px; background-color: #2980b9; color: #fff; cursor: pointer; font-size: 0.9em; transition: background-color 0.3s;">
+          Проверить
+        </button>
       </div>
+      <div id="phoneCheckResult" style="font-size: 0.9em; color: #2c3e50; min-height: 18px; margin-top: 4px;"></div>
 
-      <div style="margin-bottom: 10px;">
-        <label for="phone">Телефон:</label>
-        <input type="text" id="phone" name="phone" required>
-      </div>
+      <label for="info" style="font-weight: 600; font-size: 1em;">Дополнительная информация:</label>
+      <textarea id="info" name="info" rows="3" placeholder="Введите любые дополнительные сведения" style="padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1em; resize: vertical;"></textarea>
 
-      <div style="margin-bottom: 10px;">
-        <label for="info">Дополнительная информация:</label>
-        <textarea id="info" name="info" rows="3" style="width:100%;"></textarea>
-      </div>
-
-      <div style="margin-bottom: 10px;">
-        <label>Цель (Purpose):</label>
-        <div>
+      <label style="font-weight: 600; font-size: 1em;">Цель визита:</label>
+      <div style="display: flex; flex-direction: column; gap: 8px; padding-left: 10px;">
+        <label style="display: flex; align-items: center; gap: 8px;">
           <input type="radio" id="purpose1" name="purpose" value="1" required>
-          <label for="purpose1">Цель 1</label>
-        </div>
-        <div>
+          <span>Цель 1</span>
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px;">
           <input type="radio" id="purpose2" name="purpose" value="2" required>
-          <label for="purpose2">Цель 2</label>
-        </div>
+          <span>Цель 2</span>
+        </label>
       </div>
 
-      <div style="text-align: right;">
-        <button type="submit">Отправить</button>
-        <button type="button" id="cancelBooking" style="margin-left: 10px;">Отмена</button>
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button type="submit" style="padding: 10px 20px; border: none; border-radius: 8px; background-color: #27ae60; color: #fff; font-weight: 600; cursor: pointer; transition: background-color 0.3s;">
+          Отправить
+        </button>
+        <button type="button" id="cancelBooking" style="padding: 10px 20px; border: none; border-radius: 8px; background-color: #95a5a6; color: #fff; font-weight: 600; cursor: pointer; transition: background-color 0.3s;">
+          Отмена
+        </button>
       </div>
     </form>
   </div>
 </div>
+
 
 </body>
 </html>

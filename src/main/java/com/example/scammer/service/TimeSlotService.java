@@ -97,4 +97,9 @@ public class TimeSlotService {
     }
 
 
+    public void setPrentryUid(Long id, Integer uid){
+        timeSlotRepository.updateUidPrentry(id , uid);
+    }
+
+
 }
