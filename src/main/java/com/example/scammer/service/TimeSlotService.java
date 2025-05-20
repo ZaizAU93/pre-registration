@@ -101,5 +101,14 @@ public class TimeSlotService {
         timeSlotRepository.updateUidPrentry(id , uid);
     }
 
+    public void updateStateTimeSlot(TimeSlot timeSlot, Boolean state){
+        timeSlotRepository.updateIsFreeById(timeSlot.getId(), state);
+    }
+
+
+    public TimeSlot getTimeSlotByPrentryUID(Integer id){
+        return timeSlotRepository.findByPrentryUid(id).get();
+    }
+
 
 }

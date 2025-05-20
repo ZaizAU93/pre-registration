@@ -312,4 +312,19 @@ public class PreEntryRepository {
         }
     }
 
+    public void updateState(Integer prentryId) {
+        System.out.println("User UID: " + prentryId);
+
+        String sql = "{call RSDS600.PREENTRY_PKG.addresult(?, ?, ?, ?)}";
+
+        jdbcTemplate.update(sql,
+                prentryId, // id записи
+                600, // p_customername
+                "",
+                2 // код статуса
+        );
+    }
+
+
+
 }

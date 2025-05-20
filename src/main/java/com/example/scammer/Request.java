@@ -55,4 +55,10 @@ public class Request {
 
     @Column(name = "regcode")
     private Integer regcode;
+
+    @Column(name = "customername")
+    private String customername;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "regcode", referencedColumnName = "regcode", insertable = false, updatable = false)
+    private Users user;
 }

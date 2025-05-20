@@ -38,25 +38,28 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
                                          @Param("endDate") Date endDate);
 
 
-
-    @Query("SELECT r FROM Request r WHERE " +
-            "(:preentryid IS NULL OR r.preentryid = :preentryid) AND " +
-            "(:receiptdate IS NULL OR r.receiptdate = :receiptdate) AND " +
-            "(:purposeid IS NULL OR r.purposeid = :purposeid) AND " +
-            "(:info IS NULL OR r.info LIKE %:info%) AND " +
-            "(:phone IS NULL OR r.phone LIKE %:phone%) AND " +
-            "(:datein IS NULL OR r.datein = :datein) AND " +
-            "(:regcode IS NULL OR r.regcode = :regcode) AND " +
-            "(:entrystate IS NULL OR r.entrystate = :entrystate)")
-    List<Request> findByFilters(@Param("preentryid") Long preentryid,
-                                @Param("receiptdate") Date receiptdate,
-                                @Param("purposeid") Integer purposeid,
-                                @Param("info") String info,
-                                @Param("phone") String phone,
-                                @Param("datein") Date datein,
-                                @Param("regcode") Integer regcode,
-                                @Param("entrystate") Integer entrystate);
-
-
+    @Query("SELECT r FROM Request r LEFT JOIN FETCH r.user u WHERE "
+            + "(:preentryid IS NULL OR r.preentryid = :preentryid) AND "
+            + "(:receiptdate IS NULL OR r.receiptdate = :receiptdate) AND "
+            + "(:purposeid IS NULL OR r.purposeid = :purposeid) AND "
+            + "(:info IS NULL OR r.info LIKE %:info%) AND "
+            + "(:phonenum IS NULL OR r.phonenum LIKE %:phonenum%) AND "
+            + "(:datein IS NULL OR r.datein = :datein) AND "
+            + "(:regcode IS NULL OR r.regcode = :regcode) AND "
+            + "(:entrystate IS NULL OR r.entrystate = :entrystate) AND "
+            + "(:customername IS NULL OR r.customername LIKE %:customername%) AND "
+            + "(:registratorName IS NULL OR u.USERNAME LIKE %:registratorName%)")
+    List<Request> findByFilters(
+            @Param("preentryid") Long preentryid,
+            @Param("receiptdate") Date receiptdate,
+            @Param("purposeid") Integer purposeid,
+            @Param("info") String info,
+            @Param("phonenum") String phonenum,
+            @Param("datein") Date datein,
+            @Param("regcode") Integer regcode,
+            @Param("entrystate") Integer entrystate,
+            @Param("registratorName") String registratorName,
+            @Param("customername") String customername
+    );
 
 }

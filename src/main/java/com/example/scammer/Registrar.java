@@ -18,6 +18,7 @@ public class Registrar {
     @GeneratedValue
     private Long id;
 
+    @Column(name = "regCode", unique = true)
     private String regCode;
     private String name;
 
@@ -29,4 +30,5 @@ public class Registrar {
 
     @OneToMany(mappedBy = "registrar", cascade = CascadeType.ALL)
     private List<TimeSlot> timeSlots;
+
 }

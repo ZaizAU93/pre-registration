@@ -285,7 +285,7 @@
 
         // собираем данные формы
         const formData = new FormData(this);
-        fetch('/timeslots//save-interval', {
+        fetch('/timeslots/save-interval', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -473,6 +473,19 @@
         font-size: 1.5em;
       }
     }
+
+    .day-block {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+
+    .comment {
+      color: #666;
+      font-style: italic;
+      margin-bottom: 1rem;
+    }
   </style>
   <script>
     function saveInterval() {
@@ -561,10 +574,29 @@
   </div>
 </div>
 
-<!-- Форма для добавления интервала -->
-<form th:action="@{/timeslots/save-interval}" method="post" id="intervalForm">
-  <h3>Введите промежуток времени и выберите дату:</h3>
-  <input type="hidden" name="registrarId" th:value="${registrarId}" /> <!-- Передайте registrarId из модели -->
+
+<div>
+  <h2>Тайм-слоты по дням:</h2>
+  <div th:unless="${slotsByDate.isEmpty()}">
+    <div th:each="entry : ${slotsByDate}">
+      <h3 th:text="${#temporals.format(entry.key, 'dd.MM.yyyy')}"></h3>
+      <p th:if="${commentsByDate.containsKey(entry.key)}"
+         th:text="'Комментарий: ' + ${commentsByDate.get(entry.key)}"></p>
+      <ul>
+        <li th:each="ts : ${entry.value}">
+          <span th:text="${#temporals.format(ts.startTime, 'HH:mm')} + ' - ' + ${#temporals.format(ts.endTime, 'HH:mm')}"></span>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div th:if="${slotsByDate.isEmpty()}">
+    <p>Тайм-слоты еще не назначены.</p>
+  </div>
+</div>
+
+<form th:action="@{/timeslots/timeslots/save-interval}" method="post" id="intervalForm">
+  <h3>Добавить тайм-слот:</h3>
+  <input type="hidden" name="registrarId" th:value="${registrarId}" />
 
   <label for="date">Дата:</label>
   <input type="date" id="date" name="date" required />
@@ -574,6 +606,9 @@
 
   <label for="endTime">Конец:</label>
   <input type="time" id="endTime" name="endTime" required />
+
+  <label for="coment">Комментарий к дню (необязательно):</label>
+  <input type="text" id="coment" name="coment" />
 
   <button type="submit">Сохранить интервал</button>
 </form>

@@ -27,9 +27,6 @@ public class BookingController {
     private TimeSlotService timeSlotService;
 
     @Autowired
-    private OraclePackageService oraclePackageService;
-
-    @Autowired
     private PreEntryRepository preEntryRepository;
 
     @Autowired

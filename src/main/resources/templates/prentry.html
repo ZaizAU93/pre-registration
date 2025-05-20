@@ -30,26 +30,53 @@
     button {
       padding: 5px 10px;
     }
+
+
+    select {
+      width: 170px;
+      padding: 5px;
+      margin-right: 10px;
+    }
   </style>
 </head>
 <body>
 <h1>Фильтр и список запросов</h1>
 
 <form th:action="@{/prentry}" method="get">
-  <input type="number" name="preentryid" th:value="${preentryid}"/>
+  <!-- Остальные поля фильтрации -->
+  <input type="number" name="preentryid" th:value="${preentryid}" placeholder="ID запроса"/>
   <input type="date" name="receiptdate" th:value="${#dates.format(receiptdate, 'yyyy-MM-dd')}"/>
-  <input type="number" name="purposeid" th:value="${purposeid}"/>
-  <input type="text" name="info" th:value="${info}"/>
-  <input type="text" name="phone" th:value="${phone}"/>
+
+  <!-- Выпадающий список для purposeid -->
+  <select name="purposeid">
+    <option value="">Все цели</option>
+    <option value="1" th:selected="${purposeid} == 1">Удостоверение сделки</option>
+    <option value="2" th:selected="${purposeid} == 2">Государственная регистрация</option>
+  </select>
+
+  <input type="text" name="info" th:value="${info}" placeholder="Информация"/>
+  <input type="text" name="phonenum" th:value="${phonenum}" placeholder="Телефон"/>
   <input type="date" name="datein" th:value="${#dates.format(datein, 'yyyy-MM-dd')}"/>
-  <input type="number" name="entrystate" th:value="${entrystate}"/>
-  <input type="number" name="regcode" th:value="${regcode}"/>
+
+  <!-- Выпадающий список для entrystate -->
+  <select name="entrystate">
+    <option value="">Все статусы</option>
+    <option value="0" th:selected="${entrystate} == 0">Новые</option>
+    <option value="1" th:selected="${entrystate} == 1">В работе</option>
+    <option value="2" th:selected="${entrystate} == 2">Отмененные</option>
+    <option value="3" th:selected="${entrystate} == 3">Исполненные</option>
+  </select>
+
+  <input type="number" name="regcode" th:value="${regcode}" placeholder="Код регистратора"/>
+  <input type="text" name="registratorName" th:value="${registratorName}" placeholder="Регистратора"/>
+  <input type="text" name="customername" th:value="${customername}" placeholder="Заказчик"/>
   <button type="submit">Фильтровать</button>
 </form>
 
 <table>
   <thead>
   <tr>
+    <!-- Заголовки таблицы без изменений -->
     <th>Preentry ID</th>
     <th>Receipt Date</th>
     <th>Purpose ID</th>
@@ -57,21 +84,89 @@
     <th>Phone</th>
     <th>Date In</th>
     <th>Entry State</th>
+    <th>Код регистратора</th>
+    <th>Регистратор</th>
+    <th>Заказчик</th>
   </tr>
   </thead>
   <tbody>
   <tr th:each="request : ${requests}">
     <td th:text="${request.preentryid}">1</td>
     <td th:text="${#dates.format(request.receiptdate, 'yyyy-MM-dd')}">2023-10-01</td>
-    <td th:text="${request.purposeid}">1</td>
+
+    <!-- Отображение purposeid -->
+    <td>
+      <span th:switch="${request.purposeid}">
+        <span th:case="1">Удостоверение сделки</span>
+        <span th:case="2">Государственная регистрация</span>
+      </span>
+    </td>
+
     <td th:text="${request.info}">Some info</td>
-    <td th:text="${request.phone}">1234567890</td>
+    <td th:text="${request.phonenum}">1234567890</td>
     <td th:text="${#dates.format(request.datein, 'yyyy-MM-dd')}">2023-10-01</td>
-    <td th:text="${request.entrystate}">1</td>
+
+    <!-- Отображение entrystate -->
+    <td>
+      <span th:switch="${request.entrystate}">
+        <span th:case="0">
+          Новые
+          <!-- Если статус новый, показываем кнопку "Отменить" -->
+          <button class="cancel-button"
+                  th:data-preentryid="${request.preentryid}">
+            Отменить
+          </button>
+        </span>
+        <span th:case="1">В работе</span>
+        <span th:case="2">Отмененные</span>
+        <span th:case="3">Исполненные</span>
+      </span>
+    </td>
+
     <td th:text="${request.regcode}">1</td>
+    <td th:text="${request.user?.USERNAME}">Регистратор</td>
+
+    <td th:text="${request.customername}">Заказчик</td>
   </tr>
   </tbody>
 </table>
+
+<!-- Добавим скрипт для обработки AJAX -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.cancel-button').forEach(function(button) {
+      button.addEventListener('click', function() {
+        const preentryId = this.getAttribute('data-preentryid');
+
+        fetch('/prentry/update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: new URLSearchParams({ id: preentryId })
+        })
+                .then(response => {
+                  if (response.ok) {
+                    console.log(response);
+                    const row = this.closest('tr');
+                    const statusCell = row.querySelector('td:nth-child(7)'); // седьмой столбец — статус
+                    statusCell.innerHTML = 'Отмененные';
+                    this.remove();
+                  } else {
+                    alert('Ошибка при отмене');
+                  }
+                })
+                .catch(error => {
+                  console.error('Ошибка:', error);
+                  alert('Ошибка при отмене');
+                });
+      });
+    });
+  });
+</script>
+
+
 
 </body>
 </html>

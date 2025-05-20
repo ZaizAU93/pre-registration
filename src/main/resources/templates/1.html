@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Установка свободных промежутков</title>
+  <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css' rel='stylesheet' />
+
+  <style>
+    /* Общие стили */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      color: #333;
+    }
+
+    /* Шапка без повторения */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #2c3e50;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    header h1 {
+      color: #ffffff;
+      margin: 0;
+      font-size: 2em;
+    }
+
+    .header-buttons a {
+      text-decoration: none;
+      padding: 10px 15px;
+      background-color: #3498db;
+      color: #fff;
+      border-radius: 5px;
+      font-weight: 600;
+      margin-left: 10px;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    .header-buttons a:hover {
+      background-color: #2980b9;
+      transform: scale(1.05);
+    }
+
+    /* Основной контент: календарь + форма справа */
+    .container {
+      display: flex;
+      flex: 1;
+      gap: 20px;
+    }
+
+    #calendar {
+      flex: 3;
+      background: #fff;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Блок формы и комментария справа */
+    .sidebar {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* форма */
+    #intervalForm {
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    #intervalForm h3 {
+      margin-top: 0;
+      text-align: center;
+      color: #2980b9;
+    }
+
+    /* комментарий к дню */
+    .day-comment {
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .day-comment h4 {
+      margin-top: 0;
+    }
+
+    /* Оформление */
+    label {
+      display: block;
+      margin-top: 10px;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    input[type="date"],
+    input[type="time"],
+    input[type="text"] {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 15px;
+      border: none;
+      border-radius: 4px;
+      background-color: #27ae60;
+      color: #fff;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    button:hover {
+      background-color: #2ecc71;
+      transform: scale(1.05);
+    }
+
+    /* Адаптивность */
+    @media(max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+      .container {
+        flex-direction: column;
+      }
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css" />
+  <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js"></script>
+</head>
+<body>
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js'></script>
+<!-- Скрипты -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      },
+      events: [], // сюда будем загружать события
+      dateClick: function(info) {
+        // при клике на день показываем комментарий
+        loadDayComment(info.dateStr);
+      }
+    });
+
+    // Загружаем события таймслотов
+    function loadTimeSlots() {
+      fetch('/registrar/free-slots') // ваш API
+              .then(res => res.json())
+              .then(data => {
+                const events = data.map(ts => ({
+                  id: ts.id,
+                  title: 'Свободно',
+                  start: ts.startTime,
+                  end: ts.endTime,
+                  color: ts.isFree ? '#27ae60' : '#c0392b'
+                }));
+                calendar.removeAllEvents();
+                calendar.addEventSource(events);
+              })
+              .catch(console.error);
+    }
+
+    // Загружаем комментарий для выбранной даты
+    function loadDayComment(dateStr) {
+      fetch('/daycomment?date=' + dateStr)
+              .then(res => res.json())
+              .then(data => {
+                document.getElementById('dayCommentSection').style.display = 'block';
+                document.getElementById('dayCommentText').innerText = data.comment || 'Нет комментария.';
+                document.getElementById('commentDate').value = dateStr;
+                document.getElementById('newComment').value = data.comment || '';
+              })
+              .catch(() => {
+                document.getElementById('dayCommentSection').style.display = 'block';
+                document.getElementById('dayCommentText').innerText = 'Нет комментария.';
+                document.getElementById('commentDate').value = dateStr;
+                document.getElementById('newComment').value = '';
+              });
+    }
+
+    // Сохраняем комментарий
+    function saveDayComment() {
+      const date = document.getElementById('commentDate').value;
+      const comment = document.getElementById('newComment').value;
+
+      fetch('/daycomment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ date: date, comment: comment })
+      }).then(res => {
+        if (res.ok) {
+          alert('Комментарий сохранен');
+          loadDayComment(date);
+        } else {
+          alert('Ошибка сохранения комментария');
+        }
+      }).catch(() => alert('Ошибка соединения'));
+    }
+
+    // Обработка формы добавления интервала
+    document.getElementById('intervalForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+      fetch('/timeslots/timeslots/save-interval', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          date: formData.get('date'),
+          startTime: formData.get('startTime'),
+          endTime: formData.get('endTime'),
+          registrarId: formData.get('registrarId'),
+          coment: formData.get('comment')
+        })
+      }).then(res => {
+        if (res.ok) {
+          loadTimeSlots();
+          document.getElementById('startTime').value = '';
+          document.getElementById('endTime').value = '';
+          document.getElementById('date').value = '';
+        } else {
+          alert('Ошибка при сохранении интервала');
+        }
+      }).catch(() => alert('Ошибка соединения'));
+    });
+
+    // Инициализация
+    calendar.render();
+    loadTimeSlots();
+
+  });
+</script>
+<header>
+  <h1>Установка свободных промежутков</h1>
+  <div class="header-buttons">
+    <a href="/logout">Выйти</a>
+    <a href="/registrar">Назначение</a>
+    <a href="/schedule/graph">График работы</a>
+  </div>
+</header>
+
+<div class="container">
+  <!-- Календарь -->
+  <div id='calendar'></div>
+
+  <!-- Правая панель: форма и комментарий -->
+  <div class="sidebar">
+    <!-- Форма добавления интервала -->
+    <form th:action="@{/timeslots/timeslots/save-interval}" method="post" id="intervalForm">
+      <h3>Добавить тайм-слот</h3>
+      <input type="hidden" name="registrarId" th:value="${registrarId}" />
+
+      <label for="date">Дата:</label>
+      <input type="date" id="date" name="date" required />
+
+      <label for="startTime">Начало:</label>
+      <input type="time" id="startTime" name="startTime" required />
+
+      <label for="endTime">Конец:</label>
+      <input type="time" id="endTime" name="endTime" required />
+
+      <label for="coment">Комментарий к дню (необязательно):</label>
+      <input type="text" id="coment" name="comment" />
+
+      <button type="submit">Сохранить интервал</button>
+    </form>
+
+    <!-- Комментарий к выбранному дню -->
+    <div class="day-comment" id="dayCommentSection" style="display:none;">
+      <h4>Комментарий к дню:</h4>
+      <p id="dayCommentText"></p>
+      <form id="saveCommentForm" style="margin-top:10px;">
+        <input type="hidden" id="commentDate" name="date" />
+        <label for="newComment">Редактировать комментарий:</label>
+        <input type="text" id="newComment" name="comment" />
+        <button type="button" onclick="saveDayComment()">Сохранить комментарий</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+</body>
+</html>

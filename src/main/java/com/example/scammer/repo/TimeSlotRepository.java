@@ -20,6 +20,8 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, Long> {
     List<TimeSlot> findByRegistrar(Registrar registrar);
     Optional<TimeSlot> findById(Long id);
 
+    Optional<TimeSlot> findByPrentryUid(Integer id);
+
     @Modifying
     @Transactional
     @Query("UPDATE TimeSlot e SET e.isFree = ?2 WHERE e.id = ?1")
