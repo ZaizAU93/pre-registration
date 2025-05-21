@@ -7,6 +7,7 @@ import com.example.scammer.service.TimeSlotService;
 import com.example.service.UserService;
 import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -88,7 +89,7 @@ public class RegistrarController {
         model.addAttribute("registrarId", registrar.get().getId());
         model.addAttribute("hasTimeSlots", !slotsByDate.isEmpty());
 
-        return "1";
+        return "2";
     }
 
 
@@ -121,7 +122,7 @@ public class RegistrarController {
     }
 
 
-    @GetMapping("/registrar/free-slots-data")
+    // @GetMapping("/registrar/free-slots-data")
     @ResponseBody
     public Map<String, Object> getTimeSlotsData() {
         Long userId = userService.getCurrentUser().getId();
@@ -149,7 +150,7 @@ public class RegistrarController {
         List<Registrar> registrars = registrarRepository.findAll();
         model.addAttribute("registrars", registrars);
         System.out.println("строка запроса к rsds600: " + preEntryRepository.getUser(principal.getName()).getUSERNAME());
-        return "tableSvod"; // название шаблона
+        return "tableSvod_1"; // название шаблона
     }
 
     // Выбрать время для назначения записи
@@ -205,5 +206,59 @@ public class RegistrarController {
 
     // DTO для запроса
     public record DayCommentRequest(LocalDate date, String comment) {}
+
+    @GetMapping("/registrar/free-slots-data")
+    @ResponseBody
+    public Map<String, Object> getCalendarData(
+            @RequestParam int year,
+            @RequestParam int month
+    ) {
+        Long userId = userService.getCurrentUser().getId();
+        Registrar registrar = registrarRepository.findByUserIdReg(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Регистратор не найден"));
+
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+
+        Map<String, List<TimeSlotDTO>> slots = timeSlotRepository
+                .findByRegistrarAndDataBetween(registrar, startDate, endDate)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        ts -> ts.getData().toString(),
+                        Collectors.mapping(ts -> new TimeSlotDTO(
+                                ts.getStartTime(),
+                                ts.getEndTime()
+                        ), Collectors.toList())
+                ));
+
+        Map<String, String> comments = dayCommentRepository
+                .findByRegistrarAndDateBetween(registrar, startDate, endDate)
+                .stream()
+                .collect(Collectors.toMap(
+                        dc -> dc.getDate().toString(),
+                        DayComment::getCommentText
+                ));
+
+        return Map.of(
+                "slots", slots,
+                "comments", comments
+        );
+    }
+
+    // DTO для временных слотов
+    public record TimeSlotDTO(LocalDateTime startTime, LocalDateTime endTime) {}
+
+    @GetMapping("/{registrarId}/day-comment")
+    public ResponseEntity<Map<String, String>> getDayComment(@PathVariable Long registrarId, @RequestParam String date) {
+        Optional<Registrar> regOpt = registrarRepository.findById(registrarId);
+        if (!regOpt.isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.singletonMap("comment", "Регистратор не найден"));
+        }
+        Registrar registrar = regOpt.get();
+        LocalDate day = LocalDate.parse(date);
+        Optional<DayComment> commentOpt = dayCommentRepository.findByRegistrarAndDate(registrar, day);
+        String commentText = commentOpt.map(DayComment::getCommentText).orElse("Нет комментария");
+        return ResponseEntity.ok(Collections.singletonMap("commentText", commentText));
+    }
 
 }

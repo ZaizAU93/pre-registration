@@ -2,6 +2,7 @@ package com.example.scammer.controllers;
 
 import com.example.scammer.DayComment;
 import com.example.scammer.Registrar;
+import com.example.scammer.Request;
 import com.example.scammer.TimeSlot;
 import com.example.scammer.repo.DayCommentRepository;
 import com.example.scammer.repo.RegistratorRepo;
@@ -12,6 +13,7 @@ import com.example.scammer.service.TimeSlotService;
 import com.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,10 +23,8 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Controller
 @RequestMapping("/timeslots")
@@ -77,23 +77,21 @@ public class TimeSlotController {
         return "redirect:/registrar/free-slots";
     }
 */
-@PostMapping("/timeslots/save-interval")
-public String saveInterval(
-        @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
-        @RequestParam @DateTimeFormat(pattern = "HH:mm") LocalTime startTime,
-        @RequestParam @DateTimeFormat(pattern = "HH:mm") LocalTime endTime,
-        @RequestParam Long registrarId,
-        @RequestParam(required = false) String comment
+@PostMapping("/save-interval")
+@ResponseBody
+public ResponseEntity<?> saveInterval(
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTime,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime endTime,
+        @RequestParam Long registrarId
 ) {
     Registrar registrar = registrarRepository.findById(registrarId)
             .orElseThrow(() -> new IllegalArgumentException("Регистратор не найден"));
 
-    // Проверка, что endTime после startTime
     if (endTime.isBefore(startTime) || endTime.equals(startTime)) {
-        throw new IllegalArgumentException("Время окончания должно быть после времени начала");
+        return ResponseEntity.badRequest().body("Время окончания должно быть после времени начала");
     }
 
-    // Сохранение тайм-слота
     TimeSlot timeSlot = new TimeSlot();
     timeSlot.setData(date);
     timeSlot.setStartTime(LocalDateTime.of(date, startTime));
@@ -101,8 +99,7 @@ public String saveInterval(
     timeSlot.setRegistrar(registrar);
     timeSlot.setFree(true);
     timeSlotRepository.save(timeSlot);
-
-    // Обработка комментария
+    /*
     if (StringUtils.hasText(comment)) {
         DayComment dayComment = dayCommentRepository.findByRegistrarAndDate(registrar, date)
                 .orElseGet(() -> {
@@ -114,8 +111,8 @@ public String saveInterval(
         dayComment.setCommentText(comment.trim());
         dayCommentRepository.save(dayComment);
     }
-
-    return "redirect:/registrar/free-slots";
+*/
+    return ResponseEntity.ok().body("{\"success\":true}");
 }
 
 
@@ -142,4 +139,36 @@ public String saveInterval(
     }
 
 
+
+    @PostMapping("/delete-interval")
+    public ResponseEntity<?> deleteInterval(@RequestBody Map<String, String> payload) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy,M,d,H,m");
+        LocalDate date = LocalDate.parse(payload.get("date"));
+        LocalDateTime startTime = LocalDateTime.parse(payload.get("startTime"), formatter);
+        LocalDateTime endTime = LocalDateTime.parse(payload.get("endTime"), formatter);
+        Long userId = userService.getCurrentUser().getId();
+        Optional<Registrar> registrar = registrarRepository.findByUserIdReg(userId);
+
+        timeSlotRepository.deleteTimeSlotByStartTimeAndEndTimeAndRegistrarAndData(startTime, endTime, registrar.get(), date);
+
+        return ResponseEntity.ok(Map.of("success", true));
+    }
+
+
+    @GetMapping("/filters")
+    @ResponseBody
+    public ResponseEntity<?> showFiltersTimeSlot(
+            @RequestParam(name = "date", required = false)
+            @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
+            @RequestParam(name = "startTime", required = false)
+            @DateTimeFormat(pattern = "HH:mm") LocalTime startTime,
+            @RequestParam(name = "endTime", required = false)
+            @DateTimeFormat(pattern = "HH:mm") LocalTime endTime,
+            @RequestParam(name = "name", required = false) String name) {
+
+        List<TimeSlot> timeSlotList = timeSlotRepository.findByFilters(
+                date, startTime, endTime, name
+        );
+        return ResponseEntity.ok(timeSlotList);
+    }
 }

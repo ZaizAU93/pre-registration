@@ -1,6 +1,7 @@
 package com.example.scammer.repo;
 
 import com.example.scammer.Registrar;
+import com.example.scammer.Request;
 import com.example.scammer.TimeSlot;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -10,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,6 +45,38 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, Long> {
     @Transactional
     @Query("UPDATE TimeSlot e SET e.prentryUid = ?2 WHERE e.id = ?1")
     void updateUidPrentry(@Param("id") Long id, @Param("isFree") int uid);
+
+
+    List<TimeSlot> findByRegistrarAndDataBetween(
+            Registrar registrar,
+            LocalDate start,
+            LocalDate end
+    );
+
+
+    @Modifying
+    @Transactional
+    @Query("DELETE TimeSlot e  WHERE e.id = ?1")
+    void вуUidPrentry(@Param("id") Long id, @Param("isFree") int uid);
+
+    @Transactional
+    void  deleteTimeSlotByStartTimeAndEndTimeAndRegistrarAndData(LocalDateTime staertTime, LocalDateTime endTime, Registrar registrar, LocalDate date);
+
+
+
+    @Query("SELECT s FROM TimeSlot s WHERE "
+            + "(:date IS NULL OR s.data = :date) AND "
+            + "(:startTime IS NULL OR FUNCTION('TIME', s.startTime) >= :startTime) AND "
+            + "(:endTime IS NULL OR FUNCTION('TIME', s.endTime) <= :endTime) AND "
+            + "(:name IS NULL OR s.registrar.name LIKE %:name%)")
+    List<TimeSlot> findByFilters(
+            @Param("date") LocalDate date,
+            @Param("startTime") LocalTime startTime,
+            @Param("endTime") LocalTime endTime,
+            @Param("name") String name
+    );
+
+
 
 
 }
