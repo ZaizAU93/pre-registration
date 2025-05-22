@@ -48,7 +48,8 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
             + "(:regcode IS NULL OR r.regcode = :regcode) AND "
             + "(:entrystate IS NULL OR r.entrystate = :entrystate) AND "
             + "(:customername IS NULL OR r.customername LIKE %:customername%) AND "
-            + "(:registratorName IS NULL OR u.USERNAME LIKE %:registratorName%)")
+            + "(:registratorName IS NULL OR u.USERNAME LIKE %:registratorName%)"
+            + "ORDER BY r.receiptdate DESC")
     List<Request> findByFilters(
             @Param("preentryid") Long preentryid,
             @Param("receiptdate") Date receiptdate,

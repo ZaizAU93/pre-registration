@@ -46,7 +46,7 @@ public class SecurityConfig {
                                       .requestMatchers("/printer").permitAll()
                                       .requestMatchers("/register").permitAll()
                                       .requestMatchers("/admin/register").permitAll()
-                                      .requestMatchers("/admin/tickets").hasAnyRole("ADMIN")
+                                      .requestMatchers("/schedule/graph").hasAnyRole("ADMIN")
                                       .requestMatchers("/report").hasAnyRole("ADMIN")
                                       .requestMatchers("/notifications/**").hasAnyRole("ADMIN")
                                       .requestMatchers("/rup/**").hasAnyRole("ADMIN")
@@ -94,8 +94,10 @@ public class SecurityConfig {
             http
                     .csrf(csrf -> csrf.disable())
                     .authorizeHttpRequests(auth -> auth
+                            .requestMatchers("/schedule/upload").hasAnyRole("BOSSREGISR")
                             .anyRequest().permitAll()
                     )
+
                     .formLogin(form -> form
                             .loginPage("/login")
                             .permitAll()

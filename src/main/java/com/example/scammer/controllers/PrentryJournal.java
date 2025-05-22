@@ -45,6 +45,12 @@ public class PrentryJournal {
             @RequestParam(name = "customername", required = false) String customername,
             Model model) {
 
+        // Если entrystate не передан, по умолчанию установим 0 (новые)
+        if (entrystate == null) {
+            entrystate = 0;
+        }
+
+
         List<Request> requests = requestRepository.findByFilters(
                 preentryid, receiptdate, purposeid, info, phonenum, datein, regcode, entrystate, registratorName, customername);
         // Передача списка запросов
@@ -75,6 +81,20 @@ public class PrentryJournal {
 
         return ResponseEntity.ok("Запись успешно отменена");
     }
+
+    @PostMapping("/replace")
+    @ResponseBody
+    public ResponseEntity<String> replaceRegistra(@RequestParam Integer id) {
+
+        preEntryRepository.updateState(id);
+
+        TimeSlot timeSlot = timeSlotService.getTimeSlotByPrentryUID(id);
+
+        timeSlotService.updateStateTimeSlot(timeSlot, true); //освобождение таймслота регистратора после отмены записи в журнале
+
+        return ResponseEntity.ok("Запись успешно отменена");
+    }
+
 
 
 }

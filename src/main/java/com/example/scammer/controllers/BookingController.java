@@ -58,9 +58,9 @@ public class BookingController {
             if (regCode != null && regCode.length() > 1) {
                 try {
                     // Удаляем первый символ и преобразуем в Integer
-                    String numericPart = regCode.substring(1);
-                    int regCodeInt = Integer.parseInt(numericPart);
-                    booking.setRegCode(regCodeInt);
+                //    String numericPart = regCode.substring(1);
+                //    int regCodeInt = Integer.parseInt(numericPart);
+                    booking.setRegCode(Integer.parseInt(regCode));
                 } catch (NumberFormatException e) {
                     // Обработка ошибки: часть после первого символа не является числом
                     throw new IllegalArgumentException("Invalid regCode format: " + regCode);
