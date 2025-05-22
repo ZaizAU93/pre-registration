@@ -172,3 +172,6 @@ public ResponseEntity<?> saveInterval(
         return ResponseEntity.ok(timeSlotList);
     }
 }
+
+
+

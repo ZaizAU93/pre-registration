@@ -60,14 +60,14 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, Long> {
     void вуUidPrentry(@Param("id") Long id, @Param("isFree") int uid);
 
     @Transactional
-    void  deleteTimeSlotByStartTimeAndEndTimeAndRegistrarAndData(LocalDateTime staertTime, LocalDateTime endTime, Registrar registrar, LocalDate date);
+    void  deleteTimeSlotByStartTimeAndEndTimeAndRegistrarAndData(LocalDateTime startTime, LocalDateTime endTime, Registrar registrar, LocalDate date);
 
 
 
     @Query("SELECT s FROM TimeSlot s WHERE "
             + "(:date IS NULL OR s.data = :date) AND "
-            + "(:startTime IS NULL OR FUNCTION('TIME', s.startTime) >= :startTime) AND "
-            + "(:endTime IS NULL OR FUNCTION('TIME', s.endTime) <= :endTime) AND "
+            + "(:startTime IS NULL OR s.startTime >= :startTime) AND "
+            + "(:endTime IS NULL OR s.endTime <= :endTime) AND "
             + "(:name IS NULL OR s.registrar.name LIKE %:name%)")
     List<TimeSlot> findByFilters(
             @Param("date") LocalDate date,

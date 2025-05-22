@@ -1,7 +1,9 @@
 package com.example.scammer;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -19,7 +21,7 @@ public class TimeSlot {
     private LocalDate data;
 
     @ManyToOne
-    @JsonIgnore
+    @JsonManagedReference
     private Registrar registrar;
 
     private LocalDateTime startTime;
