@@ -3,88 +3,246 @@
 <head>
   <title>Request Entries</title>
   <style>
+    /* Общие стили таблицы */
     table {
       width: 100%;
       border-collapse: collapse;
+      font-family: Arial, sans-serif;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      overflow: hidden;
     }
 
     th, td {
-      padding: 8px;
-      border: 1px solid #ccc;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      text-align: left;
     }
 
     th {
-      background-color: #f2f2f2;
+      background-color: #f4f4f4;
+      font-weight: 600;
+      position: relative;
     }
 
+    /* Стиль для фильтров */
+    .filter-row th {
+      background-color: #e8e8e8;
+    }
+
+    /* Общие стили для формы фильтра */
     form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
       margin-bottom: 20px;
     }
 
-    input[type="text"], input[type="date"], input[type="number"] {
-      width: 150px;
-      padding: 5px;
-      margin-right: 10px;
+    input[type="text"],
+    input[type="date"],
+    input[type="number"],
+    select {
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      min-width: 150px;
+      font-size: 1em;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    input[type="number"]:focus,
+    select:focus {
+      border-color: #66afe9;
+      outline: none;
+      box-shadow: 0 0 8px rgba(102, 175, 233, 0.6);
     }
 
     button {
-      padding: 5px 10px;
+      padding: 8px 16px;
+      background-color: #3498db;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s, transform 0.2s;
     }
 
+    button:hover {
+      background-color: #2980b9;
+      transform: scale(1.02);
+    }
 
-    select {
-      width: 170px;
-      padding: 5px;
-      margin-right: 10px;
+    /* Стиль для шапки страницы */
+    header.page2-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #2c3e50;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    header.page2-header h1 {
+      color: #ffffff;
+      margin: 0;
+      font-size: 2em;
+    }
+
+    header.page2-header .header-buttons a {
+      text-decoration: none;
+      padding: 10px 15px;
+      background-color: #3498db;
+      color: #fff;
+      border-radius: 5px;
+      font-weight: 600;
+      margin-left: 10px;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    header.page2-header .header-buttons a:hover {
+      background-color: #2980b9;
+      transform: scale(1.05);
+    }
+
+    /* Стиль для кнопки отмены внутри таблицы */
+    .cancel-button {
+      padding: 6px 12px;
+      background-color: #e74c3c;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9em;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    .cancel-button:hover {
+      background-color: #c0392b;
+      transform: scale(1.05);
+    }
+  </style>
+
+  <style>
+    /* Добавляем стили для кнопки сброса */
+    .reset-button {
+      background-color: #95a5a6;
+      margin-left: 10px;
+    }
+    .reset-button:hover {
+      background-color: #7f8c8d;
+    }
+
+    /* Исправляем стиль для поля ID */
+    input[name="preentryid"] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+    input[name="preentryid"]::-webkit-outer-spin-button,
+    input[name="preentryid"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
     }
   </style>
 </head>
 <body>
-<h1>Фильтр и список запросов</h1>
+<header class="page2-header">
+  <h1>Предварительные заказы</h1>
+  <div class="header-buttons">
+    <a href="/registrar/free-slots">Выставить слоты</a>
+    <a href="/registrar">Назначение</a>
+    <a href="/schedule/graph">График работы</a>
+    <a href="/logout">Выйти</a>
+  </div>
+</header>
 
-<form th:action="@{/prentry}" method="get">
-  <!-- Остальные поля фильтрации -->
-  <input type="number" name="preentryid" th:value="${preentryid}" placeholder="ID запроса"/>
-  <input type="date" name="receiptdate" th:value="${#dates.format(receiptdate, 'yyyy-MM-dd')}"/>
-
-  <!-- Выпадающий список для purposeid -->
-  <select name="purposeid">
-    <option value="">Все цели</option>
-    <option value="1" th:selected="${purposeid} == 1">Удостоверение сделки</option>
-    <option value="2" th:selected="${purposeid} == 2">Государственная регистрация</option>
-  </select>
-
-  <input type="text" name="info" th:value="${info}" placeholder="Информация"/>
-  <input type="text" name="phonenum" th:value="${phonenum}" placeholder="Телефон"/>
-  <input type="date" name="datein" th:value="${#dates.format(datein, 'yyyy-MM-dd')}"/>
-
-  <!-- Выпадающий список для entrystate -->
-  <select name="entrystate">
-    <option value="">Все статусы</option>
-    <option value="0" th:selected="${entrystate} == 0">Новые</option>
-    <option value="1" th:selected="${entrystate} == 1">В работе</option>
-    <option value="2" th:selected="${entrystate} == 2">Отмененные</option>
-    <option value="3" th:selected="${entrystate} == 3">Исполненные</option>
-  </select>
-
-  <input type="number" name="regcode" th:value="${regcode}" placeholder="Код регистратора"/>
-  <input type="text" name="registratorName" th:value="${registratorName}" placeholder="Регистратора"/>
-  <input type="text" name="customername" th:value="${customername}" placeholder="Заказчик"/>
-  <button type="submit">Фильтровать</button>
+<!-- Форма фильтров с расположением фильтров над колонками -->
+<form th:action="@{/prentry}" method="get" id="filterForm">
+  <!-- В строке фильтров добавляем поля для каждого фильтра -->
+  <table>
+    <thead>
+    <tr class="filter-row">
+      <th>
+        <input type="text"
+               name="preentryid"
+               th:value="${preentryid}"
+               placeholder="ID"
+               pattern="\d*"
+               style="width: 80px;"/>
+      </th>
+      <th>
+        <input type="date" name="receiptdate" th:value="${#dates.format(receiptdate, 'yyyy-MM-dd')}" />
+      </th>
+      <th>
+        <select name="purposeid">
+          <option value="">Все цели</option>
+          <option value="1" th:selected="${purposeid} == 1">Удостоверение сделки</option>
+          <option value="2" th:selected="${purposeid} == 2">Государственная регистрация</option>
+        </select>
+      </th>
+      <th>
+        <input type="text" name="info" th:value="${info}" placeholder="Информация"/>
+      </th>
+      <th>
+        <input type="text" name="phonenum" th:value="${phonenum}" placeholder="Телефон"/>
+      </th>
+      <th>
+        <input type="date" name="datein" th:value="${#dates.format(datein, 'yyyy-MM-dd')}"/>
+      </th>
+      <th>
+        <select name="entrystate">
+          <option value="">Все статусы</option>
+          <option value="0" th:selected="${entrystate} == 0">Новые</option>
+          <option value="1" th:selected="${entrystate} == 1">В работе</option>
+          <option value="2" th:selected="${entrystate} == 2">Отмененные</option>
+          <option value="3" th:selected="${entrystate} == 3">Исполненные</option>
+        </select>
+      </th>
+      <th>
+        <input type="text" name="registratorName" th:value="${registratorName}" placeholder="Регистратора"/>
+      </th>
+      <th>
+        <input type="text" name="customername" th:value="${customername}" placeholder="Заказчик"/>
+      </th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+      <!-- Заголовки колонок для визуального отделения -->
+      <th>№ п/п</th>
+      <th>Дата приема</th>
+      <th>Цель визита</th>
+      <th>Доп. сведения</th>
+      <th>Телефон</th>
+      <th>Дата обращения</th>
+      <th>Состояние</th>
+      <th>Регистратор</th>
+      <th>Заказчик</th>
+    </tr>
+    </tbody>
+  </table>
+  <div style="margin-bottom: 15px;">
+    <button type="submit">Фильтровать</button>
+    <button type="button" class="reset-button" onclick="resetFilters()">Сбросить фильтры</button>
+  </div>
 </form>
 
+<!-- Таблица с данными -->
 <table>
   <thead>
   <tr>
     <!-- Заголовки таблицы без изменений -->
-    <th>Preentry ID</th>
-    <th>Receipt Date</th>
-    <th>Purpose ID</th>
-    <th>Info</th>
-    <th>Phone</th>
-    <th>Date In</th>
-    <th>Entry State</th>
-    <th>Код регистратора</th>
+    <th>№ п/п</th>
+    <th>Дата приема</th>
+    <th>Цель визита</th>
+    <th>Доп. сведения</th>
+    <th>Телефон</th>
+    <th>Дата обращения</th>
+    <th>Состояние</th>
     <th>Регистратор</th>
     <th>Заказчик</th>
   </tr>
@@ -93,7 +251,6 @@
   <tr th:each="request : ${requests}">
     <td th:text="${request.preentryid}">1</td>
     <td th:text="${#dates.format(request.receiptdate, 'yyyy-MM-dd')}">2023-10-01</td>
-
     <!-- Отображение purposeid -->
     <td>
       <span th:switch="${request.purposeid}">
@@ -101,11 +258,9 @@
         <span th:case="2">Государственная регистрация</span>
       </span>
     </td>
-
     <td th:text="${request.info}">Some info</td>
     <td th:text="${request.phonenum}">1234567890</td>
     <td th:text="${#dates.format(request.datein, 'yyyy-MM-dd')}">2023-10-01</td>
-
     <!-- Отображение entrystate -->
     <td>
       <span th:switch="${request.entrystate}">
@@ -122,16 +277,13 @@
         <span th:case="3">Исполненные</span>
       </span>
     </td>
-
-    <td th:text="${request.regcode}">1</td>
     <td th:text="${request.user?.USERNAME}">Регистратор</td>
-
     <td th:text="${request.customername}">Заказчик</td>
   </tr>
   </tbody>
 </table>
 
-<!-- Добавим скрипт для обработки AJAX -->
+<!-- Скрипт для AJAX отмены -->
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.cancel-button').forEach(function(button) {
@@ -148,9 +300,8 @@
         })
                 .then(response => {
                   if (response.ok) {
-                    console.log(response);
                     const row = this.closest('tr');
-                    const statusCell = row.querySelector('td:nth-child(7)'); // седьмой столбец — статус
+                    const statusCell = row.querySelector('td:nth-child(7)'); // статус
                     statusCell.innerHTML = 'Отмененные';
                     this.remove();
                   } else {
@@ -165,8 +316,24 @@
     });
   });
 </script>
+<script>
+  // Функция для сброса фильтров
+  function resetFilters() {
+    const form = document.getElementById('filterForm');
 
+    // Очищаем все поля ввода
+    const inputs = form.querySelectorAll('input, select');
+    inputs.forEach(input => {
+      if (input.tagName.toLowerCase() === 'input') {
+        input.value = '';
+      } else if (input.tagName.toLowerCase() === 'select') {
+        input.selectedIndex = 0;
+      }
+    });
 
-
+    // Отправляем очищенную форму
+    form.submit();
+  }
+</script>
 </body>
 </html>

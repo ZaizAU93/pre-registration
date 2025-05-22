@@ -68,11 +68,12 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, Long> {
             + "(:date IS NULL OR s.data = :date) AND "
             + "(:startTime IS NULL OR s.startTime >= :startTime) AND "
             + "(:endTime IS NULL OR s.endTime <= :endTime) AND "
-            + "(:name IS NULL OR s.registrar.name LIKE %:name%)")
+            + "(:name IS NULL OR s.registrar.name LIKE %:name%) "
+            + "ORDER BY s.data DESC")
     List<TimeSlot> findByFilters(
             @Param("date") LocalDate date,
-            @Param("startTime") LocalTime startTime,
-            @Param("endTime") LocalTime endTime,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime,
             @Param("name") String name
     );
 

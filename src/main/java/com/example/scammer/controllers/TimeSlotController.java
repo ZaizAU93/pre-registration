@@ -166,8 +166,30 @@ public ResponseEntity<?> saveInterval(
             @DateTimeFormat(pattern = "HH:mm") LocalTime endTime,
             @RequestParam(name = "name", required = false) String name) {
 
+
+
+        LocalDateTime startDateTime = null;
+        LocalDateTime endDateTime = null;
+
+        if (date != null) {
+            startDateTime = date.atStartOfDay();
+            if (endTime != null) {
+                endDateTime = date.atTime(endTime);
+            } else {
+                endDateTime = date.plusDays(1).atStartOfDay();
+            }
+        } else {
+            if (startTime != null && endTime != null) {
+                // Без даты, фильтр по времени за весь день
+                startDateTime = LocalDate.of(2000,1,1).atTime(startTime);
+            //    endDateTime = LocalDate.of(2000,1,1).atTime(endTime);
+            }
+        }
+
+
+
         List<TimeSlot> timeSlotList = timeSlotRepository.findByFilters(
-                date, startTime, endTime, name
+                date, startDateTime, endDateTime, name
         );
         return ResponseEntity.ok(timeSlotList);
     }

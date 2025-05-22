@@ -21,7 +21,14 @@
       overflow-y: auto;
       transition: all 0.3s ease;
     }
-
+    tr.disabled-slot {
+      opacity: 0.6;
+      background-color: #f5f6fa !important;
+    }
+    tr.disabled-slot button {
+      background-color: #95a5a6 !important;
+      cursor: not-allowed !important;
+    }
     /* Заголовок панели фильтров */
     .filters-panel h3 {
       margin-top: 0;
@@ -136,7 +143,7 @@
       padding: 15px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.1);
       max-height: calc(100vh - 40px);
-      overflow-y: auto;
+      overflow-x: hidden;
     }
 
     /* Заголовок панели фильтров */
@@ -278,9 +285,112 @@
         margin-top: 20px;
       }
     }
+
+    .slots-container.hidden {
+      display: none;
+    }
+    /* Общие стили для таблицы со слотами */
+    .slots-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    .slots-table th, .slots-table td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .slots-table th {
+      background-color: #f4f4f4;
+      position: sticky; /* фиксировать заголовки при прокрутке, если нужно */
+      top: 0;
+      z-index: 2;
+    }
+
+    .table-wrapper {
+      max-height: 300px; /* или любой другой размер по вашему желанию */
+      overflow-y: auto;
+    }
+
+    .slots-container {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #fafafa;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    .comments-section {
+      margin-bottom: 10px;
+    }
+
+    tbody tr {
+      background-color: #fff !important;
+      border: none;
+    }
+
+    tr.day-boundary {
+      border-top: 2px solid #2980b9; /* цвет границы, подберите по дизайну */
+    }
+
+
+    /* Стиль для шапки из страницы 2 */
+    header.page2-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #2c3e50;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    header.page2-header h1 {
+      color: #ffffff;
+      margin: 0;
+      font-size: 2em;
+    }
+
+    header.page2-header .header-buttons a {
+      text-decoration: none;
+      padding: 10px 15px;
+      background-color: #3498db;
+      color: #fff;
+      border-radius: 5px;
+      font-weight: 600;
+      margin-left: 10px;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    header.page2-header .header-buttons a:hover {
+      background-color: #2980b9;
+      transform: scale(1.05);
+    }
+
+    /* Остальные стили остаются без изменений */
+
+    .main-container {
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+    }
   </style>
 </head>
 <body>
+<header class="page2-header">
+  <h1>Назначение</h1>
+  <div class="header-buttons">
+    <a href="/prentry">Предварительная запись</a>
+    <a href="/registrar/free-slots">Выставить слоты</a>
+    <a href="/schedule/graph">График работы</a>
+    <a href="/logout">Выйти</a>
+  </div>
+</header>
 <script>
   // Изначально WebSocket подключение
   const socket = new SockJS('/ws');
@@ -295,11 +405,18 @@
       stompClient.subscribe('/topic/slots', function(message) {
         const slotId = JSON.parse(message.body);
         console.log("Пришло сообщение с сервера: " + slotId);
-        // Удаляем слот по ID
-        $('button[data-slot-id="'+slotId+'"]').closest('tr').fadeOut(300, function() {
-          $(this).remove();
+
+        // Вместо удаления строки делаем блокировку
+        const row = $('button[data-slot-id="'+slotId+'"]').closest('tr');
+        row.css('opacity', '0.6');
+        row.css('background-color', '#f5f6fa');
+        const btn = row.find('button');
+        btn.prop('disabled', true).text('Занято').css({
+          'background-color': '#95a5a6',
+          'cursor': 'not-allowed'
         });
       });
+
     });
   }
 
@@ -390,253 +507,22 @@
       });
     });
 
+
   });
 
-/*
-  function updateRegistrars(registrars) {
-    console.log("Обновляем регистраторов:", registrars);
-    try {
-      $('.content').empty();
 
-      if (!registrars || registrars.length === 0) {
-        $('.content').html('<p class="no-data">Нет данных для отображения</p>');
-        return;
-      }
+  // Вспомогательная функция для форматирования времени
 
-      registrars.forEach(registrar => {
-        let registrarDiv = $(`div[data-registrar-id="${registrar.id}"]`);
-
-        if (registrarDiv.length === 0) {
-          registrarDiv = $(`
-        <div class="registrar" data-registrar-id="${registrar.id}">
-          <div class="registrar-header">
-            <h2>${registrar.name}</h2>
-            <button type="button" class="toggle-slots">Посмотреть свободное время</button>
-          </div>
-          <div class="slots-container" style="display: none;">
-            <h3>Временные слоты:</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>Дата</th>
-                  <th>Время начала</th>
-                  <th>Время конца</th>
-                  <th>Статус</th>
-                  <th>Комментарий регистратора</th>
-                  <th>Действие</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-        `);
-          $('.content').append(registrarDiv);
-        }
-
-        const tbody = registrarDiv.find('tbody');
-        tbody.empty();
-
-        if (!Array.isArray(registrar.timeSlots) || registrar.timeSlots.length === 0) {
-          tbody.append('<tr><td colspan="6">Нет доступных слотов</td></tr>');
-          return;
-        }
-
-        // Группируем слоты по дню
-        const slotsByDate = {};
-        registrar.timeSlots.forEach(slot => {
-          if (slot.free === false) return; // пропускаем занятые
-          const dateStr = slot.data ? slot.data.join('-') : 'Нет данных';
-
-          if (!slotsByDate[dateStr]) {
-            slotsByDate[dateStr] = [];
-          }
-          slotsByDate[dateStr].push(slot);
-        });
-
-        // Обработка групп
-        Object.keys(slotsByDate).forEach(dateStr => {
-          const slots = slotsByDate[dateStr];
-
-          // Загрузить комментарий для этого дня
-          loadDayComment(registrar.id, dateStr).then(commentText => {
-            // Создаем строки для каждого слота
-            slots.forEach((slot, index) => {
-              const row = $('<tr></tr>');
-              if (index === 0) {
-                // Объединяем ячейки для даты и комментария
-                row.append(`<td rowspan="${slots.length}">${dateStr}</td>`);
-              }
-              row.append(`<td>${formatTime(slot.startTime)}</td>`);
-              row.append(`<td>${formatTime(slot.endTime)}</td>`);
-              row.append(`<td>Свободно</td>`);
-              if (index === 0) {
-                // Ячейка с комментариями (объединенная)
-                row.append(`<td rowspan="${slots.length}" class="comment-cell" data-registrar-id="${registrar.id}" data-date="${dateStr}">${commentText || 'Нет комментария'}</td>`);
-              }
-              // Действие
-              row.append(`
-              <td>
-                <button type="button" data-slot-id="${slot.id}" onclick="placeAnOrder(${slot.id})">Занять</button>
-              </td>
-            `);
-              tbody.append(row);
-            });
-          });
-        });
-
-        // Обработка кнопки "Посмотреть свободное время"
-        $(document).off('click', '.toggle-slots').on('click', '.toggle-slots', function() {
-          const container = $(this).closest('.registrar').find('.slots-container');
-          container.slideToggle();
-          const currentText = $(this).text();
-          $(this).text(currentText === 'Посмотреть свободное время' ? 'Скрыть' : 'Посмотреть свободное время');
-        });
-      });
-    } catch (error) {
-      console.error("Ошибка при обновлении регистраторов:", error);
-      $('.content').html('<p class="error">Ошибка загрузки данных</p>');
-    }
-  }
-*/
-
-
-/*
   function updateRegistrars(data) {
     console.log("Обновляем регистраторов:", data);
     try {
-      // Очищаем содержимое
       $('.content').empty();
 
-      // Проверка наличия данных
       if (!data || data.length === 0) {
         $('.content').html('<p class="no-data">Нет данных для отображения</p>');
         return;
       }
 
-      data.forEach(registrar => {
-        // Создаем блок регистратора, если его еще нет
-        let registrarDiv = $(`div[data-registrar-id="${registrar.registrar.id}"]`);
-
-        if (registrarDiv.length === 0) {
-          registrarDiv = $(`
-                <div class="registrar" data-registrar-id="${registrar.registrar.id}">
-                  <div class="registrar-header" style="display:flex; justify-content: space-between; align-items: center; margin-top:20px;">
-                    <h2>${registrar.registrar.name}</h2>
-                    <button type="button" class="toggle-slots">Посмотреть свободное время</button>
-                  </div>
-                  <div class="slots-container" style="display: none; margin-top:10px;">
-                    <h3>Временные слоты:</h3>
-                    <table border="1" cellpadding="5" cellspacing="0" style="width:100%; border-collapse: collapse;">
-                      <thead>
-                        <tr>
-                          <th>Дата</th>
-                          <th>Время начала</th>
-                          <th>Время конца</th>
-                          <th>Статус</th>
-                          <th>Комментарий регистратора</th>
-                          <th>Действие</th>
-                        </tr>
-                      </thead>
-                      <tbody></tbody>
-                    </table>
-                  </div>
-                </div>
-                `);
-          $('.content').append(registrarDiv);
-        }
-
-        const tbody = registrarDiv.find('tbody');
-        tbody.empty();
-
-        // Проверяем наличие временных слотов
-        const timeSlots = data;
-        if (!Array.isArray(timeSlots) || timeSlots.length === 0) {
-          tbody.append('<tr><td colspan="6" style="text-align:center;">Нет доступных слотов</td></tr>');
-          return;
-        }
-
-        // Группируем слоты по дню
-        const slotsByDate = {};
-        timeSlots.forEach(slot => {
-        //  if (slot.free === false) return; // пропускаем занятые
-          const dateObj = slot.data; // массив [ГГГГ, ММ, ДД]
-          const dateStr = dateObj ? dateObj.join('-') : 'Нет данных';
-
-          if (!slotsByDate[dateStr]) {
-            slotsByDate[dateStr] = [];
-          }
-          slotsByDate[dateStr].push(slot);
-        });
-
-        // Обрабатываем каждую дату
-        Object.keys(slotsByDate).forEach(dateStr => {
-          const slots = slotsByDate[dateStr];
-
-          // Загружаем комментарий для этого дня
-          loadDayComment(registrar.registrar.id, dateStr).then(commentText => {
-            // Для каждого слота создаем строку таблицы
-            slots.forEach((slot, index) => {
-              const row = $('<tr></tr>');
-
-              if (index === 0) {
-                // Объединяем ячейки по дате
-                row.append(`<td rowspan="${slots.length}">${dateStr}</td>`);
-              }
-
-              // Форматируем время
-              row.append(`<td>${formatTime(slot.startTime)}</td>`);
-              row.append(`<td>${formatTime(slot.endTime)}</td>`);
-              row.append(`<td>${slot.free ? 'Свободно' : 'Занято'}</td>`);
-
-              if (index === 0) {
-                // Объединенная ячейка с комментариями
-                row.append(`<td rowspan="${slots.length}" class="comment-cell" data-registrar-id="${registrar.registrar.id}" data-date="${dateStr}">${commentText || 'Нет комментария'}</td>`);
-              }
-
-              // Кнопка для бронирования
-              row.append(`
-                            <td>
-                                <button type="button" data-slot-id="${slot.id}" onclick="placeAnOrder(${slot.id})" ${slot.free ? '' : 'disabled'}>Занять</button>
-                            </td>
-                        `);
-
-              tbody.append(row);
-            });
-          }).catch(error => {
-            console.error('Ошибка загрузки комментария:', error);
-          });
-        });
-
-        // Обработка клика по кнопке "Посмотреть свободное время" делегировано
-        $(document).off('click', '.toggle-slots').on('click', '.toggle-slots', function() {
-          const container = $(this).closest('.registrar').find('.slots-container');
-          container.slideToggle();
-          const currentText = $(this).text();
-          $(this).text(currentText === 'Посмотреть свободное время' ? 'Скрыть' : 'Посмотреть свободное время');
-        });
-      });
-    } catch (error) {
-      console.error("Ошибка при обновлении регистраторов:", error);
-      $('.content').html('<p class="error">Ошибка загрузки данных</p>');
-    }
-  }
-*/
-
-
-  function updateRegistrars(data) {
-    console.log("Обновляем регистраторов:", data);
-    try {
-      // Очищаем содержимое
-      $('.content').empty();
-
-      // Проверка наличия данных
-      if (!data || data.length === 0) {
-        $('.content').html('<p class="no-data">Нет данных для отображения</p>');
-        return;
-      }
-
-      // Группируем слоты по регистратору
       const registrarsMap = {};
       data.forEach(slot => {
         const registrarId = slot.registrar.id;
@@ -649,103 +535,121 @@
         registrarsMap[registrarId].slots.push(slot);
       });
 
-      // Обрабатываем каждого регистратора
       Object.values(registrarsMap).forEach(({ registrar, slots }) => {
-        // Создаем блок регистратора
         let registrarDiv = $(`div[data-registrar-id="${registrar.id}"]`);
 
         if (registrarDiv.length === 0) {
           registrarDiv = $(`
-                    <div class="registrar" data-registrar-id="${registrar.id}">
-                      <div class="registrar-header" style="display:flex; justify-content: space-between; align-items: center; margin-top:20px;">
-                        <h2>${registrar.name}</h2>
-                        <button type="button" class="toggle-slots">Посмотреть свободное время</button>
-                      </div>
-                      <div class="slots-container" style="display: none; margin-top:10px;">
-                        <h3>Временные слоты:</h3>
-                        <table border="1" cellpadding="5" cellspacing="0" style="width:100%; border-collapse: collapse;">
-                          <thead>
-                            <tr>
-                              <th>Дата</th>
-                              <th>Время начала</th>
-                              <th>Время конца</th>
-                              <th>Статус</th>
-                              <th>Комментарий регистратора</th>
-                              <th>Действие</th>
-                            </tr>
-                          </thead>
-                          <tbody></tbody>
-                        </table>
-                      </div>
-                    </div>
-                `);
+<div class="registrar" data-registrar-id="${registrar.id}">
+  <div class="registrar-header">
+    <h2>${registrar.name}</h2>
+    <button type="button" class="toggle-slots">Посмотреть свободное время</button>
+  </div>
+  <div class="slots-container hidden">
+    <table>
+      <thead>
+        <tr>
+          <th>Дата</th>
+          <th>Время начала</th>
+          <th>Время окончания</th>
+          <th>Статус</th>
+          <th>Действие</th>
+          <th>Комментарий регистратора</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+`);
           $('.content').append(registrarDiv);
         }
 
         const tbody = registrarDiv.find('tbody');
+        tbody.empty();
 
-        // Группируем слоты по дате
-        const slotsByDate = {};
+        // Собираем все уникальные даты
+        const dateSet = new Set();
         slots.forEach(slot => {
-          const dateArr = slot.data; // массив [ГГГГ, ММ, ДД]
+          const dateArr = slot.data;
           const dateStr = dateArr
                   ? dateArr.map(num => String(num).padStart(2, '0')).join('-')
                   : 'Нет данных';
-
-          if (!slotsByDate[dateStr]) {
-            slotsByDate[dateStr] = [];
-          }
-          slotsByDate[dateStr].push(slot);
+          dateSet.add(dateStr);
         });
+        const dateArray = Array.from(dateSet);
 
-        // Обрабатываем каждую дату
-        Object.keys(slotsByDate).forEach(dateStr => {
-          const slotsForDate = slotsByDate[dateStr];
+        // Функция для парсинга строки даты обратно в объект Date для сортировки
+        function parseDateString(dateStr) {
+          const parts = dateStr.split('-');
+          if (parts.length !== 3) return new Date(0); // Невалидная дата
+          const [day, month, year] = parts;
+          return new Date(`${year}-${month}-${day}`);
+        }
 
-          // Загружаем комментарий для этого дня
+        // Сортируем даты по возрастанию
+        dateArray.sort((a, b) => parseDateString(a) - parseDateString(b));
+
+        // Обрабатываем каждую дату по порядку
+        for (const dateStr of dateArray) {
+          // Загружаем комментарий на день
           loadDayComment(registrar.id, dateStr).then(commentText => {
-            // Для каждого слота создаем строку таблицы
+            // Фильтруем слоты для этой даты
+            const slotsForDate = slots.filter(slot => {
+              const slotDateStr = slot.data
+                      ? slot.data.map(num => String(num).padStart(2, '0')).join('-')
+                      : 'Нет данных';
+              return slotDateStr === dateStr;
+            });
+
+            // Для каждого слота этой даты создаем строку
             slotsForDate.forEach((slot, index) => {
               const row = $('<tr></tr>');
 
+              // Для первой строки каждого дня добавляем класс 'day-boundary'
               if (index === 0) {
-                // Объединяем ячейки по дате
+                row.addClass('day-boundary');
+              }
+
+              if (index === 0) {
                 row.append(`<td rowspan="${slotsForDate.length}">${dateStr}</td>`);
               }
 
-              // Форматируем время
-              row.append(`<td>${formatTime(slot.startTime)}</td>`);
-              row.append(`<td>${formatTime(slot.endTime)}</td>`);
-              row.append(`<td>${slot.free ? 'Свободно' : 'Занято'}</td>`);
-
-              if (index === 0) {
-                // Объединенная ячейка с комментариями
-                row.append(
-                        `<td rowspan="${slotsForDate.length}" class="comment-cell" data-registrar-id="${registrar.id}" data-date="${dateStr}">${commentText || 'Нет комментария'}</td>`
-                );
-              }
-
-              // Кнопка для бронирования
-              row.append(`
-                            <td>
-                                <button type="button" data-slot-id="${slot.id}" onclick="placeAnOrder(${slot.id})" ${slot.free ? '' : 'disabled'}>Занять</button>
-                            </td>
-                        `);
+              row.append(
+                      `<td>${formatTime(slot.startTime)}</td>`,
+                      `<td>${formatTime(slot.endTime)}</td>`,
+                      `<td>${slot.free ? 'Свободно' : 'Занято'}</td>`,
+                      `<td>
+                <button type="button"
+                  data-slot-id="${slot.id}"
+                  onclick="placeAnOrder(${slot.id})"
+                  ${slot.free ? '' : 'disabled'}>
+                  Занять
+                </button>
+              </td>`,
+                      index === 0
+                              ? `<td rowspan="${slotsForDate.length}" class="comment-cell">${commentText || 'Нет комментария'}</td>`
+                              : ''
+              );
 
               tbody.append(row);
             });
-          }).catch(error => {
-            console.error('Ошибка загрузки комментария:', error);
           });
-        });
+        }
+      });
 
-        // Делегируем обработку клика по кнопке "Посмотреть свободное время"
-        $(document).off('click', '.toggle-slots').on('click', '.toggle-slots', function() {
-          const container = $(this).closest('.registrar').find('.slots-container');
-          container.slideToggle();
-          const currentText = $(this).text();
-          $(this).text(currentText === 'Посмотреть свободное время' ? 'Скрыть' : 'Посмотреть свободное время');
-        });
+      // Единоразовая инициализация обработчиков
+      $(document).off('click', '.toggle-slots').on('click', '.toggle-slots', function() {
+        const container = $(this).closest('.registrar').find('.slots-container');
+        const isHidden = container.hasClass('hidden');
+
+        if (isHidden) {
+          container.removeClass('hidden').slideDown(300);
+          $(this).text('Скрыть');
+        } else {
+          container.slideUp(300, () => container.addClass('hidden'));
+          $(this).text('Посмотреть свободное время');
+        }
       });
     } catch (error) {
       console.error("Ошибка при обновлении регистраторов:", error);
@@ -753,9 +657,145 @@
     }
   }
 
-  // Вспомогательная функция для форматирования времени
+ /* function updateRegistrars(data) {
+    console.log("Обновляем регистраторов:", data);
+    try {
+      $('.content').empty();
 
+      if (!data || data.length === 0) {
+        $('.content').html('<p class="no-data">Нет данных для отображения</p>');
+        return;
+      }
 
+      const registrarsMap = {};
+      data.forEach(slot => {
+        const registrarId = slot.registrar.id;
+        if (!registrarsMap[registrarId]) {
+          registrarsMap[registrarId] = {
+            registrar: slot.registrar,
+            slots: []
+          };
+        }
+        registrarsMap[registrarId].slots.push(slot);
+      });
+
+      Object.values(registrarsMap).forEach(({ registrar, slots }) => {
+        let registrarDiv = $(`div[data-registrar-id="${registrar.id}"]`);
+
+        if (registrarDiv.length === 0) {
+          registrarDiv = $(`
+                    <div class="registrar" data-registrar-id="${registrar.id}">
+                        <div class="registrar-header">
+                            <h2>${registrar.name}</h2>
+                            <button type="button" class="toggle-slots">Посмотреть свободное время</button>
+                        </div>
+                        <div class="slots-container hidden">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Дата</th>
+                                        <th>Начало</th>
+                                        <th>Окончание</th>
+                                        <th>Статус</th>
+                                        <th>Действие</th>
+                                        <th>Комментарий</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                `);
+          $('.content').append(registrarDiv);
+        }
+
+        const tbody = registrarDiv.find('tbody');
+        tbody.empty();
+
+        // Преобразование и сортировка слотов
+        const processedSlots = slots
+                .map(slot => {
+                  const dateArr = slot.data || [];
+                  return {
+                    ...slot,
+                    dateStr: dateArr.map(n => String(n).padStart(2, '0')).join('-'),
+                    dateObj: new Date(
+                            dateArr[0],
+                            dateArr[1] - 1,
+                            dateArr[2]
+                    )
+                  };
+                })
+                .sort((a, b) => a.dateObj - b.dateObj);
+
+        // Группировка с сохранением порядка
+        const dateGroups = processedSlots.reduce((acc, slot) => {
+
+          const lastGroup = acc[acc.length - 1];
+          if (!lastGroup || lastGroup.dateStr !== slot.dateStr) {
+            acc.push({
+              dateStr: slot.dateStr,
+              dateObj: slot.dateObj,
+              slots: [slot]
+            });
+          } else {
+            lastGroup.slots.push(slot);
+          }
+          return acc;
+        }, []);
+        dateGroups.sort((a, b) => a.dateObj - b.dateObj);
+        // Обработка групп по порядку
+        dateGroups.forEach(group => {
+          loadDayComment(registrar.id, group.dateStr).then(commentText => {
+            group.slots.forEach((slot, index) => {
+              const row = $('<tr></tr>');
+
+              if (index === 0) {
+                row.append(`<td rowspan="${group.slots.length}">${group.dateStr}</td>`);
+              }
+
+              row.append(
+                      `<td>${formatTime(slot.startTime)}</td>`,
+                      `<td>${formatTime(slot.endTime)}</td>`,
+                      `<td>${slot.free ? 'Свободно' : 'Занято'}</td>`,
+                      `<td>
+                                <button type="button"
+                                    data-slot-id="${slot.id}"
+                                    onclick="placeAnOrder(${slot.id})"
+                                    ${slot.free ? '' : 'disabled'}>
+                                    Занять
+                                </button>
+                            </td>`,
+                      index === 0
+                              ? `<td rowspan="${group.slots.length}" class="comment-cell">${commentText || '—'}</td>`
+                              : ''
+              );
+
+              tbody.append(row);
+            });
+          });
+        });
+      });
+
+      // Обработчик кнопок
+      $(document).off('click', '.toggle-slots').on('click', '.toggle-slots', function() {
+        const container = $(this).closest('.registrar').find('.slots-container');
+        const isHidden = container.hasClass('hidden');
+
+        if (isHidden) {
+          container.removeClass('hidden').slideDown(300);
+          $(this).text('Скрыть');
+        } else {
+          container.slideUp(300, () => container.addClass('hidden'));
+          $(this).text('Посмотреть свободное время');
+        }
+      });
+    } catch (error) {
+      console.error("Ошибка при обновлении регистраторов:", error);
+      $('.content').html('<p class="error">Ошибка загрузки данных</p>');
+    }
+  }
+*/
 
 
   // Функция для загрузки комментария на день
@@ -794,6 +834,7 @@
     }
   }
 */
+
 
   // Функция сброса фильтров
   function applyFilters() {
@@ -865,26 +906,55 @@
       url: url,
       data: { id: id },
       success: function(response) {
-        // Удаляем слот
-        $('button[data-slot-id="'+id+'"]').closest('tr').fadeOut(300, function() {
-          $(this).remove();
-        });
+        // Находим кнопку и родительскую строку
+        const button = $(`button[data-slot-id="${id}"]`);
+        const row = button.closest('tr');
+
+        // Блокируем кнопку
+        button.prop('disabled', true)
+                .text('Занято')
+                .css({
+                  'background-color': '#95a5a6',
+                  'cursor': 'not-allowed'
+                });
+
+        // Обновляем статус в таблице
+        row.find('td:nth-child(4)').text('Занято');
+
+        // Добавляем визуальные изменения строки
+        row.css('opacity', '0.6');
+        row.css('background-color', '#f5f6fa');
+
         // Отправляем сообщение через WebSocket
         if (isConnected) {
           stompClient.send('/topic/slots', {}, JSON.stringify(id));
         }
-        console.log("Отправлено на сервер: " + id);
+
+        $('#slotId').val(id);
+        $('#bookingFormContainer').css('display', 'flex');
       },
       error: function(xhr, status, error) {
         console.log('Ошибка при бронировании: ' + xhr.responseText);
       }
     });
-    // Устанавливаем выбранный слот
-    $('#slotId').val(id);
-    // Показываем модалку только при нажатии
-    $('#bookingFormContainer').css('display', 'flex');
   }
 
+
+  function resetFilters() {
+    $('#surnameFilter').val('');
+    $('#dateFilter').val('');
+    $('#startTimeFilter').val('');
+    $('#endTimeFilter').val('');
+    applyFilters();
+  }
+
+  $('.filters-panel').on('click', 'button:contains("Сбросить фильтры")', function() {
+    resetFilters();
+  });
+
+  function showAll() {
+    resetFilters();
+  }
 </script>
 
 
@@ -917,7 +987,7 @@
       <input type="time" id="startTimeFilter" name="startTimeFilter">
     </div>
     <div style="margin-top: 10px;">
-      <label for="endTimeFilter">Время конца:</label>
+      <label for="endTimeFilter">Время окончания:</label>
       <input type="time" id="endTimeFilter" name="endTimeFilter">
     </div>
     <div style="margin-top: 15px; text-align: center;">
@@ -955,11 +1025,11 @@
       <div style="display: flex; flex-direction: column; gap: 8px; padding-left: 10px;">
         <label style="display: flex; align-items: center; gap: 8px;">
           <input type="radio" id="purpose1" name="purpose" value="1" required>
-          <span>Цель 1</span>
+          <span>Удостоверение сделки</span>
         </label>
         <label style="display: flex; align-items: center; gap: 8px;">
           <input type="radio" id="purpose2" name="purpose" value="2" required>
-          <span>Цель 2</span>
+          <span>Государственная регистрация</span>
         </label>
       </div>
 
