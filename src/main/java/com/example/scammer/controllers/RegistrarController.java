@@ -1,4 +1,5 @@
 package com.example.scammer.controllers;
+import com.example.scammer.DTO.RegistrarDTO;
 import com.example.scammer.Registrar;
 import com.example.scammer.DayComment;
 import com.example.scammer.TimeSlot;
@@ -14,6 +15,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
 import java.time.LocalDate;
@@ -259,6 +261,28 @@ public class RegistrarController {
         Optional<DayComment> commentOpt = dayCommentRepository.findByRegistrarAndDate(registrar, day);
         String commentText = commentOpt.map(DayComment::getCommentText).orElse("Нет комментария");
         return ResponseEntity.ok(Collections.singletonMap("commentText", commentText));
+    }
+
+
+    @GetMapping("/list")
+    @ResponseBody
+    public List<RegistrarDTO> getRegistrars() {
+        List<Registrar> registrars = registrarRepository.findAll();
+        return registrars.stream()
+                .map(r -> new RegistrarDTO(r.getRegCode(), r.getName(), r.getSurname()))
+                .collect(Collectors.toList());
+    }
+
+
+    @GetMapping("/name/{regCode}")
+    @ResponseBody
+    public RegistrarDTO getRegistrarName(@PathVariable String regCode) {
+        Registrar registrar = registrarRepository.findByRegCode(regCode);
+        if (registrar != null) {
+            return new RegistrarDTO(registrar.getRegCode(), registrar.getName(), registrar.getSurname());
+        } else {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
     }
 
 }

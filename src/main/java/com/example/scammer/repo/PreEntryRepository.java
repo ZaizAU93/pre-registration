@@ -2,7 +2,13 @@ package com.example.scammer.repo;
 
 import com.example.scammer.Booking;
 import com.example.scammer.DTO.UserDTO;
+import com.example.scammer.Registrar;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.jdbc.core.*;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
@@ -17,6 +23,11 @@ import java.util.*;
 @Repository
 public class PreEntryRepository {
     private final JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private  RegistratorRepo registratorRepo;
+    @PersistenceContext
+    private EntityManager em;
 
     public PreEntryRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -326,5 +337,28 @@ public class PreEntryRepository {
     }
 
 
+    @Transactional
+    public void replaceRegCodePrentry(Integer regCode, Long prentryId) {
+        String jpql = "UPDATE Request e SET e.regcode = :newRegCode WHERE e.preentryid = :preentryid";
+
+        em.createQuery(jpql)
+                .setParameter("newRegCode", regCode)
+                .setParameter("preentryid", prentryId)
+                .executeUpdate();
+    }
+
+    @Transactional
+    public void replaceRegCodeTimeSlot(Integer regCode, Long prentryId) {
+
+        Registrar registrar = registratorRepo.findByRegCode(regCode.toString());
+
+        String jpql = "UPDATE TimeSlot t SET t.registrar = :newRegistrar WHERE t.prentryUid = :prentryUid";
+
+        // Создаем и настраиваем запрос
+        em.createQuery(jpql)
+                .setParameter("newRegistrar", registrar)
+                .setParameter("prentryUid", prentryId)
+                .executeUpdate();
+    }
 
 }

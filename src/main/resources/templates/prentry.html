@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <title>Request Entries</title>
-  <style>
+  <meta charset="UTF-8" />
+  <title>Предварительные записи</title>
+   <style>
     /* Общие стили таблицы */
     table {
       width: 100%;
@@ -293,7 +294,6 @@
     <span th:case="3">Исполненные</span>
   </span>
     </td>
-    <td th:text="${request.user?.USERNAME}">Регистратор</td>
     <td th:text="${request.customername}">Заказчик</td>
   </tr>
   </tbody>
@@ -369,6 +369,170 @@
     // Отправляем очищенную форму
     form.submit();
   }
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    let selectedPreentryId = null;
+    let selectedCurrentRegCode = null;
+
+    // Обработка кнопки "Заменить"
+    document.querySelectorAll('.replace-registrar-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedPreentryId = btn.getAttribute('data-preentryid');
+        selectedCurrentRegCode = btn.getAttribute('data-currentregcode');
+
+        // Запрос списка регистраторов
+        fetch('/registrar/list') // предполагаемый эндпоинт для получения списка регистраторов
+                .then(res => res.json())
+                .then(data => {
+                  populateRegistrarSelect(data);
+                  showModal();
+                });
+      });
+    });
+
+    function populateRegistrarSelect(registrars) {
+      const select = document.getElementById('registrarSelect');
+      select.innerHTML = '<option value="">-- Выберите --</option>';
+      registrars.forEach(r => {
+        const option = document.createElement('option');
+        option.value = r.regCode;
+        option.text = r.name;
+        select.appendChild(option);
+      });
+    }
+
+    function showModal() {
+      document.getElementById('registrarModal').style.display = 'block';
+      document.getElementById('modalOverlay').style.display = 'block';
+    }
+
+    function hideModal() {
+      document.getElementById('registrarModal').style.display = 'none';
+      document.getElementById('modalOverlay').style.display = 'none';
+    }
+
+    document.getElementById('cancelReplaceBtn').addEventListener('click', () => {
+      hideModal();
+    });
+
+  /*  document.getElementById('confirmReplaceBtn').addEventListener('click', () => {
+      const newRegCode = document.getElementById('registrarSelect').value;
+      if (!newRegCode) {
+        alert('Пожалуйста, выберите регистратора');
+        return;
+      }
+
+      // Отправка на сервер
+      fetch('/prentry/update-registrar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+          preentryId: selectedPreentryId,
+          newRegCode: newRegCode
+        })
+      })
+              .then(res => {
+                if (res.ok) {
+                  // Обновляем строку таблицы
+                  updateRequestRow(selectedPreentryId, newRegCode);
+                  hideModal();
+                } else {
+                  alert('Ошибка при смене регистратора');
+                }
+              });
+    });*/
+
+    document.getElementById('confirmReplaceBtn').addEventListener('click', () => {
+      const newRegCode = document.getElementById('registrarSelect').value;
+      if (!newRegCode) {
+        alert('Пожалуйста, выберите регистратора');
+        return;
+      }
+
+      fetch('/prentry/update-registrar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+          preentryId: selectedPreentryId,
+          newRegCode: newRegCode
+        })
+      })
+              .then(res => {
+                if (res.ok) {
+                  // Обновление строки
+                  updateRequestRow(selectedPreentryId, newRegCode);
+                  hideModal();
+                } else {
+                  // Получение текста ошибки
+                  res.text().then(text => {
+                    showErrorModal("Пользователь не является регистратором");
+                    console.log(text, res)
+                  });
+                }
+              })
+              .catch(error => {
+                console.error('Ошибка:', error);
+                showErrorModal('Произошла ошибка при смене регистратора.');
+              });
+    });
+
+    function updateRequestRow(preentryId, newRegCode) {
+      // Можно выполнить обновление строки таблицы, например, через AJAX или напрямую обновить DOM
+      // Предположим, что в таблице есть data-атрибут с preentryid
+      const row = document.querySelector(`button[data-preentryid="${preentryId}"]`).closest('tr');
+
+      // Обновить регистратор в текущей строке
+      fetch('/registrar/name/' + newRegCode) // эндпоинт для получения регистратора по коду
+              .then(res => res.json())
+              .then(data => {
+                const regSpan = row.querySelector('td:nth-child(8)');
+                regSpan.textContent = data.name + ' ' + data.surname;
+
+                // Также можно обновить data-currentregcode атрибут кнопки
+                const btn = row.querySelector('.replace-registrar-btn');
+                if (btn) {
+                  btn.setAttribute('data-currentregcode', newRegCode);
+                }
+              });
+    }
+  });
+</script>
+
+
+<!-- Модальное окно ошибок -->
+<div id="errorModal" style="display:none; position:fixed; top:50%; left:50%; transform: translate(-50%, -50%);
+     background:#fff; padding:20px; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.2); z-index:1001; max-width:400px; width:80%;">
+  <h3>Ошибка</h3>
+  <p id="errorMessage" style="margin-top:10px; word-wrap: break-word;"></p>
+  <div style="margin-top:15px; text-align:right;">
+    <button id="closeErrorBtn">Закрыть</button>
+  </div>
+</div>
+<!-- Фон затемнения для ошибки -->
+<div id="errorOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+     background:rgba(0,0,0,0.5); z-index:1000;"></div>
+
+<script>
+  // Функции для отображения ошибок
+  function showErrorModal(message) {
+    document.getElementById('errorMessage').textContent = message;
+    document.getElementById('errorModal').style.display = 'block';
+    document.getElementById('errorOverlay').style.display = 'block';
+  }
+
+  function hideErrorModal() {
+    document.getElementById('errorModal').style.display = 'none';
+    document.getElementById('errorOverlay').style.display = 'none';
+  }
+
+  document.getElementById('closeErrorBtn').addEventListener('click', hideErrorModal);
 </script>
 </body>
 </html>

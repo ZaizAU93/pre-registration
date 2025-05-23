@@ -1,13 +1,17 @@
 package com.example.scammer.controllers;
 
+import com.example.scammer.DTO.UpdateRegistrarRequest;
+import com.example.scammer.Registrar;
 import com.example.scammer.Request;
 import com.example.scammer.TimeSlot;
 import com.example.scammer.repo.PreEntryRepository;
+import com.example.scammer.repo.RegistratorRepo;
 import com.example.scammer.repo.RequestRepository;
 import com.example.scammer.repo.TimeSlotRepository;
 import com.example.scammer.service.TimeSlotService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/prentry")
@@ -29,6 +34,12 @@ public class PrentryJournal {
 
     @Autowired
     private TimeSlotService timeSlotService;
+
+    @Autowired
+    private TimeSlotRepository timeSlotRepository;
+
+    @Autowired
+    private RegistratorRepo registratorRepo;
     @GetMapping
     public String showEntries(
             // существующие параметры
@@ -96,5 +107,25 @@ public class PrentryJournal {
     }
 
 
+    @PostMapping("/update-registrar")
+    public ResponseEntity<?> updateRegistrar(@RequestBody UpdateRegistrarRequest request) {
+        Optional<Request> optionalRequest = requestRepository.findById(request.getPreentryId());
+        if (!optionalRequest.isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Запись не найдена");
+        }
+
+        String newRegCodeStr = request.getNewRegCode();
+        if (newRegCodeStr != null && newRegCodeStr.equals("-1")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Данный пользователь не является регистратором");
+        }
+
+        // Остальной код
+        int newRegCode = Integer.parseInt(newRegCodeStr);
+        preEntryRepository.replaceRegCodePrentry(newRegCode, request.getPreentryId());
+        preEntryRepository.replaceRegCodeTimeSlot(newRegCode, request.getPreentryId());
+
+        return ResponseEntity.ok().build();
+    }
 
 }
+

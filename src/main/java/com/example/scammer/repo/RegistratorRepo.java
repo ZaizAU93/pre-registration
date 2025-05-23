@@ -16,4 +16,8 @@ public interface RegistratorRepo extends JpaRepository<Registrar, Long> {
 
     List<Registrar> findBySurname(String surname);
 
+
+    Registrar findByRegCode(String regCode);
+
+
 }
