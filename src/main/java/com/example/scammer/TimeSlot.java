@@ -1,9 +1,6 @@
 package com.example.scammer;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -26,10 +23,12 @@ public class TimeSlot {
 
     private LocalDateTime startTime;
     private LocalDateTime endTime;
+    @JsonProperty("isFree")
     private boolean isFree;
 
     @OneToOne(mappedBy = "timeSlot")
     private Booking booking; // если есть
 
     private Integer prentryUid;
+
 }

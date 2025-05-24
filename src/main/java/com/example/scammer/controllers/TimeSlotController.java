@@ -149,7 +149,7 @@ public ResponseEntity<?> saveInterval(
         Long userId = userService.getCurrentUser().getId();
         Optional<Registrar> registrar = registrarRepository.findByUserIdReg(userId);
 
-        timeSlotRepository.deleteTimeSlotByStartTimeAndEndTimeAndRegistrarAndData(startTime, endTime, registrar.get(), date);
+        timeSlotService.deleteTimeSlotAndReturnId(startTime, endTime, registrar.get(), date);
 
         return ResponseEntity.ok(Map.of("success", true));
     }

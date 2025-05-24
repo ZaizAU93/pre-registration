@@ -316,8 +316,10 @@
 
 
     <div class="day-comment" id="dayCommentSection" style="display: none;">
-      <h4>Комментарий к дню:</h4>
-      <p id="dayCommentText"></p>
+      <h4>Комментарий:</h4>
+      <div style="display:flex; align-items:center; justify-content: space-between;">
+        <p id="dayCommentText" style="margin:0; flex:1;">Нет комментария</p>
+      </div>
       <input type="hidden" id="commentDate" />
       <textarea id="newComment" rows="3" style="width: 100%; margin: 10px 0;"></textarea>
       <button class="save-comment" onclick="saveDayComment()">Сохранить комментарий</button>
@@ -341,107 +343,6 @@
     }
   }
 
-/*
-  function renderCalendar(data, year, month) {
-    const calendarEl = document.getElementById('calendar');
-    calendarEl.innerHTML = '';
-
-    // Заголовки дней недели
-    const headerContainer = document.createElement('div');
-    headerContainer.className = 'calendar-header-row';
-
-    ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].forEach(day => {
-      const headerCell = document.createElement('div');
-      headerCell.className = 'calendar-header';
-      headerCell.textContent = day;
-      headerContainer.appendChild(headerCell);
-    });
-    calendarEl.appendChild(headerContainer);
-
-    // Создаем контейнер для дней
-    const daysContainer = document.createElement('div');
-    daysContainer.className = 'calendar-days';
-
-    const firstDay = new Date(year, month - 1, 1);
-    const lastDay = new Date(year, month, 0);
-    const startDayOfWeek = (firstDay.getDay() + 6) % 7; // Понедельник = 0
-    const totalDays = lastDay.getDate();
-
-    // Пустые ячейки перед первым днем
-    for (let i = 0; i < startDayOfWeek; i++) {
-      const emptyCell = document.createElement('div');
-      emptyCell.className = 'calendar-day other-month';
-      daysContainer.appendChild(emptyCell);
-    }
-
-    // Заполняем дни
-    for (let day = 1; day <= totalDays; day++) {
-      const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      const slots = data.slots[dateStr] || [];
-      const comment = data.comments[dateStr] || '';
-
-      const dayCell = document.createElement('div');
-      dayCell.className = 'calendar-day';
-
-      // Форматировать тайм-слоты
-      const slotsHtml = slots.map(slot => {
-        const startTime = slot.startTime;
-        const endTime = slot.endTime;
-        return `<div class="event-item">${startTime} - ${endTime}</div>`;
-      }).join('');
-
-      // Внутри ячейки добавляем номер дня, тайм-слоты и комментарий
-      dayCell.innerHTML = `
-      <div class="day-number">${day}</div>
-      <div class="day-events">
-        ${slotsHtml}
-      </div>
-      ${comment ? `<div class="day-comment-content" style="margin-top:8px; font-size:0.9em; color:#555;">Комментарий: ${comment}</div>` : ''}
-    `;
-
-      // Обработка клика по дню
-      dayCell.addEventListener('click', () => {
-        selectedDate = dateStr;
-        document.getElementById('date').value = dateStr;
-        showDayComment(comment, dateStr);
-      });
-
-      daysContainer.appendChild(dayCell);
-    }
-
-    // Обработка событий удаления интервала
-    daysContainer.addEventListener('click', function(e) {
-      if (e.target.classList.contains('delete-interval')) {
-        const date = e.target.dataset.date;
-        const startTime = e.target.dataset.start;
-        const endTime = e.target.dataset.end;
-
-        // Вызов API для удаления интервала
-        fetch('/timeslots/delete-interval', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ date, startTime, endTime })
-        })
-                .then(response => {
-                  if (!response.ok) throw new Error('Ошибка при удалении интервала');
-                  return response.json();
-                })
-                .then(data => {
-                  alert('Интервал удален');
-                  fetchCalendarData(year, month);
-                })
-                .catch(error => {
-                  alert('Ошибка: ' + error.message);
-                });
-      }
-    });
-
-    calendarEl.appendChild(daysContainer);
-    updateMonthHeader(year, month);
-  }
-*/
 
   function renderCalendar(data, year, month) {
     const calendarEl = document.getElementById('calendar');
@@ -480,6 +381,8 @@
       const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const slots = data.slots[dateStr] || [];
       const comment = data.comments[dateStr] || '';
+
+      console.log(data)
 
       const dayCell = document.createElement('div');
       dayCell.className = 'calendar-day';
@@ -487,16 +390,19 @@
       // Форматировать тайм-слоты
       // Внутри функции renderCalendar, в строке формирования slotsHtml:
       const slotsHtml = slots.map(slot => {
+        console.log(slot)
         const startTime = getTimeString(slot.startTime);
         const endTime = getTimeString(slot.endTime);
         return `
     <div class="event-item">
       ${startTime} - ${endTime}
-      <button class="delete-interval"
-              data-date="${dateStr}"
-              data-start="${slot.startTime}"
-              data-end="${slot.endTime}"
-              style="margin-left:8px; padding:2px 6px; font-size:0.8em; color: lightcoral">Удалить</button>
+  ${slot.isFree === true ? `
+    <button class="delete-interval"
+            data-date="${dateStr}"
+            data-start="${slot.startTime}"
+            data-end="${slot.endTime}"
+            style="margin-left:8px; padding:2px 6px; font-size:0.8em; color: lightcoral;">Удалить</button>
+  ` : ''}
     </div>`;
       }).join('');
 
@@ -604,6 +510,7 @@
     return cell;
   }
 
+  /*
 
   function showDayComment(comment, date) {
     const section = document.getElementById('dayCommentSection');
@@ -612,7 +519,7 @@
     document.getElementById('commentDate').value = date;
     document.getElementById('newComment').value = comment || '';
   }
-
+*/
   async function saveDayComment() {
     const date = document.getElementById('commentDate').value;
     const comment = document.getElementById('newComment').value;
@@ -699,6 +606,41 @@
   document.addEventListener('DOMContentLoaded', () => {
     fetchCalendarData(currentDate.getFullYear(), currentDate.getMonth() + 1);
   });
+
+  //удаление комментария
+  document.getElementById('deleteCommentBtn').addEventListener('click', () => {
+    const date = document.getElementById('commentDate').value;
+    if (!date) return;
+    // Отправляем запрос на удаление комментария
+    fetch('/registrar/daycomment/delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ date })
+    })
+            .then(response => {
+              if (!response.ok) throw new Error('Ошибка при удалении комментария');
+              return response.json();
+            })
+            .then(data => {
+              alert('Комментарий удален');
+              showDayComment('', date); // Обновляем интерфейс, очищая комментарий
+            })
+            .catch(error => {
+              alert('Ошибка: ' + error.message);
+            });
+  });
+
+  function showDayComment(comment, date) {
+    const section = document.getElementById('dayCommentSection');
+    section.style.display = 'block';
+    document.getElementById('dayCommentText').textContent = comment || 'Нет комментария';
+    document.getElementById('commentDate').value = date;
+    document.getElementById('newComment').value = comment || '';
+  }
+
+
 </script>
 
 </body>

@@ -111,4 +111,18 @@ public class TimeSlotService {
     }
 
 
+    @Transactional
+    public Long deleteTimeSlotAndReturnId(LocalDateTime startTime, LocalDateTime endTime, Registrar registrar, LocalDate date) {
+        Optional<TimeSlot> optionalTimeSlot = timeSlotRepository.findByStartTimeAndEndTimeAndRegistrarAndData(startTime, endTime, registrar, date);
+        if (optionalTimeSlot.isPresent()) {
+            Long id = optionalTimeSlot.get().getId();
+            timeSlotRepository.delete(optionalTimeSlot.get());
+            return id;
+        } else {
+            // Можно вернуть null или выбросить исключение
+            return null;
+        }
+    }
+
+
 }

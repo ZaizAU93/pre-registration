@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Регистраторы и временные слоты</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.8/jquery.inputmask.min.js"></script>
+  <style>
+    /* Общие стили */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    /* Шапка */
+    .page2-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #2c3e50;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .page2-header h1 {
+      color: #ffffff;
+      margin: 0;
+      font-size: 2em;
+    }
+
+    .header-buttons a {
+      text-decoration: none;
+      padding: 10px 15px;
+      background-color: #3498db;
+      color: #fff;
+      border-radius: 5px;
+      font-weight: 600;
+      margin-left: 10px;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    .header-buttons a:hover {
+      background-color: #2980b9;
+      transform: scale(1.05);
+    }
+
+    /* Основной контейнер */
+    .main-container {
+      display: flex;
+      gap: 20px;
+    }
+
+    /* Панель фильтров */
+    .filters-panel {
+      flex: 0 0 300px;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .filters-panel label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    .filters-panel input {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    .apply-btn {
+      background: #2980b9;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    /* Таблица Excel-стиль */
+    .table-container {
+      flex: 1;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      overflow: auto;
+      max-height: 80vh;
+    }
+
+    .excel-table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 800px;
+    }
+
+    .excel-table th, .excel-table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      min-width: 150px;
+      vertical-align: top;
+    }
+
+    .registrar-name {
+      background: #f8f9fa;
+      position: sticky;
+      left: 0;
+      z-index: 1;
+    }
+
+    .day-header {
+      background: #e9ecef;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .time-slot {
+      margin: 2px;
+      padding: 6px;
+      background: #e3f2fd;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .time-slot:hover {
+      background: #bbdefb;
+    }
+
+    .time-slot.disabled {
+      background: #eee;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .day-comment {
+      margin-top: 8px;
+      padding-top: 4px;
+      border-top: 1px dashed #ddd;
+      font-size: 0.85em;
+      color: #666;
+    }
+
+    /* Модальное окно */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 25px;
+      border-radius: 8px;
+      width: 400px;
+    }
+  </style>
+  <style>
+    /* Добавленные стили для модального окна */
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      width: 450px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+      transform: translateY(-50px);
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+
+    .modal.show .modal-content {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .modal-content h3 {
+      margin-top: 0;
+      color: #2c3e50;
+      font-size: 1.5em;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 10px;
+    }
+
+    .modal-content div {
+      margin-bottom: 15px;
+    }
+
+    .modal-content label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: #34495e;
+    }
+
+    .modal-content input[type="text"],
+    .modal-content input[type="tel"],
+    .modal-content textarea {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #bdc3c7;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    .modal-content input:focus,
+    .modal-content textarea:focus {
+      border-color: #3498db;
+      outline: none;
+    }
+
+    .modal-content .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .modal-content .radio-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: normal;
+      cursor: pointer;
+    }
+
+    .modal-content button {
+      padding: 12px 25px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .modal-content button[type="submit"] {
+      background: #3498db;
+      color: white;
+    }
+
+    .modal-content button[type="submit"]:hover {
+      background: #2980b9;
+    }
+
+    .modal-content button[type="button"] {
+      background: #95a5a6;
+      color: white;
+    }
+
+    .modal-content button[type="button"]:hover {
+      background: #7f8c8d;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 25px;
+    }
+
+    /* Анимация модального окна */
+    @keyframes modalShow {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal.show {
+      animation: modalShow 0.3s ease;
+    }
+  </style>
+  <style>
+    /* Обновленные стили для слотов */
+    .time-slot {
+      margin: 2px;
+      padding: 6px;
+      background: #e3f2fd;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .time-slot.disabled {
+      background: #f5f5f5;
+      color: #666;
+      cursor: not-allowed;
+    }
+
+    .time-slot.disabled:hover {
+      background: #eee;
+    }
+
+    .time-slot.disabled::after {
+      content: "⨯";
+      position: absolute;
+      right: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #ff4444;
+      font-size: 1.2em;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .time-slot.disabled:hover::after {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+<header class="page2-header">
+  <h1>Назначение</h1>
+  <div class="header-buttons">
+    <a href="/prentry">Предварительная запись</a>
+    <a href="/registrar/free-slots">Выставить слоты</a>
+    <a href="/schedule/graph">График работы</a>
+    <a href="/logout">Выйти</a>
+  </div>
+</header>
+
+<div class="main-container">
+  <div class="table-container">
+    <table class="excel-table" id="registrarsTable">
+      <thead>
+      <tr>
+        <th class="registrar-name">Регистратор</th>
+      </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="filters-panel">
+    <h3>Фильтры</h3>
+    <div>
+      <label>Фамилия:</label>
+      <input type="text" id="surnameFilter">
+    </div>
+    <div>
+      <label>Дата:</label>
+      <input type="date" id="dateFilter">
+    </div>
+    <div>
+      <label>Время начала:</label>
+      <input type="time" id="startTimeFilter">
+    </div>
+    <div>
+      <label>Время окончания:</label>
+      <input type="time" id="endTimeFilter">
+    </div>
+    <button class="apply-btn" onclick="applyFilters()">Применить</button>
+    <button class="apply-btn" onclick="resetFilters()" style="margin-top: 10px;">Сбросить</button>
+  </div>
+</div>
+
+<div id="bookingModal" class="modal">
+  <div class="modal-content">
+    <h3>Бронирование времени</h3>
+    <form id="bookingForm">
+      <input type="hidden" id="slotId">
+
+      <div>
+        <label>Имя клиента:</label>
+        <input type="text" id="customerName" required>
+      </div>
+
+      <div>
+        <label>Телефон:</label>
+        <input type="text" id="phone" required>
+      </div>
+      <!-- Кнопка проверки телефона -->
+      <div style="margin-top: 10px;">
+        <button type="button" id="checkPhoneBtn">Проверить телефон</button>
+      </div>
+
+      <!-- Строка для отображения результата проверки -->
+      <div id="phoneCheckResult" style="margin-top: 10px; font-weight: bold; color: #2c3e50;"></div>
+      <div>
+        <label>Цель визита:</label>
+        <div>
+          <label>
+            <input type="radio" name="purpose" value="1" required>
+            Удостоверение сделки
+          </label>
+          <label>
+            <input type="radio" name="purpose" value="2" required>
+            Государственная регистрация
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label>Комментарий:</label>
+        <textarea id="info"></textarea>
+      </div>
+
+      <div style="margin-top: 20px; display: flex; gap: 10px;">
+        <button type="submit">Сохранить</button>
+        <button type="button" onclick="cancelBooking()">Отмена</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // WebSocket подключение
+  const socket = new SockJS('/ws');
+  const stompClient = Stomp.over(socket);
+  let isConnected = false;
+
+  function connectWebSocket() {
+    if (isConnected) return;
+    stompClient.connect({}, () => {
+      isConnected = true;
+      stompClient.subscribe('/topic/slots', (message) => {
+        const data = JSON.parse(message.body);
+        // Ожидаемый формат data:
+        // { slotId: 'id_слота', free: true/false }
+        console.log("вебсокет " + data.slotId)
+        if (data && data.slotId) {
+          if (data.free === false) {
+            // Слот занялся — блокируем
+            blockSlot(data.slotId);
+          } else if (data.free === true) {
+            // Слот освободился — разблокируем
+            unblockSlot(data.slotId);
+          }
+        }
+      });
+    });
+  }
+
+
+  // Форматирование времени
+  function formatTime(timeArray) {
+    if (!timeArray) return '--:--';
+    return `${String(timeArray[3]).padStart(2, '0')}:${String(timeArray[4]).padStart(2, '0')}`;
+  }
+
+  // Обновление таблицы
+  function updateRegistrars(data) {
+
+    console.log(data)
+
+
+    const $table = $('#registrarsTable');
+    const dates = [...new Set(data
+            .map(slot => slot.data?.join('-'))
+            .filter(Boolean)
+    )].sort((a, b) => new Date(a) - new Date(b));
+
+    // Обновление заголовков
+    $table.find('thead tr').html(`<th class="registrar-name">Регистратор</th>${
+            dates.map(date => `<th class="day-header">${date}</th>`).join('')
+    }`);
+
+    // Группировка данных
+    const registrars = data.reduce((acc, slot) => {
+      const reg = slot.registrar;
+      if (!acc[reg.id]) {
+        acc[reg.id] = {
+          registrar: reg,
+          slots: {}
+        };
+      }
+      const dateKey = slot.data?.join('-');
+      if (dateKey) {
+        if (!acc[reg.id].slots[dateKey]) {
+          acc[reg.id].slots[dateKey] = [];
+        }
+        acc[reg.id].slots[dateKey].push(slot);
+      }
+      return acc;
+    }, {});
+
+    // Построение таблицы
+    const $tbody = $table.find('tbody').empty();
+    Object.values(registrars).forEach(reg => {
+      const $row = $('<tr>').append(
+              $('<td>').addClass('registrar-name').text(reg.registrar.name)
+      );
+
+      dates.forEach(date => {
+        const $cell = $('<td>');
+        const slots = reg.slots[date] || [];
+
+        slots.forEach(slot => {
+          const $slot = $('<div>')
+                  .addClass('time-slot')
+                  // .toggleClass('disabled', !slot.isFree)
+                  .text(`${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`)
+                  .attr('data-slot-id', slot.id)
+                  .data('startTime', slot.startTime)
+                  .data('endTime', slot.endTime);
+
+          console.log("статус таймслота " + slot.isFree);
+
+
+          if (slot.isFree === false) {
+            $slot.addClass('disabled');
+          }else{
+            $slot.on('click', () => showBookingModal(slot.id));
+          }
+
+          $cell.append($slot);
+        });
+
+
+        // Загрузка комментария дня
+        loadDayComment(reg.registrar.id, date).then(comment => {
+          if (comment) {
+            $cell.append($('<div>')
+                    .addClass('day-comment')
+                    .text(comment));
+          }
+        });
+
+        $row.append($cell);
+      });
+
+      $tbody.append($row);
+    });
+  }
+
+
+  // Показать модальное окно
+
+  function showBookingModal(slotId) {
+    $('#slotId').val(slotId);
+    $('#bookingModal').addClass('show').show();
+    blockSlotViaWebSocket(slotId);
+  }
+
+  // Закрыть модальное окно
+  function closeModal() {
+    $('#bookingModal').removeClass('show').hide();
+  }
+
+
+
+
+
+  // Фильтрация
+  function applyFilters() {
+    const filters = {
+      name: $('#surnameFilter').val(),
+      date: $('#dateFilter').val(),
+      startTime: $('#startTimeFilter').val(),
+      endTime: $('#endTimeFilter').val()
+    };
+
+    $.get("/timeslots/filters", filters)
+            .done(updateRegistrars)
+            .fail(err => console.error('Ошибка фильтрации:', err));
+  }
+
+  function resetFilters() {
+    $('#surnameFilter').val('');
+    $('#dateFilter').val('');
+    $('#startTimeFilter').val('');
+    $('#endTimeFilter').val('');
+    applyFilters();
+  }
+
+  // Загрузка комментария дня
+  function loadDayComment(registrarId, date) {
+    return $.get(`/registrar/${registrarId}/day-comment?date=${date}`)
+            .then(res => res.commentText)
+            .catch(() => '');
+  }
+
+  // Инициализация
+  $(document).ready(() => {
+    connectWebSocket();
+    applyFilters();
+    $('#phone').inputmask('375(99)999-99-99');
+
+    $('#bookingForm').submit(function(e) {
+      e.preventDefault();
+
+      const data = {
+        timeSlot: $('#slotId').val(),
+        customerName: $('#customerName').val().trim(),
+        purposeId: $('input[name="purpose"]:checked').val(),
+        info: $('#info').val().trim(),
+        phone: $('#phone').val().trim()
+      };
+
+      $.ajax({
+        url: '/booking/save',
+        type: 'POST',
+        contentType: 'application/json', // важно
+        data: JSON.stringify(data),
+        success: function(response) {
+          closeModal();
+          sendSlotStatusUpdate(data.timeSlot, false);
+        },
+        error: function(xhr) {
+          console.error('Ошибка сохранения:', xhr.responseText);
+          alert('Ошибка сохранения: ' + xhr.responseText);
+        }
+      });
+    });
+
+  });
+
+  function blockSlot(slotId) {
+    const $slot = $(`.time-slot[data-slot-id="${slotId}"]`);
+    if ($slot.length) {
+      $slot.addClass('disabled');
+      $slot.off('click');
+    }
+  }
+
+  function unblockSlot(slotId) {
+    const $slot = $(`.time-slot[data-slot-id="${slotId}"]`);
+    if ($slot.length) {
+      $slot.removeClass('disabled');
+      $slot.on('click', () => showBookingModal(slotId));
+    }
+  }
+
+  function sendSlotStatusUpdate(slotId, isFree) {
+    // isFree: true — слот свободен, false — занят
+    const message = {
+      slotId: slotId,
+      free: isFree
+    };
+    stompClient.send('/topic/slots', {}, JSON.stringify(message));
+  }
+
+  function blockSlotViaWebSocket(slotId) {
+    const message = {
+      slotId: slotId,
+      free: false
+    };
+    stompClient.send('/topic/slots', {}, JSON.stringify(message));
+  }
+
+  function cancelBooking() {
+    const slotId = $('#slotId').val();
+    closeModal();
+    unblockSlot(slotId);
+    sendSlotStatusUpdate(slotId, true); // делаем слот свободным
+  }
+
+  $(document).on('click', '#checkPhoneBtn', function() {
+    const phoneInput = $('#phone').val().trim();
+
+    if (!phoneInput) {
+      $('#phoneCheckResult').text('Пожалуйста, введите номер телефона.');
+      return;
+    }
+
+    // Отправляем запрос на сервер
+    $.get('/timeslots/phones/check', { phone: phoneInput })
+            .done(function(count) {
+              if (count === 0) {
+                $('#phoneCheckResult').text('Заказчик не обращался за последние 3 месяца');
+              } else {
+                $('#phoneCheckResult').text('За последние 3 месяца на телефон зарегистрировано записей ' + count);
+              }
+            })
+            .fail(function() {
+              $('#phoneCheckResult').text('Ошибка при проверке телефона.');
+            });
+  });
+
+</script>
+</body>
+</html>

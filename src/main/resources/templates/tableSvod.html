@@ -391,7 +391,9 @@
     });
 
   });
-  function updateRegistrars(registrars) {
+
+/*
+ function updateRegistrars(registrars) {
     console.log("Обновляем регистраторов:", registrars);
     try {
       $('.content').empty();
@@ -475,7 +477,105 @@
       console.error("Ошибка при обновлении регистраторов:", error);
       $('.content').html('<p class="error">Ошибка загрузки данных</p>');
     }
+  }*/
+  function updateRegistrars(registrars) {
+    console.log("Обновляем регистраторов:", registrars);
+    try {
+      $('.content').empty();
+
+      if (!registrars || registrars.length === 0) {
+        $('.content').html('<p class="no-data">Нет данных для отображения</p>');
+        return;
+      }
+
+      registrars.forEach(registrar => {
+        let registrarDiv = $(`div[data-registrar-id="${registrar.id}"]`);
+        const isNewRegistrar = registrarDiv.length === 0;
+
+        // Создаём новый элемент, если не существует
+        if (isNewRegistrar) {
+          registrarDiv = $(`
+          <div class="registrar" data-registrar-id="${registrar.id}">
+            <div class="registrar-header">
+              <h2>${registrar.name} ${registrar.surname} - <span class="free-slots-count">0</span></h2>
+              <button type="button" class="toggle-slots">Посмотреть свободное время</button>
+            </div>
+            <div class="slots-container" style="display: none;">
+              <h3>Временные слоты:</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Дата</th>
+                    <th>Время начала</th>
+                    <th>Время конца</th>
+                    <th>Статус</th>
+                    <th>Действие</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        `);
+          $('.content').append(registrarDiv);
+        }
+
+        // Всегда обновляем счётчик свободных слотов
+        const timeSlots = Array.isArray(registrar.timeSlots) ? registrar.timeSlots : [];
+        const freeSlots = timeSlots.filter(slot => slot.free === true);
+        registrarDiv.find('.free-slots-count').text(freeSlots.length);
+
+        // Обновляем таблицу
+        const tbody = registrarDiv.find('tbody');
+        tbody.empty();
+
+        if (freeSlots.length === 0) {
+          tbody.append('<tr><td colspan="5">Нет свободных слотов</td></tr>');
+        } else {
+          freeSlots.forEach(slot => {
+            const row = $(`
+            <tr>
+              <td>${slot.date || formatDate(slot.data) || 'Нет данных'}</td>
+              <td>${formatTime(slot.startTime)}</td>
+              <td>${formatTime(slot.endTime)}</td>
+              <td>Свободно</td>
+              <td>
+                <button type="button" data-slot-id="${slot.id}" onclick="placeAnOrder('${slot.id}')">Занять</button>
+              </td>
+            </tr>
+          `);
+            tbody.append(row);
+          });
+        }
+
+        // Инициализация toggle только для новых элементов
+        if (isNewRegistrar) {
+          registrarDiv.find('.toggle-slots').click(function() {
+            const container = $(this).closest('.registrar').find('.slots-container');
+            container.slideToggle();
+            $(this).text(container.is(':visible') ? 'Скрыть' : 'Посмотреть свободное время');
+          });
+        }
+      });
+
+    } catch (error) {
+      console.error("Ошибка при обновлении регистраторов:", error);
+      $('.content').html('<p class="error">Ошибка загрузки данных</p>');
+    }
   }
+
+  // Вспомогательные функции
+  function formatTime(timeString) {
+    return timeString ? timeString.slice(0, 5) : '--:--';
+  }
+
+  function formatDate(dataArray) {
+    return dataArray?.join('.') || '';
+  }
+
+
+
+
 
   function formatTime(timeArray) {
     if (!Array.isArray(timeArray)) return 'Некорректное время';

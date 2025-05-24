@@ -1,4 +1,5 @@
 package com.example.scammer.controllers;
+
 import com.example.scammer.DTO.RegistrarDTO;
 import com.example.scammer.Registrar;
 import com.example.scammer.DayComment;
@@ -6,7 +7,6 @@ import com.example.scammer.TimeSlot;
 import com.example.scammer.repo.*;
 import com.example.scammer.service.TimeSlotService;
 import com.example.service.UserService;
-import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,11 +16,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
 import java.security.Principal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -97,8 +98,6 @@ public class RegistrarController {
 
 
 
-
-
     @PostMapping("/free-slots")
     public String saveFreeSlot(@RequestParam String startTime,
                                @RequestParam String endTime) {
@@ -152,7 +151,7 @@ public class RegistrarController {
         List<Registrar> registrars = registrarRepository.findAll();
         model.addAttribute("registrars", registrars);
         System.out.println("строка запроса к rsds600: " + preEntryRepository.getUser(principal.getName()).getUSERNAME());
-        return "tableSvod_1"; // название шаблона
+        return "tableSvod_11"; // название шаблона
     }
 
     // Выбрать время для назначения записи
@@ -229,7 +228,8 @@ public class RegistrarController {
                         ts -> ts.getData().toString(),
                         Collectors.mapping(ts -> new TimeSlotDTO(
                                 ts.getStartTime(),
-                                ts.getEndTime()
+                                ts.getEndTime(),
+                                ts.isFree()
                         ), Collectors.toList())
                 ));
 
@@ -248,8 +248,8 @@ public class RegistrarController {
     }
 
     // DTO для временных слотов
-    public record TimeSlotDTO(LocalDateTime startTime, LocalDateTime endTime) {}
-
+    public record TimeSlotDTO(LocalDateTime startTime, LocalDateTime endTime, boolean isFree) {}
+    /*
     @GetMapping("/{registrarId}/day-comment")
     public ResponseEntity<Map<String, String>> getDayComment(@PathVariable Long registrarId, @RequestParam String date) {
         Optional<Registrar> regOpt = registrarRepository.findById(registrarId);
@@ -262,7 +262,28 @@ public class RegistrarController {
         String commentText = commentOpt.map(DayComment::getCommentText).orElse("Нет комментария");
         return ResponseEntity.ok(Collections.singletonMap("commentText", commentText));
     }
+*/
 
+    @GetMapping("/{registrarId}/day-comment")
+    public ResponseEntity<Map<String, String>> getDayComment(@PathVariable Long registrarId, @RequestParam String date) {
+        Optional<Registrar> regOpt = registrarRepository.findById(registrarId);
+        if (!regOpt.isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.singletonMap("comment", "Регистратор не найден"));
+        }
+        Registrar registrar = regOpt.get();
+        // Используем форматтер, чтобы принимать даты без ведущих нулей
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-M-d");
+        LocalDate day;
+        try {
+            day = LocalDate.parse(date, formatter);
+        } catch (DateTimeParseException e) {
+            // Обработка неправильного формата даты
+            return ResponseEntity.badRequest().body(Collections.singletonMap("error", "Некорректный формат даты. Используйте формат yyyy-M-d."));
+        }
+        Optional<DayComment> commentOpt = dayCommentRepository.findByRegistrarAndDate(registrar, day);
+        String commentText = commentOpt.map(DayComment::getCommentText).orElse("Нет комментария");
+        return ResponseEntity.ok(Collections.singletonMap("commentText", commentText));
+    }
 
     @GetMapping("/list")
     @ResponseBody
@@ -284,5 +305,6 @@ public class RegistrarController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
     }
+
 
 }

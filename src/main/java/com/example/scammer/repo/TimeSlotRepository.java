@@ -59,8 +59,12 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, Long> {
     @Query("DELETE TimeSlot e  WHERE e.id = ?1")
     void вуUidPrentry(@Param("id") Long id, @Param("isFree") int uid);
 
+    /*
     @Transactional
     void  deleteTimeSlotByStartTimeAndEndTimeAndRegistrarAndData(LocalDateTime startTime, LocalDateTime endTime, Registrar registrar, LocalDate date);
+    */
+
+    Optional<TimeSlot> findByStartTimeAndEndTimeAndRegistrarAndData(LocalDateTime startTime, LocalDateTime endTime, Registrar registrar, LocalDate date);
 
 
 

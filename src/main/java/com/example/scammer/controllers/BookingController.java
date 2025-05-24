@@ -2,6 +2,7 @@ package com.example.scammer.controllers;
 
 import com.example.model.User;
 import com.example.scammer.Booking;
+import com.example.scammer.DTO.BookingRequest;
 import com.example.scammer.TimeSlot;
 import com.example.scammer.repo.PreEntryRepository;
 import com.example.scammer.service.BookingService;
@@ -33,13 +34,12 @@ public class BookingController {
     private UserService userService;
 
     @PostMapping("/save")
-    public ResponseEntity<?> save(
-            @RequestParam Long timeSlot,
-            @RequestParam String customerName,
-            @RequestParam int purposeId,
-            @RequestParam String info,
-            @RequestParam String phone) {
-
+    public ResponseEntity<?> save(@RequestBody BookingRequest request) {
+        Long timeSlot = request.getTimeSlot();
+        String customerName = request.getCustomerName();
+        int purposeId = request.getPurposeId();
+        String info = request.getInfo();
+        String phone = request.getPhone();
 
         try {
             Optional<TimeSlot> slotOptional = timeSlotService.findById(timeSlot);
@@ -87,7 +87,7 @@ public class BookingController {
              int uidPrentry =  preEntryRepository.addPreEntryAPIExemple(booking);
 
              timeSlotService.setPrentryUid(slot.getId(), uidPrentry);
-
+             timeSlotService.updateStateTimeSlot(slot, false);
 
             System.out.println("айди заказа: " + uidPrentry);
 

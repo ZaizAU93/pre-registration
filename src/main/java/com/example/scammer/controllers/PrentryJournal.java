@@ -4,10 +4,7 @@ import com.example.scammer.DTO.UpdateRegistrarRequest;
 import com.example.scammer.Registrar;
 import com.example.scammer.Request;
 import com.example.scammer.TimeSlot;
-import com.example.scammer.repo.PreEntryRepository;
-import com.example.scammer.repo.RegistratorRepo;
-import com.example.scammer.repo.RequestRepository;
-import com.example.scammer.repo.TimeSlotRepository;
+import com.example.scammer.repo.*;
 import com.example.scammer.service.TimeSlotService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -17,10 +14,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+
 
 @Controller
 @RequestMapping("/prentry")
@@ -34,6 +31,9 @@ public class PrentryJournal {
 
     @Autowired
     private TimeSlotService timeSlotService;
+
+    @Autowired
+    private BookingRepository bookingRepository;
 
     @Autowired
     private TimeSlotRepository timeSlotRepository;
@@ -88,12 +88,18 @@ public class PrentryJournal {
 
         TimeSlot timeSlot = timeSlotService.getTimeSlotByPrentryUID(id);
 
-        timeSlotService.updateStateTimeSlot(timeSlot, true); //освобождение таймслота регистратора после отмены записи в журнале
+     //   timeSlotService.updateStateTimeSlot(timeSlot, true); //освобождение таймслота регистратора после отмены записи в журнале
+
+        timeSlot.setPrentryUid(null); // очистить поле
+        timeSlot.setFree(true);
+        timeSlotRepository.save(timeSlot); // сохранить изменения
+
+        bookingRepository.deleteBooking(timeSlot.getId());
 
         return ResponseEntity.ok("Запись успешно отменена");
     }
 
-    @PostMapping("/replace")
+    //  @PostMapping("/replace")
     @ResponseBody
     public ResponseEntity<String> replaceRegistra(@RequestParam Integer id) {
 
