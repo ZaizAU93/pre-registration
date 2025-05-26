@@ -44,9 +44,6 @@ public class RegistrarController {
     private UserService userService;
 
     @Autowired
-    private TimeSlotService timeSlotService;
-
-    @Autowired
     private PreEntryRepository preEntryRepository;
 
     @Autowired
@@ -56,25 +53,7 @@ public class RegistrarController {
         this.registrarRepository = registrarRepository;
         this.timeSlotRepository = timeSlotRepository;
     }
-/*
-    @GetMapping("/free-slots")
-    public String showFreeSlotsForm(Model model) {
-        Long userId = userService.getCurrentUser().getId();
-        Optional<Registrar> registrarOpt = registrarRepository.findByUserIdReg(userId);
-        List<TimeSlot> timeSlotList = Collections.emptyList();
-        boolean hasTimeSlots = false;
 
-        if (registrarOpt.isPresent()) {
-            Long registrarId = registrarOpt.get().getId();
-            timeSlotList = timeSlotService.getTimeSlotUser(registrarId);
-            hasTimeSlots = !timeSlotList.isEmpty();
-        }
-
-        model.addAttribute("timeSlot", timeSlotList);
-        model.addAttribute("hasTimeSlots", hasTimeSlots);
-        return "createFreeSlots";
-    }
-*/
     @GetMapping("/free-slots")
     public String showTimeSlotsForm(Model model) {
     Long userId = userService.getCurrentUser().getId();

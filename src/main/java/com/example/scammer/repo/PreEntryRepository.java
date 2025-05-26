@@ -8,9 +8,7 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.jdbc.core.*;
-import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -330,7 +328,7 @@ public class PreEntryRepository {
 
         jdbcTemplate.update(sql,
                 prentryId, // id записи
-                600, // p_customername
+                600,
                 "",
                 2 // код статуса
         );

@@ -387,8 +387,6 @@
       const dayCell = document.createElement('div');
       dayCell.className = 'calendar-day';
 
-      // Форматировать тайм-слоты
-      // Внутри функции renderCalendar, в строке формирования slotsHtml:
       const slotsHtml = slots.map(slot => {
         console.log(slot)
         const startTime = getTimeString(slot.startTime);
@@ -523,16 +521,7 @@
     return cell;
   }
 
-  /*
 
-  function showDayComment(comment, date) {
-    const section = document.getElementById('dayCommentSection');
-    section.style.display = 'block';
-    document.getElementById('dayCommentText').textContent = comment || 'Нет комментария';
-    document.getElementById('commentDate').value = date;
-    document.getElementById('newComment').value = comment || '';
-  }
-*/
   async function saveDayComment() {
     const date = document.getElementById('commentDate').value;
     const comment = document.getElementById('newComment').value;
@@ -641,9 +630,6 @@
 
 
 
-  // Пример для удаления комментария
-  // Обработчик для кнопки удаления комментария
-  // Обновим обработчик удаления комментариев
   document.addEventListener('click', function(e) {
     if (e.target.classList.contains('delete-comment-btn')) {
       const commentId = e.target.dataset.commentId;
@@ -681,8 +667,6 @@
               });
     }
   });
-
-
 
 
 </script>
