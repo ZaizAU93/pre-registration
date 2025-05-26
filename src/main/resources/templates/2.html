@@ -291,24 +291,24 @@
         const form = document.getElementById('intervalForm');
         const formData = new FormData(form);
 
+        // Сохраняем текущий выбранный месяц и год
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth() + 1;
+
         fetch('/timeslots/save-interval', {
           method: 'POST',
           body: formData,
         })
                 .then(response => {
-                  if (!response.ok) {
-                    throw new Error('Ошибка при отправке данных');
-                  }
-                  return response.json(); // или response.text(), в зависимости от ответа сервера
+                  if (!response.ok) throw new Error('Ошибка при отправке данных');
+                  return response.json();
                 })
                 .then(data => {
-                  // Обработка успешного ответа
                   alert('Интервал успешно сохранен');
-                  // Обновляем страницу
-                  location.reload();
+                  // Обновляем календарь для текущего выбранного месяца
+                  fetchCalendarData(currentYear, currentMonth);
                 })
                 .catch(error => {
-                  // Обработка ошибок
                   alert('Произошла ошибка: ' + error.message);
                 });
       });
@@ -409,18 +409,31 @@
 
       // Внутри ячейки добавляем номер дня, тайм-слоты и комментарий
       dayCell.innerHTML = `
-      <div class="day-number">${day}</div>
-      <div class="day-events">
-        ${slotsHtml}
-      </div>
-      ${comment ? `<div class="day-comment-content" style="margin-top:8px; font-size:0.9em; color:#555;">Комментарий: ${comment}</div>` : ''}
-    `;
+<input type="hidden" id="commentId" />
+  <div class="day-number">${day}</div>
+  <div class="day-events">
+    ${slotsHtml}
+  </div>
+  ${comment ? `
+<div class="day-comment-content" style="margin-top:8px; font-size:0.9em; color:#555;">
+  <div style="display:flex; align-items:center; justify-content: space-between;">
+    <span>Комментарий: ${comment.text}</span>
+    <button class="delete-comment-btn"
+            data-comment-id="${comment.id}"
+            style="margin-left:10px; padding:2px 6px; font-size:0.8em;">
+      Удалить
+    </button>
+  </div>
+</div>
+  ` : ''}
+`;
+
 
       // Обработка клика по дню
       dayCell.addEventListener('click', () => {
         selectedDate = dateStr;
         document.getElementById('date').value = dateStr;
-        showDayComment(comment, dateStr);
+        showDayComment(comment, dateStr, commentId);
       });
 
       daysContainer.appendChild(dayCell);
@@ -535,7 +548,9 @@
 
       if (response.ok) {
         alert('Комментарий сохранен');
-        showDayComment(comment, date);
+        // Обновляем календарь и скрываем поле комментария
+        fetchCalendarData(currentDate.getFullYear(), currentDate.getMonth() + 1);
+        document.getElementById('dayCommentSection').style.display = 'none';
       }
     } catch (error) {
       console.error('Error:', error);
@@ -607,38 +622,67 @@
     fetchCalendarData(currentDate.getFullYear(), currentDate.getMonth() + 1);
   });
 
-  //удаление комментария
-  document.getElementById('deleteCommentBtn').addEventListener('click', () => {
-    const date = document.getElementById('commentDate').value;
-    if (!date) return;
-    // Отправляем запрос на удаление комментария
-    fetch('/registrar/daycomment/delete', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ date })
-    })
-            .then(response => {
-              if (!response.ok) throw new Error('Ошибка при удалении комментария');
-              return response.json();
-            })
-            .then(data => {
-              alert('Комментарий удален');
-              showDayComment('', date); // Обновляем интерфейс, очищая комментарий
-            })
-            .catch(error => {
-              alert('Ошибка: ' + error.message);
-            });
-  });
 
-  function showDayComment(comment, date) {
+
+
+  function showDayComment(comment, date, commentId = null) {
     const section = document.getElementById('dayCommentSection');
     section.style.display = 'block';
-    document.getElementById('dayCommentText').textContent = comment || 'Нет комментария';
+    document.getElementById('dayCommentText').textContent = comment.text || 'Нет комментария';
     document.getElementById('commentDate').value = date;
-    document.getElementById('newComment').value = comment || '';
+    document.getElementById('newComment').value = comment.text || '';
+
+    // Обновить кнопку "Удалить" с id комментария
+    const deleteBtn = section.querySelector('.delete-comment-btn');
+    if (deleteBtn) {
+      deleteBtn.dataset.commentId = commentId;
+    }
   }
+
+
+
+  // Пример для удаления комментария
+  // Обработчик для кнопки удаления комментария
+  // Обновим обработчик удаления комментариев
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('delete-comment-btn')) {
+      const commentId = e.target.dataset.commentId;
+
+      if (!commentId) {
+        alert('Комментарий еще не сохранен');
+        return;
+      }
+
+      if (!confirm('Вы уверены, что хотите удалить комментарий?')) return;
+
+      fetch('/registrar/daycomment/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ id: commentId })
+      })
+              .then(response => {
+                if (!response.ok) throw new Error('Ошибка при удалении комментария');
+                return response.json();
+              })
+              .then(data => {
+                if (data.status === 'success') {
+                  alert('Комментарий удален');
+                  // Используем текущую дату календаря вместо парсинга
+                  fetchCalendarData(
+                          currentDate.getFullYear(),
+                          currentDate.getMonth() + 1
+                  );
+                }
+              })
+              .catch(error => {
+                alert('Ошибка: ' + error.message);
+              });
+    }
+  });
+
+
 
 
 </script>

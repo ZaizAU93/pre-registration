@@ -8,6 +8,7 @@ import com.example.scammer.repo.*;
 import com.example.scammer.service.TimeSlotService;
 import com.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -100,11 +101,13 @@ public class RegistrarController {
 
     @PostMapping("/free-slots")
     public String saveFreeSlot(@RequestParam String startTime,
-                               @RequestParam String endTime) {
+                               @RequestParam String endTime,
+                               @RequestParam LocalDate date) {
         Registrar registrar = registrarRepository.findByUserIdReg(userService.getCurrentUser().getId())
                 .orElseThrow(() -> new IllegalArgumentException("Registrar не найден"));
 
-        LocalDate localDate = LocalDate.now();
+       // LocalDate localDate = LocalDate.now();
+        LocalDate localDate = date;
         LocalTime start = LocalTime.parse(startTime);
         LocalTime end = LocalTime.parse(endTime);
 
@@ -181,7 +184,8 @@ public class RegistrarController {
 
         Optional<DayComment> commentOpt = dayCommentRepository.findByRegistrarAndDate(registrar, date);
         String commentText = commentOpt.map(DayComment::getCommentText).orElse("");
-        return Map.of("comment", commentText);
+        return Map.of("comment", commentText,
+                 "id", commentOpt.get().getId().toString());
     }
 
 
@@ -233,12 +237,12 @@ public class RegistrarController {
                         ), Collectors.toList())
                 ));
 
-        Map<String, String> comments = dayCommentRepository
+        Map<String, DayCommentDTO> comments = dayCommentRepository
                 .findByRegistrarAndDateBetween(registrar, startDate, endDate)
                 .stream()
                 .collect(Collectors.toMap(
                         dc -> dc.getDate().toString(),
-                        DayComment::getCommentText
+                        dc -> new DayCommentDTO(dc.getId(), dc.getCommentText())
                 ));
 
         return Map.of(
@@ -246,6 +250,8 @@ public class RegistrarController {
                 "comments", comments
         );
     }
+
+    public record DayCommentDTO(Long id, String text) {}
 
     // DTO для временных слотов
     public record TimeSlotDTO(LocalDateTime startTime, LocalDateTime endTime, boolean isFree) {}
@@ -303,6 +309,26 @@ public class RegistrarController {
             return new RegistrarDTO(registrar.getRegCode(), registrar.getName(), registrar.getSurname());
         } else {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+    }
+
+
+    @PostMapping("/daycomment/delete")
+    @ResponseBody
+    public Map<String, String> deleteDayComment(@RequestBody Map<String, String> payload) {
+        String idStr = payload.get("id");
+        if (idStr == null || idStr.isEmpty()) {
+            return Map.of("status", "error", "message", "Нет ID для удаления");
+        }
+        try {
+            Long commentId = Long.parseLong(idStr);
+            // Удаление комментария по id
+            dayCommentRepository.deleteById(commentId);
+            return Map.of("status", "success");
+        } catch (NumberFormatException e) {
+            return Map.of("status", "error", "message", "Некорректный формат ID");
+        } catch (EmptyResultDataAccessException e) {
+            return Map.of("status", "error", "message", "Комментарий не найден");
         }
     }
 

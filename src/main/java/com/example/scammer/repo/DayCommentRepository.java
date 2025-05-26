@@ -17,4 +17,6 @@ public interface DayCommentRepository extends JpaRepository<DayComment, Long> {
 
     List<DayComment> findByRegistrarAndDateBetween(Registrar registrar, LocalDate startDate, LocalDate endDate);
 
+    void deleteById(Long id);
+
 }

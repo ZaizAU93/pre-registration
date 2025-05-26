@@ -484,8 +484,6 @@
     });
 
     function updateRequestRow(preentryId, newRegCode) {
-      // Можно выполнить обновление строки таблицы, например, через AJAX или напрямую обновить DOM
-      // Предположим, что в таблице есть data-атрибут с preentryid
       const row = document.querySelector(`button[data-preentryid="${preentryId}"]`).closest('tr');
 
       // Обновить регистратор в текущей строке
@@ -493,7 +491,7 @@
               .then(res => res.json())
               .then(data => {
                 const regSpan = row.querySelector('td:nth-child(8)');
-                regSpan.textContent = data.name + ' ' + data.surname;
+                regSpan.textContent = data.name;
 
                 // Также можно обновить data-currentregcode атрибут кнопки
                 const btn = row.querySelector('.replace-registrar-btn');
