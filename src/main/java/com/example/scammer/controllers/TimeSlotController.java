@@ -83,7 +83,8 @@ public ResponseEntity<?> saveInterval(
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTime,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime endTime,
-        @RequestParam Long registrarId
+        @RequestParam Long registrarId,
+        @RequestParam Integer purposeCode
 ) {
     Registrar registrar = registrarRepository.findById(registrarId)
             .orElseThrow(() -> new IllegalArgumentException("Регистратор не найден"));
@@ -98,6 +99,7 @@ public ResponseEntity<?> saveInterval(
     timeSlot.setEndTime(LocalDateTime.of(date, endTime));
     timeSlot.setRegistrar(registrar);
     timeSlot.setFree(true);
+    timeSlot.setPurposeCode(purposeCode);
     timeSlotRepository.save(timeSlot);
     /*
     if (StringUtils.hasText(comment)) {

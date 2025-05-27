@@ -149,6 +149,32 @@
       margin: 0;
     }
   </style>
+  <style>
+    .sortable-header {
+      cursor: pointer;
+      position: relative;
+      padding-right: 20px !important;
+    }
+
+    .sortable-header::after {
+      content: "↕";
+      position: absolute;
+      right: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: 0.5;
+    }
+
+    .sortable-header.asc::after {
+      content: "↑";
+      opacity: 1;
+    }
+
+    .sortable-header.desc::after {
+      content: "↓";
+      opacity: 1;
+    }
+  </style>
 </head>
 <body>
 <header class="page2-header">
@@ -214,8 +240,8 @@
     <tbody>
     <tr>
       <!-- Заголовки колонок для визуального отделения -->
-      <th>№ п/п</th>
-      <th>Дата приема</th>
+      <th class="sortable-header" onclick="sortTable(0)">№ п/п</th>
+      <th class="sortable-header" onclick="sortTable(1)">Дата приема</th>
       <th>Цель визита</th>
       <th>Доп. сведения</th>
       <th>Телефон</th>
@@ -233,12 +259,11 @@
 </form>
 
 <!-- Таблица с данными -->
-<table>
+<table id="dataTable">
   <thead>
   <tr>
-    <!-- Заголовки таблицы без изменений -->
-    <th>№ п/п</th>
-    <th>Дата приема</th>
+    <th class="sortable-header" onclick="sortTable(0)">№ п/п</th>
+    <th class="sortable-header" onclick="sortTable(1)">Дата приема</th>
     <th>Цель визита</th>
     <th>Доп. сведения</th>
     <th>Телефон</th>
@@ -251,7 +276,14 @@
   <tbody>
   <tr th:each="request : ${requests}">
     <td th:text="${request.preentryid}">1</td>
-    <td th:text="${#dates.format(request.receiptdate, 'yyyy-MM-dd')}">2023-10-01</td>
+    <td>
+  <span th:if="${request.receiptdate != null}">
+    <span th:text="${#dates.format(request.receiptdate, 'yyyy-MM-dd')}"></span>
+    <span th:if="${#dates.format(request.receiptdate, 'HH:mm') != '00:00'}">
+      <span th:text="' ' + ${#dates.format(request.receiptdate, 'HH:mm')}"></span>
+    </span>
+  </span>
+    </td>
     <!-- Отображение purposeid -->
     <td>
       <span th:switch="${request.purposeid}">
@@ -382,7 +414,7 @@
         selectedCurrentRegCode = btn.getAttribute('data-currentregcode');
 
         // Запрос списка регистраторов
-        fetch('/registrar/list') // предполагаемый эндпоинт для получения списка регистраторов
+        fetch('/registrar/list')
                 .then(res => res.json())
                 .then(data => {
                   populateRegistrarSelect(data);
@@ -531,6 +563,71 @@
   }
 
   document.getElementById('closeErrorBtn').addEventListener('click', hideErrorModal);
+</script>
+<script>
+  let currentSortColumn = -1;
+  let sortDirection = 1;
+
+  function sortTable(columnIndex) {
+    const table = document.getElementById('dataTable');
+    if (!table) {
+      console.error('Table not found');
+      return;
+    }
+
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    if (currentSortColumn === columnIndex) {
+      sortDirection *= -1;
+    } else {
+      currentSortColumn = columnIndex;
+      sortDirection = 1;
+    }
+
+    document.querySelectorAll('.sortable-header').forEach(header => {
+      header.classList.remove('asc', 'desc');
+    });
+
+    const header = table.querySelectorAll('.sortable-header')[columnIndex];
+    if (header) {
+      header.classList.add(sortDirection === 1 ? 'asc' : 'desc');
+    }
+
+    rows.sort((a, b) => {
+      const aValue = a.cells[columnIndex]?.textContent?.trim() || '';
+      const bValue = b.cells[columnIndex]?.textContent?.trim() || '';
+
+      if (columnIndex === 0) { // Numeric
+        const numA = parseInt(aValue) || 0;
+        const numB = parseInt(bValue) || 0;
+        return (numA - numB) * sortDirection;
+      }
+
+      if (columnIndex === 1) { // Date
+        const parseDate = (str) => {
+          const parts = str.split('-');
+          return parts.length === 3
+                  ? new Date(parts[0], parts[1]-1, parts[2])
+                  : null;
+        };
+
+        const dateA = parseDate(aValue);
+        const dateB = parseDate(bValue);
+
+        if (!dateA || !dateB) {
+          return aValue.localeCompare(bValue) * sortDirection;
+        }
+
+        return (dateA - dateB) * sortDirection;
+      }
+
+      return aValue.localeCompare(bValue) * sortDirection;
+    });
+
+    tbody.innerHTML = '';
+    rows.forEach(row => tbody.appendChild(row));
+  }
 </script>
 </body>
 </html>

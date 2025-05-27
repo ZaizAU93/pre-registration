@@ -18,7 +18,9 @@ import java.util.Date;
 @Component
 public class Users {
     @Id()
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    //  @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "userss_seq")
+    @SequenceGenerator(name = "userss_seq", sequenceName = "userss_seq", allocationSize = 1)
     @Column(name = "USERUID")
     private Long USERUID;
 

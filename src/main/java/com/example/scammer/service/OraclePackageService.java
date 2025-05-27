@@ -46,7 +46,7 @@ public class OraclePackageService {
         Map<String, Object> params = new HashMap<>();
 
         // Обязательные параметры
-        params.put("p_receiptdate", java.sql.Date.valueOf(booking.getReceiptDate()));
+    //    params.put("p_receiptdate", java.sql.Date.valueOf(booking.getReceiptDate()));
         params.put("p_regokrug",600);
 
         params.put("p_customername", booking.getCustomerName());

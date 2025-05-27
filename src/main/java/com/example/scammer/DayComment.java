@@ -10,7 +10,9 @@ import java.time.LocalDate;
 @Data
 public class DayComment {
     @Id
-    @GeneratedValue
+    //@GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "day_seq")
+    @SequenceGenerator(name = "day_seq", sequenceName = "day_seq", allocationSize = 1)
     private Long id;
     @ManyToOne
     @JoinColumn(name = "registrar_id")

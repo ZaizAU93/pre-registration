@@ -316,7 +316,7 @@
     .time-slot.disabled:hover {
       background: #eee;
     }
-
+/*
     .time-slot.disabled::after {
       content: "⨯";
       position: absolute;
@@ -331,6 +331,57 @@
 
     .time-slot.disabled:hover::after {
       opacity: 1;
+    }
+*/
+
+    /* Для назначения 1 (зеленый) */
+    .purpose-1 {
+      background-color: #28a745; /* зеленый */
+      color: #fff;
+    }
+
+    /* Для назначения 2 (голубой) */
+    .purpose-2 {
+      background-color: #007bff; /* голубой */
+      color: #fff;
+    }
+
+
+    /* Стили для легенды цветов */
+    .color-legend {
+      margin-top: 25px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+    }
+
+    .color-legend h4 {
+      margin: 0 0 12px 0;
+      color: #2c3e50;
+      font-size: 1em;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .color-square {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+
+    .info-btn {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      cursor: pointer;
+      color: #555;
+      font-size: 1em;
+      z-index: 2;
     }
   </style>
 
@@ -378,6 +429,17 @@
     <div>
       <label>Время окончания:</label>
       <input type="time" id="endTimeFilter">
+    </div>
+    <div class="color-legend">
+      <h4>Обозначения цветов:</h4>
+      <div class="legend-item">
+        <div class="color-square purpose-2"></div>
+        <span>Удостоверение сделки</span>
+      </div>
+      <div class="legend-item">
+        <div class="color-square purpose-1"></div>
+        <span>Государственная регистрация</span>
+      </div>
     </div>
     <button class="apply-btn" onclick="applyFilters()">Применить</button>
     <button class="apply-btn" onclick="resetFilters()" style="margin-top: 10px;">Сбросить</button>
@@ -487,6 +549,7 @@
 
     // Группировка данных
     const registrars = data.reduce((acc, slot) => {
+      console.log(slot)
       const reg = slot.registrar;
       if (!acc[reg.id]) {
         acc[reg.id] = {
@@ -516,25 +579,36 @@
         const slots = reg.slots[date] || [];
 
         slots.forEach(slot => {
+          const purposeCode = slot.purposeCode; // сервер должен вернуть purposeCode
+          const purposeClass = `purpose-${purposeCode}`;
+
           const $slot = $('<div>')
                   .addClass('time-slot')
-                  // .toggleClass('disabled', !slot.isFree)
+                  .addClass(purposeClass)
                   .text(`${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`)
-                  .attr('data-slot-id', slot.id)
-                  .data('startTime', slot.startTime)
-                  .data('endTime', slot.endTime);
-
-          console.log("статус таймслота " + slot.isFree);
-
+                  .attr('data-slot-id', slot.id);
 
           if (slot.isFree === false) {
             $slot.addClass('disabled');
-          }else{
+
+            // добавляем кнопку info
+            const infoBtn = $('<div>')
+                    .addClass('info-btn')
+                    .attr('title', 'Подробнее')
+                    .html('<i class="fas fa-info-circle"></i>')
+                    .on('click', (e) => {
+                      e.stopPropagation(); // чтобы клик не активировал слот
+                      fetchSlotInfo(slot.id);
+                    });
+            $slot.append(infoBtn);
+          } else {
             $slot.on('click', () => showBookingModal(slot.id));
           }
 
+          // добавляем в DOM
           $cell.append($slot);
         });
+
 
 
         // Загрузка комментария дня
@@ -697,6 +771,67 @@
             });
   });
 
+  function fetchSlotInfo(slotId) {
+    $.get('/booking/request-details', { id: slotId })
+            .done(function(data) {
+              showInfoModal(data);
+            })
+            .fail(function() {
+              alert('Не удалось получить информацию о слоте.');
+            });
+  }
+
+  function showInfoModal(data) {
+    const modal = document.getElementById('infoModal');
+    const detailsDiv = document.getElementById('bookingDetails');
+
+    // Формируем содержимое
+    detailsDiv.innerHTML = `
+    <p><strong>Планируемые дата и время:</strong> ${data.startTime}</p>
+    <p><strong>Заявитель:</strong> ${data.customerName || 'Нет данных'}</p>
+    <p><strong>Цель визита:</strong> ${data.purposeId}</p>
+    <p><strong>Информация:</strong> ${data.info || 'Нет информации'}</p>
+    <p><strong>Контактный номер телефона:</strong> ${data.phone || 'Нет телефона'}</p>
+    <p><strong>Регистратор недвижимости:</strong> ${data.regCode || 'Нет'}</p>
+    <p><strong>Дата записи:</strong> ${data.userUid || 'Нет'}</p>
+  `;
+    modal.style.display = 'flex';
+  }
+
+  function closeInfoModal() {
+    document.getElementById('infoModal').style.display = 'none';
+  }
+
+  function printInfo() {
+    const content = document.getElementById('bookingDetails').innerHTML;
+    const printWindow = window.open('', '', 'width=800,height=600');
+    printWindow.document.write('<html><head><title>Печать информации</title>');
+    printWindow.document.write('<style>');
+    printWindow.document.write(`
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    p { margin-bottom: 10px; }
+    h3 { margin-bottom: 20px; }
+  `);
+    printWindow.document.write('</style>');
+    printWindow.document.write('</head><body>');
+    printWindow.document.write('<h3>Информация о предварительной записи</h3>');
+    printWindow.document.write(content);
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  }
+
 </script>
+<div id="infoModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 9999;">
+  <div style="background:#fff; padding:20px; border-radius:8px; max-width:600px; width:90%; position:relative;">
+    <h3>Информация о предварительной записи</h3>
+    <div id="bookingDetails">
+      <!-- Здесь будет вставляться информация -->
+    </div>
+    <button style="position:absolute; top:10px; right:10px; background:#e74c3c; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;" onclick="closeInfoModal()">Закрыть</button>
+    <button style="background:#27ae60; ..." onclick="printInfo()">Печать</button>
+  </div>
+</div>
 </body>
 </html>

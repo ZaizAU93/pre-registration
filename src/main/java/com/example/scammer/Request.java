@@ -24,6 +24,7 @@ public class Request {
     @Column(name = "regokrug")
     private int regokrug;
     @Column(name = "receiptdate")
+    @Temporal(TemporalType.TIMESTAMP) // Для java.util.Date
     private Date receiptdate;
     @Column(name = "purposeid")
     private Integer purposeid;

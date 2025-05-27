@@ -210,12 +210,24 @@
 
     input[type="date"],
     input[type="time"],
-    input[type="text"] {
+    input[type="text"],
+    select {
       width: 100%;
       padding: 8px;
       border: 1px solid #ddd;
       border-radius: 4px;
       box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 1em;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background-color: #fff;
+      color: #333;
+    }
+
+    select:focus {
+      border-color: #3498db;
+      outline: none;
+      box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
     }
 
     button[type="submit"],
@@ -245,6 +257,37 @@
         order: -1;
       }
     }
+
+    /* Стиль для назначения 1 (зеленый фон) */
+    .purpose-1 {
+      background-color: #28a745; /* более приятный зеленый */
+      color: #fff; /* при необходимости цвет текста */
+    }
+
+    /* Стиль для назначения 2 (синий фон) */
+    .purpose-2 {
+      background-color: #007bff; /* синий */
+      color: #fff; /* при необходимости цвет текста */
+    }
+
+
+    .event-item.purpose-1 {
+      background-color: #28a745;
+      color: #fff;
+      padding: 4px;
+      border-radius: 4px;
+    }
+
+    .event-item.purpose-2 {
+      background-color: #007bff;
+      color: #fff;
+      padding: 4px;
+      border-radius: 4px;
+    }
+
+
+
+
   </style>
 </head>
 <body>
@@ -282,6 +325,12 @@
 
       <label for="endTime">Конец:</label>
       <input type="time" id="endTime" name="endTime" required />
+
+      <label for="purposeCode">Назначение:</label>
+      <select id="purposeCode" name="purposeCode" required>
+        <option value="1">Государственная регистрация</option>
+        <option value="2">Удостоверение сделки</option>
+      </select>
 
       <button type="button" id="submitBtn" class="save-comment">Сохранить интервал</button>
     </form>
@@ -387,13 +436,19 @@
       const dayCell = document.createElement('div');
       dayCell.className = 'calendar-day';
 
-      const slotsHtml = slots.map(slot => {
-        console.log(slot)
+      const purposeClass = `purpose-${purposeCode}`;
+
+   /*   const slotsHtml = slots.map(slot => {
         const startTime = getTimeString(slot.startTime);
         const endTime = getTimeString(slot.endTime);
+        const purposeCode = slot.purposeCode; // предполагается, что сервер возвращает purposeCode
+        const purposeClass = `purpose-${purposeCode}`;
+
         return `
-    <div class="event-item">
-      ${startTime} - ${endTime}
+<div class="event-item ${purposeClass}">
+  <span>
+    ${startTime} - ${endTime}
+  </span>
   ${slot.isFree === true ? `
     <button class="delete-interval"
             data-date="${dateStr}"
@@ -401,8 +456,38 @@
             data-end="${slot.endTime}"
             style="margin-left:8px; padding:2px 6px; font-size:0.8em; color: lightcoral;">Удалить</button>
   ` : ''}
-    </div>`;
-      }).join('');
+</div>`;
+      }).join(''); */
+
+      const slotsHtml = slots.map(slot => {
+        const startTime = getTimeString(slot.startTime);
+        const endTime = getTimeString(slot.endTime);
+        const purposeCode = slot.purposeCode; // предполагается, что сервер возвращает purposeCode
+        const purposeClass = `purpose-${purposeCode}`;
+
+        return `
+<div class="event-item ${purposeClass}">
+  <span>
+    ${startTime} - ${endTime}
+  </span>
+  ${slot.isFree === true ? `
+    <button class="delete-interval"
+            data-date="${dateStr}"
+            data-start="${slot.startTime}"
+            data-end="${slot.endTime}"
+            style="margin-left:8px; padding:2px 6px; font-size:0.8em; color: lightcoral;">Удалить</button>
+  ` : ''}
+  ${!slot.isFree ? `
+    <button class="info-interval"
+            data-date="${dateStr}"
+            data-start="${slot.startTime}"
+            data-end="${slot.endTime}"
+            data-purpose="${slot.purposeCode}"
+            style="margin-left:8px; padding:2px 6px; font-size:0.8em;">Информация</button>
+  ` : ''}
+</div>`;
+      });
+
 
 
       // Внутри ячейки добавляем номер дня, тайм-слоты и комментарий
@@ -466,7 +551,28 @@
                   alert('Ошибка: ' + error.message);
                 });
       }
+      if (e.target.classList.contains('info-interval')) {
+        const date = e.target.dataset.date;
+        const startTimeStr = e.target.dataset.start;
+        const endTimeStr = e.target.dataset.end;
+        const purposeCode = e.target.dataset.purpose;
+
+        // Формируем запрос к API для получения данных о бронировании
+        fetch(`/booking/registrar/booking-details?date=${date}&startTime=${startTimeStr}&endTime=${endTimeStr}`)
+                .then(res => {
+                  if (!res.ok) throw new Error('Ошибка при получении данных');
+                  return res.json();
+                })
+                .then(data => {
+                  showInfoModal(data);
+                })
+                .catch(err => {
+                  alert('Ошибка: ' + err.message);
+                });
+      }
     });
+
+
 
     calendarEl.appendChild(daysContainer);
     updateMonthHeader(year, month);
@@ -555,7 +661,8 @@
       startTime: formData.get('startTime'),
       endTime: formData.get('endTime'),
       registrarId: formData.get('registrarId'),
-      comment: formData.get('comment')
+      comment: formData.get('comment'),
+      purposeCode: parseInt.get('purposeCode')
     };
 
     try {
@@ -668,8 +775,41 @@
     }
   });
 
+  //модальное окно для инфо
+  function showInfoModal(data) {
+    const modal = document.getElementById('infoModal');
+    const detailsDiv = document.getElementById('bookingDetails');
+
+    // Формируем содержимое
+    detailsDiv.innerHTML = `
+    <p><strong>Планируемые дата и время:</strong> ${data.startTime}</p>
+    <p><strong>Заявитель:</strong> ${data.customerName || 'Нет данных'}</p>
+    <p><strong>Цель визита:</strong> ${data.purposeId}</p>
+    <p><strong>Информация:</strong> ${data.info || 'Нет информации'}</p>
+    <p><strong>Контактный номер телефона:</strong> ${data.phone || 'Нет телефона'}</p>
+    <p><strong>Регистратор недвижимости:</strong> ${data.regCode || 'Нет'}</p>
+    <p><strong>Дата записи:</strong> ${data.userUid || 'Нет'}</p>
+  `;
+    modal.style.display = 'flex';
+  }
+
+  function closeInfoModal() {
+    document.getElementById('infoModal').style.display = 'none';
+  }
+
+
 
 </script>
+<!-- Модальное окно для информации о бронировании -->
+<div id="infoModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 9999;">
+  <div style="background:#fff; padding:20px; border-radius:8px; max-width:600px; width:90%; position:relative;">
+    <h3>Информация о предварительной записи</h3>
+    <div id="bookingDetails">
+      <!-- Здесь будет вставляться информация -->
+    </div>
+    <button style="position:absolute; top:10px; right:10px; background:#e74c3c; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;" onclick="closeInfoModal()">Закрыть</button>
+  </div>
+</div>
 
 </body>
 </html>

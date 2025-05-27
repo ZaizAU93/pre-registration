@@ -212,7 +212,8 @@ public class RegistrarController {
                         Collectors.mapping(ts -> new TimeSlotDTO(
                                 ts.getStartTime(),
                                 ts.getEndTime(),
-                                ts.isFree()
+                                ts.isFree(),
+                                ts.getPurposeCode()
                         ), Collectors.toList())
                 ));
 
@@ -233,7 +234,7 @@ public class RegistrarController {
     public record DayCommentDTO(Long id, String text) {}
 
     // DTO для временных слотов
-    public record TimeSlotDTO(LocalDateTime startTime, LocalDateTime endTime, boolean isFree) {}
+    public record TimeSlotDTO(LocalDateTime startTime, LocalDateTime endTime, boolean isFree, Integer purposeCode) {}
     /*
     @GetMapping("/{registrarId}/day-comment")
     public ResponseEntity<Map<String, String>> getDayComment(@PathVariable Long registrarId, @RequestParam String date) {

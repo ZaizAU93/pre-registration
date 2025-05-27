@@ -12,7 +12,9 @@ import java.time.LocalDateTime;
 @JsonIgnoreProperties("timeSlots")
 public class TimeSlot {
     @Id
-    @GeneratedValue
+  //  @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "timeSlot_seq")
+    @SequenceGenerator(name = "timeSlot_seq", sequenceName = "timeSlot_seq", allocationSize = 1)
     private Long id;
 
     private LocalDate data;
@@ -30,5 +32,7 @@ public class TimeSlot {
     private Booking booking; // если есть
 
     private Integer prentryUid;
+
+    private Integer  purposeCode;
 
 }

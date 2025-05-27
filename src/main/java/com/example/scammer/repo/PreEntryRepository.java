@@ -41,7 +41,8 @@ public class PreEntryRepository {
         String sql = "{call RSDS600.PREENTRY_PKG.addentry(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
 
         jdbcTemplate.update(sql,
-                java.sql.Date.valueOf(booking.getReceiptDate()), // p_receiptdate
+                //  java.sql.Date.valueOf(booking.getReceiptDate()), // p_receiptdate
+                booking.getReceiptDate(), // p_receiptdate
                 booking.getCustomerName(),                   // p_customername
                 booking.getPurposeId(),                                        // p_purposeid
                 booking.getInfo(),             // p_info
@@ -274,7 +275,8 @@ public class PreEntryRepository {
 
                 int index = 1;
                 // Установка входных параметров
-                cs.setDate(index++, java.sql.Date.valueOf(booking.getReceiptDate()));
+          //      cs.setDate(index++, java.sql.Date.valueOf(booking.getReceiptDate()));
+                cs.setTimestamp(index++, java.sql.Timestamp.valueOf(booking.getReceiptDate()));
                 cs.setString(index++, booking.getCustomerName());
                 cs.setBigDecimal(index++, BigDecimal.valueOf(booking.getPurposeId()));
                 cs.setString(index++, booking.getInfo());

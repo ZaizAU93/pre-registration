@@ -23,6 +23,7 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
 
     Optional<Request> findByPreentryidAndRegokrug(long id, int regOkrug);
 
+    Optional<Request> findByPreentryid(Long uid);
 
     @Query("SELECT COUNT(r) FROM Request r WHERE r.phonenum = :phone " +
             "AND r.datein BETWEEN :startDate AND :endDate")
@@ -38,7 +39,9 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
                                          @Param("endDate") Date endDate);
 
 
-    @Query("SELECT r FROM Request r LEFT JOIN FETCH r.user u WHERE "
+
+
+    /*  @Query("SELECT r FROM Request r LEFT JOIN FETCH r.user u WHERE "
             + "(:preentryid IS NULL OR r.preentryid = :preentryid) AND "
             + "(:receiptdate IS NULL OR r.receiptdate = :receiptdate) AND "
             + "(:purposeid IS NULL OR r.purposeid = :purposeid) AND "
@@ -50,6 +53,7 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
             + "(:customername IS NULL OR r.customername LIKE %:customername%) AND "
             + "(:registratorName IS NULL OR u.USERNAME LIKE %:registratorName%)"
             + "ORDER BY r.receiptdate DESC")
+
     List<Request> findByFilters(
             @Param("preentryid") Long preentryid,
             @Param("receiptdate") Date receiptdate,
@@ -62,5 +66,37 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
             @Param("registratorName") String registratorName,
             @Param("customername") String customername
     );
+*/
+
+    @Query("SELECT r FROM Request r LEFT JOIN FETCH r.user u WHERE "
+            + "(:preentryid IS NULL OR r.preentryid = :preentryid) AND "
+            + "(:receiptdateStart IS NULL OR r.receiptdate >= :receiptdateStart) AND "
+            + "(:receiptdateEnd IS NULL OR r.receiptdate < :receiptdateEnd) AND "
+            + "(:purposeid IS NULL OR r.purposeid = :purposeid) AND "
+            + "(:info IS NULL OR r.info LIKE %:info%) AND "
+            + "(:phonenum IS NULL OR r.phonenum LIKE %:phonenum%) AND "
+            + "(:datein IS NULL OR r.datein = :datein) AND "
+            + "(:regcode IS NULL OR r.regcode = :regcode) AND "
+            + "(:entrystate IS NULL OR r.entrystate = :entrystate) AND "
+            + "(:customername IS NULL OR r.customername LIKE %:customername%) AND "
+            + "(:registratorName IS NULL OR u.USERNAME LIKE %:registratorName%) "
+            + "ORDER BY r.receiptdate DESC")
+    List<Request> findByFilters(
+            @Param("preentryid") Long preentryid,
+            @Param("receiptdateStart") Date receiptdateStart,
+            @Param("receiptdateEnd") Date receiptdateEnd,
+            @Param("purposeid") Integer purposeid,
+            @Param("info") String info,
+            @Param("phonenum") String phonenum,
+            @Param("datein") Date datein,
+            @Param("regcode") Integer regcode,
+            @Param("entrystate") Integer entrystate,
+            @Param("registratorName") String registratorName,
+            @Param("customername") String customername
+    );
+
+
+
+
 
 }

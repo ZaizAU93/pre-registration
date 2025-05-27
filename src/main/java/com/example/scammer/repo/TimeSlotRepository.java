@@ -1,5 +1,6 @@
 package com.example.scammer.repo;
 
+import com.example.scammer.Booking;
 import com.example.scammer.Registrar;
 import com.example.scammer.Request;
 import com.example.scammer.TimeSlot;
@@ -24,6 +25,8 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, Long> {
     Optional<TimeSlot> findById(Long id);
 
     Optional<TimeSlot> findByPrentryUid(Integer id);
+
+    Optional<TimeSlot> findByBooking(Booking booking);
 
     @Modifying
     @Transactional

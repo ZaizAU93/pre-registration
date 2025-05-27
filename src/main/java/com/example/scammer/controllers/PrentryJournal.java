@@ -14,6 +14,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -57,13 +61,26 @@ public class PrentryJournal {
             Model model) {
 
         // Если entrystate не передан, по умолчанию установим 0 (новые)
-        if (entrystate == null) {
+           if (entrystate == null) {
             entrystate = 0;
         }
+        Date startOfDay = null;
+        Date startOfNextDay = null;
+        if (receiptdate !=null) {
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(receiptdate);
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+             startOfDay = cal.getTime();
 
+            cal.add(Calendar.DAY_OF_MONTH, 1);
+             startOfNextDay = cal.getTime();
+        }
 
         List<Request> requests = requestRepository.findByFilters(
-                preentryid, receiptdate, purposeid, info, phonenum, datein, regcode, entrystate, registratorName, customername);
+                preentryid, startOfDay, startOfNextDay, purposeid, info, phonenum, datein, regcode, entrystate, registratorName, customername);
         // Передача списка запросов
         model.addAttribute("requests", requests);
         // Передача параметров в модель для заполнения формы
@@ -78,7 +95,6 @@ public class PrentryJournal {
         model.addAttribute("registratorName", registratorName);
         return "prentry"; // имя шаблона
     }
-
 
     @PostMapping("/update")
     @ResponseBody

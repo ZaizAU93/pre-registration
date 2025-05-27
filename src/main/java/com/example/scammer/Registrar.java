@@ -18,7 +18,8 @@ import java.util.List;
 @AllArgsConstructor
 public class Registrar {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "registrar_seq")
+    @SequenceGenerator(name = "registrar_seq", sequenceName = "registrar_seq", allocationSize = 1)
     private Long id;
 
     @Column(name = "regCode", unique = true)
