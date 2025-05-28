@@ -431,8 +431,6 @@
       const slots = data.slots[dateStr] || [];
       const comment = data.comments[dateStr] || '';
 
-      console.log(data)
-
       const dayCell = document.createElement('div');
       dayCell.className = 'calendar-day';
 
@@ -681,14 +679,11 @@
           fetchCalendarData(currentDate.getFullYear(), currentDate.getMonth() + 1);
           e.target.reset();
         } else {
-          console.log(response);
         }
       } else {
         const errorText = await response.text();
-        console.log('Ошибка: ' + errorText);
       }
     } catch (error) {
-      console.log('Error:', error);
       alert('Произошла ошибка');
     }
   });

@@ -496,6 +496,7 @@
 </div>
 
 <script>
+  let lastBookingInfo = null;
   // WebSocket подключение
   const socket = new SockJS('/ws');
   const stompClient = Stomp.over(socket);
@@ -507,9 +508,6 @@
       isConnected = true;
       stompClient.subscribe('/topic/slots', (message) => {
         const data = JSON.parse(message.body);
-        // Ожидаемый формат data:
-        // { slotId: 'id_слота', free: true/false }
-        console.log("вебсокет " + data.slotId)
         if (data && data.slotId) {
           if (data.free === false) {
             // Слот занялся — блокируем
@@ -533,9 +531,6 @@
   // Обновление таблицы
   function updateRegistrars(data) {
 
-    console.log(data)
-
-
     const $table = $('#registrarsTable');
     const dates = [...new Set(data
             .map(slot => slot.data?.join('-'))
@@ -549,7 +544,6 @@
 
     // Группировка данных
     const registrars = data.reduce((acc, slot) => {
-      console.log(slot)
       const reg = slot.registrar;
       if (!acc[reg.id]) {
         acc[reg.id] = {
@@ -699,6 +693,7 @@
         success: function(response) {
           closeModal();
           sendSlotStatusUpdate(data.timeSlot, false);
+          fetchSlotInfo(data.timeSlot);
         },
         error: function(xhr) {
           console.error('Ошибка сохранения:', xhr.responseText);
@@ -772,6 +767,10 @@
   });
 
   function fetchSlotInfo(slotId) {
+    if (lastBookingInfo && lastBookingInfo.id === slotId) {
+      showInfoModal(lastBookingInfo);
+      return;
+    }
     $.get('/booking/request-details', { id: slotId })
             .done(function(data) {
               showInfoModal(data);
@@ -782,10 +781,10 @@
   }
 
   function showInfoModal(data) {
+    lastBookingInfo = data; // сохраняем текущие данные
     const modal = document.getElementById('infoModal');
     const detailsDiv = document.getElementById('bookingDetails');
 
-    // Формируем содержимое
     detailsDiv.innerHTML = `
     <p><strong>Планируемые дата и время:</strong> ${data.startTime}</p>
     <p><strong>Заявитель:</strong> ${data.customerName || 'Нет данных'}</p>
@@ -800,6 +799,7 @@
 
   function closeInfoModal() {
     document.getElementById('infoModal').style.display = 'none';
+    lastBookingInfo = null; // очистка
   }
 
   function printInfo() {

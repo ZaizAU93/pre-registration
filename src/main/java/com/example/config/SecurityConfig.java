@@ -95,9 +95,12 @@ public class SecurityConfig {
             http
                     .csrf(csrf -> csrf.disable())
                     .authorizeHttpRequests(auth -> auth
+
+                            .requestMatchers("/shedule/graph").permitAll()
+                        //    .requestMatchers("/**").access(new WebExpressionAuthorizationManager("!hasRole('GUEST')"))
+
                             .requestMatchers("/schedule/upload").hasAnyRole("BOSSREGISR")
-                            .requestMatchers("/**").access(new WebExpressionAuthorizationManager("!hasRole('GUEST')"))
-                            .anyRequest().permitAll()
+                            .anyRequest().hasAnyRole("REGISTRATOR", "KOORDINATOR", "ADMINISTRATOR", "BOSSREGISR")
                     )
 
                     .formLogin(form -> form
