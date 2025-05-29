@@ -48,11 +48,12 @@ public class Request {
     private String password;
     @Column(name = "preentrynum")
     private String preentrynum;
-    @Column(name = "statetext")
-    private String statetext;
 
-    @Column(name = "location")
-    private String location;
+    // @Column(name = "statetext")
+   // private String statetext;
+
+    //  @Column(name = "location")
+    //private String location;
 
     @Column(name = "regcode")
     private Integer regcode;

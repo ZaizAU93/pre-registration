@@ -1,7 +1,6 @@
 package com.example.scammer.controllers;
 
 import com.example.scammer.DTO.UpdateRegistrarRequest;
-import com.example.scammer.Registrar;
 import com.example.scammer.Request;
 import com.example.scammer.TimeSlot;
 import com.example.scammer.repo.*;
@@ -15,7 +14,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.Date;
@@ -79,8 +77,31 @@ public class PrentryJournal {
              startOfNextDay = cal.getTime();
         }
 
+
+        Date startOfDayDataIn = null;
+        Date startOfNextDayDataIN = null;
+        if (datein !=null) {
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(datein);
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            startOfDayDataIn = cal.getTime();
+
+            cal.add(Calendar.DAY_OF_MONTH, 1);
+            startOfNextDayDataIN = cal.getTime();
+        }
+
+
+
+        LocalDate localDate = LocalDate.of(2025, 1, 1);
+        Date date = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+
+
+
         List<Request> requests = requestRepository.findByFilters(
-                preentryid, startOfDay, startOfNextDay, purposeid, info, phonenum, datein, regcode, entrystate, registratorName, customername);
+                preentryid, startOfDay, startOfNextDay, purposeid, info, phonenum, regcode, entrystate, registratorName, customername, date, startOfDayDataIn, startOfNextDayDataIN );
         // Передача списка запросов
         model.addAttribute("requests", requests);
         // Передача параметров в модель для заполнения формы

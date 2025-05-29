@@ -72,14 +72,18 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
             + "(:preentryid IS NULL OR r.preentryid = :preentryid) AND "
             + "(:receiptdateStart IS NULL OR r.receiptdate >= :receiptdateStart) AND "
             + "(:receiptdateEnd IS NULL OR r.receiptdate < :receiptdateEnd) AND "
-            + "(:purposeid IS NULL OR r.purposeid = :purposeid) AND "
+             + "(:purposeid IS NULL OR r.purposeid = :purposeid) AND "
+            + "((:purposeid IS NULL AND r.purposeid IN (1, 2)) OR (:purposeid IS NOT NULL)) AND"
             + "(:info IS NULL OR r.info LIKE %:info%) AND "
             + "(:phonenum IS NULL OR r.phonenum LIKE %:phonenum%) AND "
-            + "(:datein IS NULL OR r.datein = :datein) AND "
+            // + "(:datein IS NULL OR r.datein = :datein) AND "
+            + "(:dateinMin IS NULL OR r.datein >= :dateinMin) AND "
             + "(:regcode IS NULL OR r.regcode = :regcode) AND "
             + "(:entrystate IS NULL OR r.entrystate = :entrystate) AND "
             + "(:customername IS NULL OR r.customername LIKE %:customername%) AND "
-            + "(:registratorName IS NULL OR u.USERNAME LIKE %:registratorName%) "
+            + "(:registratorName IS NULL OR u.USERNAME LIKE %:registratorName%) AND"
+            + "(:dataIndateStart IS NULL OR r.datein >= :dataIndateStart) AND "
+            + "(:dataIndateEnd IS NULL OR r.datein < :dataIndateEnd)  "
             + "ORDER BY r.receiptdate DESC")
     List<Request> findByFilters(
             @Param("preentryid") Long preentryid,
@@ -88,11 +92,14 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
             @Param("purposeid") Integer purposeid,
             @Param("info") String info,
             @Param("phonenum") String phonenum,
-            @Param("datein") Date datein,
+         //   @Param("datein") Date datein,
             @Param("regcode") Integer regcode,
             @Param("entrystate") Integer entrystate,
             @Param("registratorName") String registratorName,
-            @Param("customername") String customername
+            @Param("customername") String customername,
+            @Param("dateinMin") Date dateinMin, // Новый параметр
+            @Param("dataIndateStart") Date dataIndateStart,
+            @Param("dataIndateEnd") Date dataIndateEnd
     );
 
 
